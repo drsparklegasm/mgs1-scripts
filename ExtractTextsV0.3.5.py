@@ -21,10 +21,10 @@ offset = 0
 radioData = radioFile.read()
 fileSize = radioData.__len__()
 
-commandNamesEng = {'\x01':'SUBTITLE', '\x02':'VOX_CUES', '\x03':'ANI_FACE', '\x04':'ADD_FREQ',
-                '\x05':'MEM_SAVE', '\x06':'AUD_CUES', '\x07':'ASK_USER', '\x08':'SAVEGAME',
-                '\x10':'IF_CHECK', '\x11':'ELSE', '\x12':'ELSE_IFS', '\x30':'SWITCH',
-                '\x31':'SWITCHOP', '\x80':'GCL_SCPT', '\xFF':'ANIMATION', '\x00':'NULL' 
+commandNamesEng = {b'\x01':'SUBTITLE', b'\x02':'VOX_CUES', b'\x03':'ANI_FACE', b'\x04':'ADD_FREQ',
+                b'\x05':'MEM_SAVE', b'\x06':'AUD_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
+                b'\x10':'IF_CHECK', b'\x11':'ELSE', b'\x12':'ELSE_IFS', b'\x30':'SWITCH',
+                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'ANIMATION', b'\x00':'NULL' 
 }
 
 def commandToEnglish(hex):
