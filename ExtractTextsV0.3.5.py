@@ -21,13 +21,22 @@ offset = 0
 radioData = radioFile.read()
 fileSize = radioData.__len__()
 
+commandNamesEng = {'\x01':'SUBTITLE', '\x02':'VOX_CUES', '\x03':'ANI_FACE', '\x04':'ADD_FREQ',
+                '\x05':'MEM_SAVE', '\x06':'AUD_CUES', '\x07':'ASK_USER', '\x08':'SAVEGAME',
+                '\x10':'IF_CHECK', '\x11':'ELSE', '\x12':'ELSE_IFS', '\x30':'SWITCH',
+                '\x31':'SWITCHOP', '\x80':'GCL_SCPT', '\xFF':'ANIMATION', '\x00':'NULL' 
+}
+
+def commandToEnglish(hex):
+    return commandNamesEng[str(hex)]
+
 # print(fileSize) # Result is 1776859! 
 
 def checkFreq(offsetCheck):
     global radioData
-    bytes = radioData[ offset : offset + 2]
-    freq = struct.unpack('>h', bytes)
-    if 14000 < freq[0] < 14300:
+    freq = struct.unpack('>h', radioData[ offset : offset + 2])[0] # INT from two bytes
+
+    if 14000 < freq < 14300:
         return True
     else: 
         return False
@@ -116,12 +125,6 @@ def handleCommand(offsetCheck):
         case _:
             return 8
 
-def commandToEnglish(hex):
-    match hex:
-        case b'\x80':
-            return "Command"
-        case _:
-            return "UNKNOWN"
 
 while offset < fileSize:
     offsetHex = hex(offset)
@@ -138,6 +141,8 @@ while offset < fileSize:
         byte = getBytesAtOffset(offset)
         thisCommand = commandToEnglish(byte)
         print(thisCommand + " is the command to handle with value: " + str(byte))
+        byteInt = int.to_bytes(byte, byteorder="big")
+
         commandToEnglish(byte)
         length = handleCommand(offset)
         offset += length 
