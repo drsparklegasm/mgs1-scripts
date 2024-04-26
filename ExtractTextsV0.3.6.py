@@ -11,7 +11,7 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 import os
 import struct
 
-filename = "RADIO-usa.DAT"
+filename = "/Users/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
 #filename = "RADIO-jpn.DAT"
 
 offset = 0
@@ -68,12 +68,16 @@ def getCallLength(offset): # Returns the length of the call, offset must be at t
     lengthT = struct.unpack('>h', lengthBytes)
     return lengthT[0]
 
+def getLength(offsetCheck): # Returns the length of the command, offset must be at the freq bytes
+    global radioData
+    
+    lengthBytes = radioData[offsetCheck + 1: offsetCheck + 3]
+    lengthT = struct.unpack('>H', lengthBytes)[0]
+    return lengthT
 
-def getBytesAtOffset(offset):
-    global radioFile
-    radioFile.seek(offset)
-    byte = radioFile.read(1)
-    return byte
+def getByteAtOffset(offsetCheck): # Returns a single byte, probably redundant
+    global radioData
+    return radioData[offsetCheck]
 
 def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for now
     global radioFile
@@ -102,23 +106,34 @@ def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for no
     output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes[0]} bytes long, hex {callLength}:\n')
     return
 
-def handleCommand(offsetCheck):
-    global radioFile
+def handleCommand(offsetCheck): # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
+    # global radioFile
+    global radioData
     global output
 
-    output.write(f'Handling the command...\n')
-    commandByte = radioData[offsetCheck].to_bytes()
-    output.write(f'command is {commandByte}\n')
-    
+    output.write(f'Handling the command... ')
+    commandByte = radioData[offsetCheck] #.to_bytes()?
+    output.write(f'Command is {commandByte}\n')
+
+    if commandByte == b'\x00':
+        return 1
+
+    length = getLength(offsetCheck)
+    output.write(f'Length of command is {length}\n')
+    commandBytes = radioData[offset : offset + length + 2]
+    print(commandByte, ": Offset: ", offsetCheck, " // Content: ", commandBytes, end="\n\n")
+    return length + 2
+    """
     match commandByte:
         case b'\x80':
             offsetCheck += 1
-            length = struct.unpack('>h', radioData[ offsetCheck : offsetCheck + 2])[0]
+            length = getLength(offsetCheck)
             output.write(f'Length of command is {length}\n')
-            
+            commandBytes = radioData[offset:offset + length + 1]
+            print(commandBytes, end="\n")
             return length + 1
         case _:
-            return 8 #  We'll hope whatever we run into is just 8 bytes long. 
+            return 8 #  We'll hope whatever we run into is just 8 bytes long. """
 
 def getChunk(offsetCheck): # THIS IS NOT RETURNING A SUBSET OF THE BYTES! WTF!
     global radioFile
@@ -143,19 +158,14 @@ while offset < fileSize:
         break
     if checkFreq(offset):
         freq = getFreq(offset)
-        print(f"Call found! Frequency is {freq}\n")
+        output.write(f"Call found! Frequency is {freq}\n")
         callLength = getCallLength(offset)
-        print(f'Call is {callLength} bytes long')
+        output.write(f'Call is {callLength} bytes long')
         handleCallHeader(offset)
         offset += 12
     else:
-        phrase = getChunk(offset)
-        print('offset = ' + str(offset))
-        print("Phrase = ")
-        print(phrase)
-        print('\n')
-        offset += len(phrase)
-
+        # phrase = getChunk(offset)
+        offset += handleCommand(offset)
 
 
 # Close output file
