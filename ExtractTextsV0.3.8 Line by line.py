@@ -8,10 +8,9 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 """
 
 
-import os
-import struct
+import os, struct, re
 
-filename = "/Users/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
+filename = "/home/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
 #filename = "RADIO-jpn.DAT"
 
 offset = 0
@@ -29,7 +28,7 @@ fileSize = radioData.__len__()
 commandNamesEng = {b'\x01':'SUBTITLE', b'\x02':'VOX_CUES', b'\x03':'ANI_FACE', b'\x04':'ADD_FREQ',
                 b'\x05':'MEM_SAVE', b'\x06':'AUD_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
                 b'\x10':'IF_CHECK', b'\x11':'ELSE', b'\x12':'ELSE_IFS', b'\x30':'SWITCH',
-                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'ANIMATION', b'\x00':'NULL' 
+                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'END_LINE', b'\x00':'NULL' 
 }
 
 def commandToEnglish(hex):
@@ -46,7 +45,7 @@ def checkFreq(offsetCheck): # Checks if the next two bytes are a codec number or
     global radioData
     freq = struct.unpack('>h', radioData[ offset : offset + 2])[0] # INT from two bytes
 
-    if 14000 < freq < 14300:
+    if 14000 < freq < 14200:
         return True
     else: 
         return False
@@ -65,8 +64,8 @@ def getCallLength(offset): # Returns the length of the call, offset must be at t
     radioFile.seek(offset + 9) # Call length is after 8 bytes, then 0x80, then the length of the script in 2x bytes, then FF
 
     lengthBytes = radioFile.read(2)
-    lengthT = struct.unpack('>h', lengthBytes)
-    return lengthT[0]
+    lengthT = struct.unpack('>h', lengthBytes)[0]
+    return lengthT
 
 def getLength(offsetCheck): # Returns the length of the command, offset must be at the freq bytes
     global radioData
@@ -80,10 +79,9 @@ def getByteAtOffset(offsetCheck): # Returns a single byte, probably redundant
     return radioData[offsetCheck]
 
 def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for now
-    global radioFile
+    global radioData
     global output
-    radioFile.seek(offset)
-    header = radioFile.read(12)
+    header = radioData[offset: offset + 12 ]
 
     # Separate the header
     Freq = header[0:2]
@@ -93,16 +91,16 @@ def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for no
     callLength = header[9:11]
     numBytes = 0
 
-    if header[8] == b'\x80':
+    if header[8].to_bytes() == b'\x80':
         numBytes = struct.unpack('>h', callLength)[0]
     else:
-        output.write(f'ERROR AT HEX {offset}! \n')
+        output.write(f'ERROR AT byte {offset}! Call length is reading as {numBytes} \n')
 
     # Quick check we ended with an FF
-    if header[11] == 255: # Having trouble with ff, using 255
+    if header[11].to_bytes() == b'\xff': 
         output.write('Call intro ended with FF successfully\n')
     else:
-        output.write(f'Call header DID NOT end in FF! Check hex at {callLength}')
+        output.write(f'Call header DID NOT end in FF! Check hex at {offset + 11}')
 
     output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes} bytes long, hex {callLength}:\n')
     return
@@ -111,19 +109,42 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
     # global radioFile
     global radioData
     global output
+    commandByte = radioData[offsetCheck].to_bytes()
+    
+    match commandByte:
+        case b'\x00': # AKA A null
+            output.write('NULL!\n')
+            return offsetCheck + 1
+        case b'\x01':
+            output.write('Dialogue! -- ')
+            length = getLength(offsetCheck)
+            while radioData[offsetCheck + length + 1].to_bytes() != b'\xff':
+                output.write('We have a long one! Length is not FF, adding 1...\n')
+                length += 1
+            line = radioData[offsetCheck: offsetCheck + length + 3]
+            unk1 = line[3:5]
+            unk2 = line[5:7]
+            unk3 = line[7:9]
+            dialogue = line[9: length + 1]
+            # output.write(f'Last byte in line is {line[length + 1].to_bytes()}\n') ## Should always end in FF!
+            
+            if b'\x80\x23\x80\x4e' in dialogue:
+                dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
+                output.write('Dialogue new line replaced! \n')
 
-    output.write(f'Handling the command... ')
-    commandByte = radioData[offsetCheck] #.to_bytes()?
-    output.write(f'Command is {commandByte}\n')
-
-    if commandByte == b'\x00':
-        return 1
-
-    length = getLength(offsetCheck)
-    output.write(f'Length of command is {length}\n')
-    commandBytes = radioData[offset : offset + length + 2]
-    print(commandByte, ": Offset: ", offsetCheck, " // Content: ", commandBytes, end="\n\n")
-    return length + 2
+            writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue)}\n'
+            output.write(writeToFile)
+            return offsetCheck + length + 2
+        case _:
+            output.write('Command is not cased! -- ')
+            start = offset 
+            while radioData[offsetCheck].to_bytes() != b'\xFF':
+                offsetCheck += 1
+            line = radioData[start : offsetCheck + 1]
+            writeToFile = str(commandByte) + ": Offset: " + str(offsetCheck) + " // Content: " + str(line.hex()) + "\n\n"
+            output.write(writeToFile)
+            return offsetCheck + 1 
+        
     """
     match commandByte:
         case b'\x80':
@@ -132,10 +153,11 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
             output.write(f'Length of command is {length}\n')
             commandBytes = radioData[offset:offset + length + 1]
             print(commandBytes, end="\n")
-            return length + 1
+            return length + 1global output
         case _:
             return 8 #  We'll hope whatever we run into is just 8 bytes long. """
 
+"""
 def getChunk(offsetCheck): # THIS IS NOT RETURNING A SUBSET OF THE BYTES! WTF!
     global radioFile
     global fileSize
@@ -149,7 +171,7 @@ def getChunk(offsetCheck): # THIS IS NOT RETURNING A SUBSET OF THE BYTES! WTF!
         else:
             offsetCheck += 1
     return b'\x00'
-
+"""
 
 while offset < fileSize:
     offsetHex = hex(offset)
@@ -167,16 +189,19 @@ while offset < fileSize:
         offset += 12
         start = offset
     else:
-        if radioData[offset] == 255: # Expressing FF as a byte string wasnt working :|
+        offset = handleCommand(offset)
+        """
+    else:
+        if radioData[offset].to_bytes() == b'\x80': # Expressing FF as a byte string wasnt working :|
             output.write("We matched an FF\n")
             line = radioData[start : offset + 1]
-            output.write(str(line))
+            output.write(line.hex())
             output.write('\n')
             print('Wrote line to file!\n')
             offset += 1
             start = offset
         else:
             offset += 1
-
+"""
 # Close output file
 output.close()
