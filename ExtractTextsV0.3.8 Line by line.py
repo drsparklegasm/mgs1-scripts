@@ -90,20 +90,21 @@ def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for no
     unk0 = header[2:4]
     unk1 = header[4:6]
     unk2 = header[6:8]
+    callLength = header[9:11]
+    numBytes = 0
 
-    if header[8:9] == b'\x80':
-        callLength = header[9:11]
-        numBytes = struct.unpack('>h', callLength)
+    if header[8] == b'\x80':
+        numBytes = struct.unpack('>h', callLength)[0]
     else:
-        output.write(f'ERROR AT HEX {callLength}! ')
+        output.write(f'ERROR AT HEX {offset}! \n')
 
     # Quick check we ended with an FF
-    if header[11] == b'\xFF':
-        output.write('Call intro nded with FF successfully\n')
+    if header[11] == 255: # Having trouble with ff, using 255
+        output.write('Call intro ended with FF successfully\n')
     else:
         output.write(f'Call header DID NOT end in FF! Check hex at {callLength}')
 
-    output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes[0]} bytes long, hex {callLength}:\n')
+    output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes} bytes long, hex {callLength}:\n')
     return
 
 def handleCommand(offsetCheck): # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
@@ -149,12 +150,13 @@ def getChunk(offsetCheck): # THIS IS NOT RETURNING A SUBSET OF THE BYTES! WTF!
             offsetCheck += 1
     return b'\x00'
 
-"""
+
 while offset < fileSize:
     offsetHex = hex(offset)
-    output.write(f'Loop start! Offset is currently {offset} or {offsetHex}\n')
-    if offset == fileSize:
-        print("Offset and fileSize match!!!\n END PROGRAM")
+    perc = offset / fileSize * 100
+    print(f'We are at {perc}% through the file')
+    if offset >= fileSize - 1:
+        print("Reached end of file!!!\n END PROGRAM")
         break
     if checkFreq(offset):
         freq = getFreq(offset)
@@ -163,24 +165,18 @@ while offset < fileSize:
         output.write(f'Call is {callLength} bytes long')
         handleCallHeader(offset)
         offset += 12
+        start = offset
     else:
-        # phrase = getChunk(offset)
-        offset += handleCommand(offset)
-"""
-i = offset
-while offset < fileSize:
-    start = offset
-    while offset < fileSize:
-        if radioData[offset] == b'\xff':
-            line = radioData[start : offset + 2]
-            output.write(line)
+        if radioData[offset] == 255: # Expressing FF as a byte string wasnt working :|
+            output.write("We matched an FF\n")
+            line = radioData[start : offset + 1]
+            output.write(str(line))
             output.write('\n')
-            break
+            print('Wrote line to file!\n')
+            offset += 1
+            start = offset
         else:
             offset += 1
-    
-
-
 
 # Close output file
 output.close()
