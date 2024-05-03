@@ -14,8 +14,8 @@ import os, struct, re
 import radioDict
 
 #filename = "/home/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
-filename = "/Users/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
-#filename = "RADIO-jpn.DAT"
+filename = "../../RADIO-usa.DAT"
+#filename = "../../RADIO-jpn.DAT"
 
 
 if filename.__contains__('jpn'):
@@ -139,10 +139,12 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
                 output.write('Dialogue new line replaced! \n')
 
-            if jpn == True:
+            if jpn:
                 dialogue = translateJapaneseHex(dialogue)
-
-            writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue)}\n'
+                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue.hex())}\n'
+            else:
+                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue)}\n'
+            # Write to file
             output.write(writeToFile)
             return offsetCheck + length + 2
         case _:
