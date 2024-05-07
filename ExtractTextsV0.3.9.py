@@ -14,8 +14,8 @@ import os, struct, re
 import radioDict
 
 #filename = "/home/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
-#filename = "RADIO-usa.DAT"
-filename = "RADIO-jpn.DAT"
+filename = "RADIO-usa.DAT"
+#filename = "RADIO-jpn.DAT"
 
 # We'll do a better check for this later. 
 if filename.__contains__('jpn'):
@@ -119,10 +119,10 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
     global radioData
     global output
     commandByte = radioData[offsetCheck].to_bytes()
-    0x1B111C
+    
     match commandByte:
         case b'\x00': # AKA A null
-            output.write('NULL!\n')
+            output.write('NULL in Command check!\n')
             return offsetCheck + 1
         case b'\x01':
             output.write('Dialogue! -- ')
