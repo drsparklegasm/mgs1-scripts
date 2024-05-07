@@ -51,20 +51,29 @@ def commandToEnglish(hex):
     except:
         return "BYTE WAS NOT DEFINED!!!!" 
     
+def checkFreq(offsetCheck): # Checks if the next two bytes are a codec number or not. Returns True or False.
+    global radioData
+    freq = struct.unpack('>h', radioData[ offset : offset + 2])[0] # INT from two bytes
+
+    if 14000 < freq < 14200:
+        return True
+    else: 
+        return False
+    
 def getFreq(offset): # If freq is at offset, return frequency as 140.15
     global radioData
 
     freq = struct.unpack('>h', radioData[ offset : offset + 2])[0]
     return freq / 100
 
-def getLength(offsetCheck): # Returns the length of the command, offset must be at the freq bytes
+def getLength(offsetCheck): # Returns COMMAND length, offset must be at the 0xff bytes
     global radioData
     
     lengthBytes = radioData[offsetCheck + 2: offsetCheck + 4]
     lengthT = struct.unpack('>H', lengthBytes)[0]
     return lengthT
 
-def getCallLength(offset): # Returns the length of the call, offset must be at the freq bytes
+def getCallLength(offset): # Returns CALL length, offset must be at the freq bytes
     global radioData
 
     lengthT = struct.unpack('>h', radioData[offset + 2 : offset + 4])[0]
@@ -169,7 +178,7 @@ def translateJapaneseHex(bytestring):
     messageString = ''
 
     while i < len(bytestring) - 1:
-        messageString += radioDict.getRadioChar(bytestring[i:i+2].hex())
+        messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
         i += 2
     return messageString
 
