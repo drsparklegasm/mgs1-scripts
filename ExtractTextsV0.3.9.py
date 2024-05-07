@@ -14,17 +14,18 @@ import os, struct, re
 import radioDict
 
 #filename = "/home/solidmixer/projects/mgs1-undub/RADIO-usa.DAT"
-filename = "../../RADIO-usa.DAT"
-#filename = "../../RADIO-jpn.DAT"
+#filename = "RADIO-usa.DAT"
+filename = "RADIO-jpn.DAT"
 
-
+# We'll do a better check for this later. 
 if filename.__contains__('jpn'):
     jpn = True
 else:
     jpn = False
 
 offset = 0
-# offset = 293536 # Freq 140.85
+# offset = 293536 # Freq 140.85 Hex 0x47AA0
+# Offset = 1773852 # Deepthroat 140.48 Hex 0x1B111C
 
 radioFile = open(filename, 'rb')
 output = open("output.txt", 'w')
@@ -35,10 +36,11 @@ fileSize = radioData.__len__()
 
 # print(fileSize) # Result is 1776859! 
 
+# A lot of this is work in progress or guessing
 commandNamesEng = {b'\x01':'SUBTITLE', b'\x02':'VOX_CUES', b'\x03':'ANI_FACE', b'\x04':'ADD_FREQ',
                 b'\x05':'MEM_SAVE', b'\x06':'AUD_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
                 b'\x10':'IF_CHECK', b'\x11':'ELSE', b'\x12':'ELSE_IFS', b'\x30':'SWITCH',
-                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'END_LINE', b'\x00':'NULL' 
+                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'CMD_HEDR', b'\x00':'NULL' 
 }
 
 def commandToEnglish(hex):
@@ -109,7 +111,7 @@ def handleCallHeader(offsetCheck): # Assume call is just an 8 byte header for no
     else:
         output.write(f'Call header DID NOT end in FF! Check hex at {offset + 11}')
 
-    output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes} bytes long, hex {callLength}:\n')
+    output.write(f'Call Header: {Freq}, {unk0}, {unk1}, {unk2}, Call is {numBytes} bytes long, hex {callLength}\n')
     return
 
 def handleCommand(offsetCheck): # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
@@ -117,7 +119,7 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
     global radioData
     global output
     commandByte = radioData[offsetCheck].to_bytes()
-    
+    0x1B111C
     match commandByte:
         case b'\x00': # AKA A null
             output.write('NULL!\n')
