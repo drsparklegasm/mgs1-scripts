@@ -6,6 +6,9 @@ outputFile = "stageCalls.csv"
 stageDir = open(filename, 'rb')
 output = open(outputFile, 'w')
 
+# Write csv header
+output.write('offset,call hex,frequency,call data offset\n')
+
 stageData = stageDir.read() # The byte stream is better to use than the file on disk if you can. 
 fileSize = stageData.__len__()
  
