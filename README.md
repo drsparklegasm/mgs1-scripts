@@ -12,7 +12,8 @@ This extracts all call data, hopefully keeping other byte data intact in the fil
 
 ### callsInStageDirFinder.py
 
-Since we'll hit offset problems, this script (attempts) to find all instances of a call in the stage.dir binary. There are probably a lot of false positives right now.  
+Since we'll hit offset problems, this script (attempts) to find all instances of a call in the stage.dir binary. There are probably a lot of false positives right now.  Logic is shamelessly reverse engineered from iseeeva's radio extractor:
+https://github.com/iseeeva/metal/tree/main
 
 ## Goals
 
