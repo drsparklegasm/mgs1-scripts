@@ -1,7 +1,11 @@
 import os, struct
 
-filename = "STAGE.DIR"
-outputFile = "stageCalls.csv"
+filename = "STAGE-usa.DIR"
+filename = "STAGE-jpn.DIR"
+
+outputFile = "stageCalls-usa.csv"
+if 'jpn' in filename:
+    outputFile = "stageCalls-jpn.csv"
 
 stageDir = open(filename, 'rb')
 output = open(outputFile, 'w')
@@ -52,11 +56,10 @@ def getCallOffsets():
         # Check for \x01 first, then check for a call
         if stageData[offset].to_bytes() == b'\x01':
             if stageData[offset + 3].to_bytes() == b'\x0a': # After running without this, seems all call offsets DO have 0x0a in the 4th byte
-                if checkFreq(offset): # We only write the call to the csv if the call matches a frequency
+                if checkFreq(offset): # We only write the call to the csv if the call matches a frequency, this check might not be needed....?
                     # Optional print, this is still useful for progress I guess
                     print(f'Offset {offset} has a possible call!\n====================================\n')
                     writeCall(offset)
-
         offset += 1 # No matter what we increase offset in all scenarios
 
 
