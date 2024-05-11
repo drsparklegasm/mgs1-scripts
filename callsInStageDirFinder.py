@@ -43,10 +43,11 @@ def writeCall(offset):
     global freqList
     global output
 
-    writeString = str(offset) + "," + stageData[offset: offset + 4].hex() + "," 
-    writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + "," 
-    writeString += str(stageData[offset + 4: offset + 8].hex()) 
-    writeString += "\n"
+    writeString = str(offset) + ","                                                         # Offset, 
+    writeString = stageData[offset: offset + 4].hex() + ","                                 # Frequency bytes
+    writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + ","     # Frequency 
+    writeString += str(stageData[offset + 4: offset + 8].hex())                             # offset of radio.dat call data
+    writeString += "\n" # line break
     output.write(writeString)
 
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
