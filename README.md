@@ -6,6 +6,14 @@ Reverse engineering scripts for MGS1
 
 Script is VERY WORK IN PROGRESS! I'm still working on figuring out how the RADIO file is layered, and the proper lossless way to pull it.
 
+### ExtractRadioDatV4.0.py
+
+This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file
+
+### callsInStageDirFinder.py
+
+Since we'll hit offset problems, this script (attempts) to find all instances of a call in the stage.dir binary. There are probably a lot of false positives right now.  
+
 ## Goals
 
 1. Be able to extract all instructions and dialogue
