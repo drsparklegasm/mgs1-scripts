@@ -1,7 +1,7 @@
 import os, struct
 
 filename = "STAGE-usa.DIR"
-filename = "STAGE-jpn.DIR"
+# filename = "STAGE-jpn.DIR" # Uncomment this line if using jpn version, only changes the output csv filename
 
 outputFile = "stageCalls-usa.csv"
 if 'jpn' in filename:
