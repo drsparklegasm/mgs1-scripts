@@ -21,7 +21,7 @@ freqList = [
     b'\x36\xb7', # 141.12, Otacon
     b'\x37\x48', # 141.52, Natasha
     b'\x37\x64', # 141.80, Miller
-    b'\x37\x10', # 140.48, Deepthroat
+    b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff
 ]
 
@@ -45,16 +45,23 @@ def writeCall(offset):
     writeString += "\n"
     output.write(writeString)
 
+# For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
+def getCallOffsets():
+    offset = 0
+    while offset < fileSize:
+        # Check for \x01 first, then check for a call
+        if stageData[offset].to_bytes() == b'\x01':
+            if stageData[offset + 3].to_bytes() == b'\x0a': # After running without this, seems all call offsets DO have 0x0a in the 4th byte
+                if checkFreq(offset): # We only write the call to the csv if the call matches a frequency
+                    # Optional print, this is still useful for progress I guess
+                    print(f'Offset {offset} has a possible call!\n====================================\n')
+                    writeCall(offset)
 
-while offset < fileSize:
-    # Check for \x01 first, then check for a call
-    if stageData[offset].to_bytes() == b'\x01':
-        if checkFreq(offset): # We only write the call to the csv if the call matches a frequency
-            # Optional print, this is still useful for progress I guess
-            print(f'Offset {offset} has a possible call!\n====================================\n')
-            writeCall(offset)
+        offset += 1 # No matter what we increase offset in all scenarios
 
-    offset += 1 # No matter what we increase offset in all scenarios
 
+# Main used to just be getting the call offsets
+getCallOffsets()
 print('Finished checking for calls in STAGE.DIR!')
 output.close()
+
