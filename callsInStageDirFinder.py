@@ -50,6 +50,10 @@ def writeCall(offset):
     writeString += "\n" # line break
     output.write(writeString)
 
+def replaceCallOffset(offset, radioOffset):
+    print('This function not yet implemented!')
+    # Yeah, what he said!
+
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
 def getCallOffsets():
     offset = 0

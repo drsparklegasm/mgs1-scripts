@@ -19,7 +19,7 @@ filename = "RADIO-usa.DAT"
 #filename = "RADIO-jpn.DAT"
 
 # We'll do a better check for this later. 
-if filename.__contains__('jpn'):
+if jpn in filename:
     jpn = True
 else:
     jpn = False
@@ -33,7 +33,7 @@ output = open("output.txt", 'w')
 
 offset = 0
 radioData = radioFile.read() # The byte stream is better to use than the file on disk if you can. 
-fileSize = radioData.__len__()
+fileSize = len(radioData)
 
 # print(fileSize) # Result is 1776859! 
 
