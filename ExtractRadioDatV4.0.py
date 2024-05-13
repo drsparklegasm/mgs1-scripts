@@ -24,6 +24,7 @@ if 'jpn' in filename:
 else:
     jpn = False
 
+
 offset = 0
 # offset = 293536 # Freq 140.85 Hex 0x047AA0
 # Offset = 1773852 # Deepthroat 140.48 Hex 0x1B111C
