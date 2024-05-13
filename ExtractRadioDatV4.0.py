@@ -40,7 +40,7 @@ fileSize = len(radioData)
 
 # A lot of this is work in progress or guessing
 commandNamesEng = {b'\x01':'SUBTITLE', b'\x02':'VOX_CUES', b'\x03':'ANI_FACE', b'\x04':'ADD_FREQ',
-                b'\x05':'MEM_SAVE', b'\x06':'AUD_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
+                b'\x05':'MEM_SAVE', b'\x06':'MUS_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
                 b'\x10':'IF_CHECK', b'\x11':'ELSE', b'\x12':'ELSE_IFS', b'\x30':'SWITCH',
                 b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'CMD_HEDR', b'\x00':'NULL' 
 }
@@ -133,15 +133,15 @@ def handleCommand(offsetCheck): # We get through the file! But needs refinement.
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
-            """
             if jpn:
-                dialogue = translateJapaneseHex(dialogue)
-                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue.hex())}\n'
+                # dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue.hex())}\n'
             else:
-                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, Text: {str(dialogue)}\n'
-            """
+                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue)}\n'
 
-            writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue)}\n'
+            # writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue)}\n'
+
+
             # Write to file
             output.write(writeToFile)
             return length + 2
