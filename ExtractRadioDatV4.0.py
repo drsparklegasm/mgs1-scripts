@@ -19,7 +19,7 @@ filename = "RADIO-usa.DAT"
 #filename = "RADIO-jpn.DAT"
 
 # We'll do a better check for this later. 
-if jpn in filename:
+if 'jpn' in filename:
     jpn = True
 else:
     jpn = False
