@@ -10,8 +10,8 @@ import radioDict
 filename = "RADIO-usa.DAT"
 
 # Get in/out from user
-startOffset = input("First offset? (Int): ")
-endOffset = input("End offset? (Int): ")
+startOffset = int(input("First offset? (Int): "))
+endOffset = int(input("End offset? (Int): "))
 outputFile = input("Name of extracted call? ")
 
 """
