@@ -9,23 +9,26 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 v0.3.9: Removed Chunk pull
 v0.4: Rebuild with FF as start of each command. 
 """
-
+#    Project notes
+# TODO: Handle other cases, fix natashas script breaking shit (Cases)
+# TODO: Mei ling scripts fucked up
+# TODO: CASE switching study
+# TODO: Container looping ?
 
 import os, struct, re
 import radioDict
 
 ## Formatting Settings!
 
-indentToggle = False
 jpn = False
+indentToggle = False
+debugOutput = True
 filename = "RADIO-usa.DAT"
 outputFilename = "Radio-decrypted.txt"
-
 
 # Initalizing files
 radioFile = open(filename, 'rb')
 output = open(outputFilename, 'w')
-
 
 # Script variables 
 offset = 0
@@ -47,7 +50,7 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x12':'ELSE_IFS', 
                     b'\x30':'SWITCH',
                     b'\x31':'SWITCHOP', 
-                    b'\x40':'SWITCH2?', 
+                    b'\x40':'EVAL_CMD', 
                     b'\x80':'GCL_SCPT',
                     b'\xFF':'CMD_HEDR',
                     b'\x00':'NULL' 
@@ -92,6 +95,7 @@ def getLengthManually(offset):
     length = 0
     while radioData[offset + length + 1].to_bytes() != b'\xff':
         length += 1
+    length += 1
     return length 
 
 def getCallLength(offset): # Returns CALL length, offset must be at the freq bytes
@@ -103,7 +107,7 @@ def getCallLength(offset): # Returns CALL length, offset must be at the freq byt
 def handleCallHeader(offset): # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
     global radioData
     global output
-    # output.write(f'Offset is {offset}\n') # DEBUG!!!
+    # output.write(f'Offset is {offset}\n') # print!!!
     header = radioData[ offset : offset + 11 ]
 
     # Separate the header
@@ -128,7 +132,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
     global radioData
     global output
     global layerNum
-    # output.write(f'Offset is {offset}\n') # debug for checking offset each loop
+    # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
     indentLines()
 
@@ -140,59 +144,61 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             if radioData[offset + 1] == b'\x31':
                 length = handleCommand(offset + 1)
                 return length + 1
-            return offset + 1
+            return 1
         
         case b'\x01':
-            length = getLength(offset)
-            line = radioData[ offset : offset + length + 2]
+            length = getLength(offset) + 2
+            line = radioData[ offset : offset + length]
             output.write('Dialogue -- ')
             # Don't do logic for extra nulls, caught in main loop.
-            unk1 = line[4:6]
-            unk2 = line[6:8]
+            face = line[4:6]
+            anim = line[6:8]
             unk3 = line[8:10]
-            dialogue = line[ 10 : length + 2]
+            dialogue = line[10 : length]
             
             lineBreakRepace = False
             if b'\x80\x23\x80\x4e' in dialogue:  # this replaces the in-game hex for new line with a \\r\\n
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
+            # Write to file
             if jpn:
                 # dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue.hex())}\n'
+                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue.hex())}\n')
             else:
-                writeToFile = f'Length (int) = {length}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue)}\n'
+                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, Text: {str(dialogue)}\n')
 
-            # Write to file
-            output.write(writeToFile)
-            return length + 2
+            return length
         
         case b'\x02':
             output.write('VOX START! -- ')
-            length = 11
-            line = radioData[offset : offset + length]
+            length = getLength(offset) + 2
+            line = radioData[offset : offset + 11]
             voxLength1 = struct.unpack('>h',line[2:4])[0]
             voxLength2 = struct.unpack('>h',line[9:11])[0]
             
             # Check for even length numbers
-            if voxLength1 - voxLength2 != 7:
-                print(f'OFFSET {offset} HAS A \\x02 that does not evenly fit!')
+            if debugOutput:
+                if voxLength1 - voxLength2 != 7:
+                    print(f'ERROR!! OFFSET {offset} HAS A \\x02 that does not evenly fit!')
+
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
-            layerNum += 1
+            container(offset + 11, length)
             return length
         
         case b'\x03':
             output.write('ANIMATE -- ')
-            length = 10
+            length = getLength(offset) + 2
             line = radioData[offset : offset + length]
             containerLength = line[2:4]
             face = line[4:6]
             anim = line[6:8]
             buff = line[8:10]
 
-            # Just a safety since the length of this was hard-coded
-            if struct.unpack('>h', line[2:4])[0] != 8:
-                print(f'ERROR! Offset {offset} has an ANIM that does not match its length!')
+            """# Just a safety since the length of this was hard-coded
+            if debugOutput:
+                if struct.unpack('>h', line[2:4])[0] != 8:
+                    print(f'ERROR! Offset {offset} has an ANIM that does not match its length!')"""
 
             output.write(f'Offset: {str(offset)}, FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
             return length
@@ -206,49 +212,37 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             entryName = line[6 : length - 1]
 
             # Just a safety since the length of this was hard-coded
-            if struct.unpack('>h', line[2:4])[0] != length - 2:
-                print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
+            if debugOutput:
+                if struct.unpack('>h', line[2:4])[0] != length - 2:
+                    print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
         
-            """
-        case b'\x10':
-            output.write(f'IF {commandByte.hex()} -- ')
-            length = 1
-            end = radioData[offset + length]
-            while end != b'\xff':
-                end = radioData[offset + length]
-                length += 1
-            while radioData[offset].to_bytes() != b'\xFF':
-                offset += 1
-            line = radioData[offset : offset + length + 2]
-            writeToFile = "Offset: " + str(offset) + " // Content: " + str(line.hex()) + "\n"
-            output.write(writeToFile)
-            return length + 2 
-"""
+
+        case b'\x10' :
+            output.write(commandToEnglish(commandByte))
+            length = getLengthManually(offset)
+            line = radioData[offset : offset + length]
+            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+            layerNum += 1
+            return length
         
         case b'\x11': # Else
             output.write(commandToEnglish(commandByte))
             length = getLengthManually(offset)
-            output.write(' -- Content: ')
-            output.write(radioData[offset:offset + length].hex())
-            output.write('\n')
+            line = radioData[offset : offset + length]
+            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 1
-            return length + 1
+            return length 
         
         case b'\x12': # Else IF
             output.write(commandToEnglish(commandByte))
             length = getLengthManually(offset)
-            output.write(' -- Content: ')
-            output.write(radioData[offset:offset + length].hex())
-            output.write('\n')
+            line = radioData[offset : offset + length]
+            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 1
-            return length + 1
-            
-
-        case b'\xFF':
-            return 1
+            return length
         
         # This one is fugly. Time to look at containerizing these. 
         case b'\x31':
@@ -264,6 +258,9 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
                 scriptLength = struct.unpack('>h',line[4:6])[0]
             output.write(f' -- Script is {scriptLength} bytes, Content = {line.hex()}\n')
             return length 
+        
+        case b'\xFF':
+            return 1
 
         case _:
             output.write(f'Command is not yet cased! Command = {commandByte} -- ')
@@ -274,8 +271,20 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             length = getLengthManually(offset)
             line = radioData[offset : offset + length + 1]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
-            return length + 1
+            return length
 
+def container(offset, length):
+    counter = 0
+    global layerNum
+    internalOffset = offset
+    layerNum += 1
+    while counter < length:
+        commandLength = handleCommand(internalOffset)
+        internalOffset += commandLength
+        counter += commandLength
+        
+    layerNum -= 1
+    return length
 
 ## Translation Commands:
 
@@ -290,8 +299,11 @@ def translateJapaneseHex(bytestring): # Needs fixins
         """
     return 
 
-while offset <= fileSize - 1:
-    print(f'offset is {offset}')
+while offset <= 1000: # fileSize - 1:
+    # Offset Tracking
+    if debugOutput:
+        print(f'offset is {offset}')
+
     if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
         indentLines()
         output.write("Null!\n")
@@ -300,6 +312,7 @@ while offset <= fileSize - 1:
     elif radioData[offset].to_bytes() == b'\xFF':
         length = handleCommand(offset)
         offset += length
+    # elif radioData[offset].to_bytes() == b'\xFF' and radioData[offset + 1].to_bytes() == b'\x31'
     else:
         layerNum = 0
         handleCallHeader(offset)
@@ -311,7 +324,7 @@ output.close()
 if offset == fileSize:
     print(f'File was parsed successfully! Written to {outputFilename}')
 
-#    Project notes
-# TODO: Handle other cases, fix natashas script breaking shit 
-# TODO: Mei ling scripts fucked up
-# TODO: CASE switching study
+"""
+if __name__ == '__main__':
+    main()
+"""
