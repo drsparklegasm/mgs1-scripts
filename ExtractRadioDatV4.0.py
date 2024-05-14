@@ -34,10 +34,23 @@ radioData = radioFile.read() # The byte stream is better to use than the file on
 fileSize = len(radioData)
 
 # A lot of this is work in progress or guessing from existing scripts
-commandNamesEng = {b'\x01':'SUBTITLE', b'\x02':'VOX_CUES', b'\x03':'ANI_FACE', b'\x04':'ADD_FREQ',
-                b'\x05':'MEM_SAVE', b'\x06':'MUS_CUES', b'\x07':'ASK_USER', b'\x08':'SAVEGAME',
-                b'\x10':'IF_CHECK', b'\x11':'ELSE', b'\x12':'ELSE_IFS', b'\x30':'SWITCH',
-                b'\x31':'SWITCHOP', b'\x80':'GCL_SCPT', b'\xFF':'CMD_HEDR', b'\x00':'NULL' 
+commandNamesEng = { b'\x01':'SUBTITLE',
+                    b'\x02':'VOX_CUES', 
+                    b'\x03':'ANI_FACE', 
+                    b'\x04':'ADD_FREQ',
+                    b'\x05':'MEM_SAVE', 
+                    b'\x06':'MUS_CUES', 
+                    b'\x07':'ASK_USER', 
+                    b'\x08':'SAVEGAME',
+                    b'\x10':'IF_CHECK', 
+                    b'\x11':'ELSE', 
+                    b'\x12':'ELSE_IFS', 
+                    b'\x30':'SWITCH',
+                    b'\x31':'SWITCHOP', 
+                    b'\x40':'SWITCH2?', 
+                    b'\x80':'GCL_SCPT',
+                    b'\xFF':'CMD_HEDR',
+                    b'\x00':'NULL' 
 }
 
 def commandToEnglish(hex):
@@ -53,7 +66,6 @@ def indentLines():
         for x in range(layerNum):
             output.write('\t')
 
-    
 def checkFreq(offset): # Checks if the next two bytes are a codec number or not. Returns True or False.
     global radioData
     freq = struct.unpack('>h', radioData[ offset : offset + 2])[0] # INT from two bytes
@@ -102,13 +114,13 @@ def handleCallHeader(offset): # Assume call is just an 8 byte header for now, th
     callLength = header[9:11]
     numBytes = 0
 
+    # Quick error checking
     if header[8].to_bytes() == b'\x80':
         numBytes = struct.unpack('>h', callLength)[0]
     else:
-        output.write(f'ERROR AT byte {offset}!! \\x80 was not found \n')
+        output.write(f'ERROR AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
 
     humanFreq = getFreq(offset)
-    # lengthHex = numBytes.to_bytes().hex() # I don't think we can use to_bytes() with 2 byte ints
     output.write(f'Call Header: {humanFreq}, {unk0}, {unk1}, {unk2}, Call is {numBytes} bytes long, offset: {offset}\n')
     return
 
@@ -124,8 +136,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
     match commandByte:
 
         case b'\x00': # AKA A null, May want to correct this to ending a \x02 segment
-            output.write('NULL! found in HANDLE command! \n')
-            
+            output.write('NULL! found in HANDLE command! Was a container missed?\n')
             return offset + 1
         
         case b'\x01':
@@ -157,7 +168,13 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             output.write('VOX START! -- ')
             length = 11
             line = radioData[offset : offset + length]
-            output.write(f'Offset: {str(offset)} // Content: {str(line.hex())}\n')
+            voxLength1 = struct.unpack('>h',line[2:4])[0]
+            voxLength2 = struct.unpack('>h',line[9:11])[0]
+            
+            # Check for even length numbers
+            if voxLength1 - voxLength2 != 7:
+                print(f'OFFSET {offset} HAS A \\x02 that does not evenly fit!')
+            output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             layerNum += 1
             return length
         
@@ -165,12 +182,31 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             output.write('ANIMATE -- ')
             length = 10
             line = radioData[offset : offset + length]
+            containerLength = line[2:4]
+            face = line[4:6]
+            anim = line[6:8]
+            buff = line[8:10]
 
             # Just a safety since the length of this was hard-coded
             if struct.unpack('>h', line[2:4])[0] != 8:
                 print(f'ERROR! Offset {offset} has an ANIM that does not match its length!')
 
-            output.write(f'Offset: {str(offset)} // Content: {str(line.hex())}\n')
+            output.write(f'Offset: {str(offset)}, FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
+            return length
+        
+        case b'\x04':
+            output.write('ADD FREQ -- ')
+            length = getLength(offset) + 2
+            line = radioData[offset : offset + length]
+            containerLength = getLength(offset)
+            freq = getFreq(offset + 4)
+            entryName = line[6 : length - 1]
+
+            # Just a safety since the length of this was hard-coded
+            if struct.unpack('>h', line[2:4])[0] != length - 2:
+                print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
+
+            output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
         
             """
@@ -227,13 +263,15 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
 ## Translation Commands:
 
 def translateJapaneseHex(bytestring): # Needs fixins
+    """ THIS DOES NOT YET WORK!
     i = 0
     messageString = ''
 
     while i < len(bytestring) - 1:
         messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
         i += 2
-    return messageString
+        """
+    return 
 
 while offset <= fileSize - 1:
     print(f'offset is {offset}')
@@ -246,6 +284,7 @@ while offset <= fileSize - 1:
         length = handleCommand(offset)
         offset += length
     else:
+        layerNum = 0
         handleCallHeader(offset)
         layerNum += 1
         offset += 11
@@ -254,4 +293,8 @@ output.close()
 
 if offset == fileSize:
     print(f'File was parsed successfully! Written to {outputFilename}')
+
+#    Project notes
 # TODO: Handle other cases, fix natashas script breaking shit 
+# TODO: Mei ling scripts fucked up
+# TODO: CASE switching study
