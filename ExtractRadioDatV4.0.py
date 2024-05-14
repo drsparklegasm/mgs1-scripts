@@ -137,6 +137,9 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
 
         case b'\x00': # AKA A null, May want to correct this to ending a \x02 segment
             output.write('NULL! found in HANDLE command! Was a container missed?\n')
+            if radioData[offset + 1] == b'\x31':
+                length = handleCommand(offset + 1)
+                return length + 1
             return offset + 1
         
         case b'\x01':
@@ -246,6 +249,21 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
 
         case b'\xFF':
             return 1
+        
+        # This one is fugly. Time to look at containerizing these. 
+        case b'\x31':
+            if radioData[offset] == b'\xff':
+                length = getLength() + 2
+                line = radioData[offset : offset + length]
+                output.write(commandToEnglish(commandByte))
+                scriptLength = struct.unpack('>h',line[length - 2: length])[0]
+            else:
+                output.write(commandToEnglish(commandByte))
+                length = 6
+                line = radioData[offset : offset + 6]
+                scriptLength = struct.unpack('>h',line[4:6])[0]
+            output.write(f' -- Script is {scriptLength} bytes, Content = {line.hex()}\n')
+            return length 
 
         case _:
             output.write(f'Command is not yet cased! Command = {commandByte} -- ')
@@ -255,8 +273,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             
             length = getLengthManually(offset)
             line = radioData[offset : offset + length + 1]
-            writeToFile = "Offset: " + str(offset) + " // Content: " + str(line.hex()) + "\n"
-            output.write(writeToFile)
+            output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length + 1
 
 
