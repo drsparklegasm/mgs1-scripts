@@ -231,7 +231,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
         case b'\x10' | b'\x11' | b'\x12': # If, ElseIF, Else respectively
             output.write(commandToEnglish(commandByte))
             length = getLength(offset)
-            header = getLengthManually(offset)
+            header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
 
@@ -265,11 +265,8 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
         case _:
             output.write(f'Command is not yet cased! Command = {commandByte} -- ')
             
-            if commandByte == b'\x10' or b'\x12':
-                layerNum += 1
-            
             length = getLengthManually(offset)
-            line = radioData[offset : offset + length + 1]
+            line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
 
@@ -304,18 +301,21 @@ while offset <= fileSize - 1:
     # Offset Tracking
     if debugOutput:
         print(f'offset is {offset}')
-
+    if nullCount == 4:
+        output.write(f'ALERT!!! We just had 4x Nulls in a row at offset {offset}\n')
     if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
         indentLines()
         output.write("Null! (Main loop)\n")
-
+        nullCount += 1
         offset += 1
         layerNum -= 1
     elif radioData[offset].to_bytes() == b'\xFF':
+        nullCount = 0
         length = handleCommand(offset)
         offset += length
     # elif radioData[offset].to_bytes() == b'\xFF' and radioData[offset + 1].to_bytes() == b'\x31'
     else:
+        nullCount = 0
         layerNum = 0
         handleCallHeader(offset)
         layerNum += 1
