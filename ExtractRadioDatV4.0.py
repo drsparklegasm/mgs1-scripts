@@ -24,7 +24,7 @@ import argparse
 jpn = False
 indentToggle = True
 debugOutput = True
-filename = "RADIO-usa.DAT"
+filename = "RADIO-jpn.DAT"
 outputFilename = "Radio-decrypted.txt"
 
 # Initalizing files
@@ -163,10 +163,9 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
 
             # Write to file
             if jpn:
-                # dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue.hex())}\n')
-            else:
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
+                dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+            
+            output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue.hex())}\n')
 
             return length
         
@@ -286,15 +285,18 @@ def container(offset, length):
 ## Translation Commands:
 
 def translateJapaneseHex(bytestring): # Needs fixins
-    """ THIS DOES NOT YET WORK!
     i = 0
     messageString = ''
 
     while i < len(bytestring) - 1:
-        messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
+        try:
+            messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
+        except:
+            output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
+            messageString += '[ERROR]'
         i += 2
-        """
-    return 
+        
+    return messageString
 
 nullCount = 0
 while offset <= fileSize - 1:
@@ -326,7 +328,7 @@ output.close()
 if offset == fileSize:
     print(f'File was parsed successfully! Written to {outputFilename}')
 
-"""
+""" This doesn't work because i did not code with contextual variables in mind >:O
 if __name__ == '__main__':
     main()
 """

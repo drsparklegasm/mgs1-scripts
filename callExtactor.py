@@ -9,6 +9,7 @@ import os, struct, re
 import radioDict
 
 filename = "RADIO-jpn.DAT"
+print("Please provide offsets for the call in decimal forrmat (not hex)!")
 
 # Get in/out from user
 startOffset = int(input("First offset? (Int): "))
