@@ -160,7 +160,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
     match commandByte:
 
         case b'\x00': # AKA A null, May want to correct this to ending a \x02 segment
-            output.write('NULL (Command!)\n')
+            output.write(f'NULL (Command! offset = {offset})\n')
             layerNum -= 1
             if radioData[offset + 1] == b'\x31':
                 length = handleCommand(offset + 1)
@@ -370,7 +370,7 @@ while offset <= fileSize - 1: # We might need to change this to Case When... as 
     # MAIN LOGIC
     if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
         indentLines()
-        output.write("Null! (Main loop)\n")
+        output.write(f"Null! (Main loop) offset = {offset}\n")
         nullCount += 1
         layerNum -= 1
         length = 1
