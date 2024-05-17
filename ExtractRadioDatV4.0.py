@@ -108,25 +108,30 @@ def getCallLength(offset): # Returns CALL length, offset must be at the freq byt
 def handleCallHeader(offset): # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
     global radioData
     global output
-    # output.write(f'Offset is {offset}\n') # print!!!
-    header = radioData[ offset : offset + 11 ]
+    global layerNum
+    
+    # OPTIONAL Add an offset tracker output?
+    
+    header = 11
+    line = radioData[ offset : offset + header ]
 
     # Separate the header
     humanFreq = getFreq(offset)
-    face1 = header[2:4] # face 1
-    face2 = header[4:6] # face 2
-    unk0 = header[6:8] # Usually nulls
-    callLength = header[9:11]
-    numBytes = numBytes = struct.unpack('>h', callLength)[0]
+    unk0 = line[2:4] # face 1
+    unk1 = line[4:6] # face 2
+    unk2 = line[6:8] # Usually nulls
+    callLength = line[9:11]
+    length = struct.unpack('>h', callLength)[0]
 
     # Quick error checking
     if debugOutput:
-        if header[8].to_bytes() != b'\x80':
+        if line[8].to_bytes() != b'\x80':
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return False
 
-    output.write(f'Call Header: {humanFreq}, {face1.hex()}, {face2.hex()}, {unk0.hex()}, Call is {numBytes} bytes long, offset: {offset}\n')
-    return True
+    output.write(f'\nCall Header: {humanFreq}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
+    layerNum += 1
+    return header
 
 def handleUnknown(offset): # Iterates checking frequency until we get one that is valid.... hopefully this gets us past a chunk of unknown data.
     count = 0
@@ -255,6 +260,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             container(offset + header, length - header - 2)
             contDepth -= 1
             """
+            layerNum += 1
             return header
         
         case b'\x11' | b'\x12': # If, ElseIF, Else respectively
@@ -270,6 +276,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             container(offset + header - 2, length - header - 2)
             contDepth -= 1
             """
+            layerNum += 1
             return header
         
         # This one is fugly. Time to look at containerizing these or something. 
@@ -324,12 +331,14 @@ def container(offset, length):
     internalOffset = offset
     layerNum += 1
     while counter < length:
-        # output.write(f'(Container {contDepth}) ')
-        commandLength = handleCommand(internalOffset)
+        if radioData[internalOffset].to_bytes() == b'\x00':
+            commandLength = handleCommand(internalOffset - 1) # This is to still write a null (as an end of line) as a command.
+        else:
+            commandLength = handleCommand(internalOffset)
         internalOffset += commandLength
         counter += commandLength
     
-    layerNum -= 1
+    
     return length
 
 ## Translation Commands:
