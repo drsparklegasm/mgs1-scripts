@@ -6,7 +6,7 @@ Reverse engineering scripts for MGS1
 
 Script is VERY WORK IN PROGRESS! I'm still working on figuring out how the RADIO file is layered, and the proper lossless way to pull it.
 
-### ExtractRadioDatV4.0.py
+### ExtractRadioDatV0.4.py
 
 This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file
 
@@ -24,3 +24,4 @@ https://github.com/iseeeva/metal/tree/main
 ## Usage
 
 Run it? It's not gonna get very far. Prior / testing versions are in the old version folder. 
+

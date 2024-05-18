@@ -53,12 +53,12 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x30':'SWITCH',
                     b'\x31':'SWITCHOP', 
                     b'\x40':'EVAL_CMD', 
-                    b'\x80':'GCL_SCPT',
+                    b'\x80':'GCL_SCPT', 
                     b'\xFF':'CMD_HEDR',
                     b'\x00':'NULL' 
 }
 
-def commandToEnglish(hex):
+def commandToEnglish(hex: bytes) -> str:
     global output
     try: 
         commandNamesEng[hex]
@@ -66,12 +66,12 @@ def commandToEnglish(hex):
     except:
         return f'BYTE {hex.hex()} WAS NOT DEFINED!!!!'
     
-def indentLines():
+def indentLines() -> None: # Purely formatting help
     if indentToggle == True:
         for x in range(layerNum):
             output.write('\t')
 
-def checkFreq(offset): # Checks if the next two bytes are a codec number or not. Returns True or False.
+def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec number or not. Returns True or False.
     global radioData
     freq = struct.unpack('>h', radioData[offset : offset + 2])[0] # INT from two bytes
     if 14000 < freq < 14200:
@@ -79,40 +79,40 @@ def checkFreq(offset): # Checks if the next two bytes are a codec number or not.
     else: 
         return False
     
-def getFreq(offset): # If freq is at offset, return frequency as 140.15
+def getFreq(offset: int) -> float: # If freq is at offset, return frequency as 140.15
     global radioData
 
     freq = struct.unpack('>h', radioData[ offset : offset + 2])[0]
     return freq / 100
 
-def getLength(offset): # Returns COMMAND length, offset must be at the 0xff bytes, length is bytes 1 and 2.
+def getLength(offset: int) -> int: # Returns COMMAND length, offset must be at the 0xff bytes, length is bytes 1 and 2.
     global radioData
     
     lengthBytes = radioData[offset + 2: offset + 4]
-    lengthT = struct.unpack('>H', lengthBytes)[0]
-    return lengthT + 2
+    length = struct.unpack('>H', lengthBytes)[0]
+    return length + 2
 
-def getLengthManually(offset): # Assumes it's a header ending in 80 XX XX 
+def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 XX XX 
     length = 0
     while True:
         length += 1
         if radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 3].to_bytes() == b'\x80':
             return length
 
-def getCallLength(offset): # Returns CALL length, offset must be at the freq bytes
+def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at the freq bytes
     global radioData
 
     lengthT = struct.unpack('>h', radioData[offset + 2 : offset + 4])[0]
     return lengthT
 
-def handleCallHeader(offset): # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
+def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
     global radioData
     global output
     global layerNum
     
     # OPTIONAL Add an offset tracker output?
     
-    header = 11
+    header = 11 # Call headers are static 11
     line = radioData[ offset : offset + header ]
 
     # Separate the header
@@ -133,7 +133,7 @@ def handleCallHeader(offset): # Assume call is just an 8 byte header for now, th
     layerNum += 1
     return header
 
-def handleUnknown(offset): # Iterates checking frequency until we get one that is valid.... hopefully this gets us past a chunk of unknown data.
+def handleUnknown(offset: int) -> int: # Iterates checking frequency until we get one that is valid.... hopefully this gets us past a chunk of unknown data.
     count = 0
     output.write(f'ERROR! Unknown blcok at offset {offset}! ')
     while True:
@@ -147,7 +147,7 @@ def handleUnknown(offset): # Iterates checking frequency until we get one that i
     output.write(f'Length = {count}, Unknown block: {content.hex()}\n')
     return count
 
-def handleCommand(offset): # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
+def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global radioData
     global output
     global contDepth
@@ -267,8 +267,8 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             output.write(commandToEnglish(commandByte))
             header = getLengthManually(offset) # Maybe not ?
             length = getLength(offset + header - 2)
-            line = radioData[offset : offset + header - 2]
-            output.write(f' -- Offset = {offset}, length = {header}, Content = {line.hex()}\n')
+            line = radioData[offset : offset + header]
+            output.write(f' -- Offset = {offset}, length = {header}, length = {length} Content = {line.hex()}\n')
 
             """
             # Containerizing!
@@ -317,7 +317,7 @@ def handleCommand(offset): # We get through the file! But needs refinement... We
             return length
 
         case _:
-            output.write(f'Command is not yet cased! Command = {commandByte} -- ')
+            output.write(f'ERROR! Command is not yet cased! Command = {commandByte} -- ')
             
             length = getLengthManually(offset)
             line = radioData[offset : offset + length]
