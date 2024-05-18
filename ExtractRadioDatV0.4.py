@@ -9,7 +9,7 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 v0.3.9: Removed Chunk pull
 v0.4: Rebuild with FF as start of each command. 
 """
-#    Project notes
+# Project notes
 # TODO: Handle other cases, fix natashas script breaking shit (Cases)
 # TODO: Mei ling scripts fucked up
 # TODO: CASE switching study
@@ -184,7 +184,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             # Write to file
             if jpn:
-                dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+                dialogue = str(dialogue.hex()) # We'll translate when its working
             
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
 
@@ -347,7 +347,7 @@ def translateJapaneseHex(bytestring): # Needs fixins
     i = 0
     messageString = ''
 
-    while i < len(bytestring) - 1:
+    while i < len(bytestring) :
         try:
             messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
         except:
