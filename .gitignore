@@ -4,4 +4,5 @@ RADIO-jpn.DAT
 RADIO-usa.DAT
 Scratchpad.py
 mgs1-undub-docs/.obsidian
-*pycache*
+mgs1-undub-docs/.trash
+__pycache__
