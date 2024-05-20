@@ -2,7 +2,7 @@ Tasks:
 - [ ] Handle other commands
 - [ ] 
 - [ ] Ensure offsets are correct
-- [ ] Account for `00` being an end of line delination
+- [ ] Account for `00` being an end of line delineation
 - [ ] Create re-compiler
 - [ ] Find a way to trace offsets
 - [ ] Verify where offsets occur in stage.dir
@@ -126,10 +126,23 @@ Most of these will come from 140.85 or ???. Offsets are from the USA version, D1
 | `FF FF`? |              |                |                |                |                                                    |              |     |
 \* Container implies that it contains other commands. For example `FF 01` is variable and contains a dialogue line, but not other commands, so its a form of container but not defined here as a container. 
 
+## Headers in depth
 
+### Actions
+
+FF01 // Subtitle
+- These are the main things needed to change dialogue
+- 
+
+FF02 // 
+### Conditionals
+#### FF10 // IF statements
+- They end with TWO nulls
+- 
 ## Understanding the Mei Ling clusterf
-
+TBD
 
 # Translating the Japanese Hex Code
 
-Freq 140.85 Conversation:
+Freq 140.85 Conversation: See [[Translation]]
+

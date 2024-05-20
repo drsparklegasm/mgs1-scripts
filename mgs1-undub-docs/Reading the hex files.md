@@ -1,3 +1,4 @@
+( This is an early attempt, leaving here for posterity)
 
 Dialogue has some patterns. 
 

@@ -2,4 +2,6 @@
 .DS*
 RADIO-jpn.DAT
 RADIO-usa.DAT
-
+Scratchpad.py
+mgs1-undub-docs/.obsidian
+*pycache*

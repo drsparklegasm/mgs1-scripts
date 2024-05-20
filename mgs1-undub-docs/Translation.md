@@ -36,7 +36,7 @@
 コール音が鳴ったら、セレクトボタンを押してくれ。      
 耳小骨を直接振動させるものだ。               
 敵には聞こえない。                     
-わかった。作戦に入る。(supertext unavail, it has some explanation over "strategy")
+わかった。作戦に入る。// (supertext unavail, it has some explanation over "strategy")
 
 From ChatGPT
 

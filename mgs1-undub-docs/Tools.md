@@ -9,3 +9,6 @@ https://github.com/lab313ru/ghidra_psx_ldr/
 
 Project for the binary rewriting:
 https://github.com/FoxdieTeam/mgs_reversing
+
+MGS1 tools (can extract most files)
+https://github.com/metalgeardev/MGS1

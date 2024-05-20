@@ -1,5 +1,0 @@
-New plan
-
-Codec: Set a header of 12 bytes including the length of the file
-Then work it line by line (line ending in FF)
-

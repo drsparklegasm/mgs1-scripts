@@ -15,6 +15,9 @@ v0.4.1: Adding main() block, in preparation for translating any file length, inc
 # TODO: Mei ling scripts fucked up
 # TODO: CASE switching study
 # TODO: Container looping ? # IF Statements break these right now
+# TODO: Change this to a library to parse on command
+# TODO: Shift to export as XML
+# TODO: work on recompiler
 
 import os, struct, re
 import radioDict
@@ -162,7 +165,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
         case b'\x00': # AKA A null, May want to correct this to ending a \x02 segment
             output.write(f'NULL (Command! offset = {offset})\n')
-            layerNum -= 1
+            if layerNum > 0:
+                layerNum -= 1
             if radioData[offset + 1] == b'\x31':
                 length = handleCommand(offset + 1)
                 return length + 7
@@ -261,7 +265,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             container(offset + header, length - header - 2)
             contDepth -= 1
             """
-            layerNum += 1
+            layerNum += 2
             return header
         
         case b'\x11' | b'\x12': # If, ElseIF, Else respectively
@@ -338,8 +342,6 @@ def container(offset, length):
             commandLength = handleCommand(internalOffset)
         internalOffset += commandLength
         counter += commandLength
-    
-    
     return length
 
 def outputCallHeaders(filename: str):
@@ -369,6 +371,7 @@ def main():
     global indentToggle
     global debugOutput
     global fileSize
+
     nullCount = 0
 
     # Parser logic
@@ -421,7 +424,8 @@ def main():
             indentLines()
             output.write(f"Null! (Main loop) offset = {offset}\n")
             nullCount += 1
-            layerNum -= 1
+            if layerNum > 0:
+                layerNum -= 1
             length = 1
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0

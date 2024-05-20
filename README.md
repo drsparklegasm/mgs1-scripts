@@ -15,6 +15,14 @@ This extracts all call data, hopefully keeping other byte data intact in the fil
 Since we'll hit offset problems, this script (attempts) to find all instances of a call in the stage.dir binary. There are probably a lot of false positives right now.  Logic is shamelessly reverse engineered from iseeeva's radio extractor:
 https://github.com/iseeeva/metal/tree/main
 
+### callExtractor.py
+
+Extracts a single call based on offsets (leaves in a bin format)
+
+### splitRadioFile.py
+
+(WORK IN PROGRESS) This will split all calls into individual bin files with an offset name.
+
 ## Goals
 
 1. Be able to extract all instructions and dialogue
