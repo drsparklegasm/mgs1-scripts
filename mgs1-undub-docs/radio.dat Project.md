@@ -1,12 +1,11 @@
 Tasks:
-- [ ] Handle other commands
-- [ ] 
+- [x] Handle other commands
+We now (sort of) handle all commands
 - [ ] Ensure offsets are correct
 - [ ] Account for `00` being an end of line delineation
 - [ ] Create re-compiler
 - [ ] Find a way to trace offsets
 - [ ] Verify where offsets occur in stage.dir
-
 
 
 Notes on stage.dir:
@@ -105,25 +104,23 @@ Here are some naming conventions I try to keep to in the script, as well as a de
 
 Most of these will come from 140.85 or ???. Offsets are from the USA version, D1
 
-| Command  | Name         | is container?* | Static Header? | Static length? | Example                                            | offset (int) |     |
-| -------- | ------------ | -------------- | -------------- | -------------- | -------------------------------------------------- | ------------ | --- |
-| `FF 01`  | SUBTITLE     | No             | Yes            | No             | `ff 01 00 17 21 ca 59 F8 00 00 This is Snake.\x00` | 293578       |     |
-| `FF 02`  | VOX_START    | Yes            | Yes            | No             | `ff 02 03 1a 00 00 1f 25 80 03 13`                 | 293567       |     |
-| `FF 03`  | ANIMATE      | No             | Yes            | Yes            | `ff 03 00 08 21 ca 59 f8 00 00`                    | 293547       |     |
-| `FF 04`  | ADD FREQ     | No             | Yes            | No             | `ff 04 00 0d 37 05 43 41 4d 50 42 45 4c 4c 00`     | 294363       |     |
-| `FF 05`  | ?            |                |                |                |                                                    |              |     |
-| `FF 06`  | MUSIC CUE?   |                |                |                |                                                    |              |     |
-| `FF 07`  | PROMPT       |                |                |                |                                                    |              |     |
-| `FF 08`  | SAVEGAME ?   |                |                |                |                                                    |              |     |
-| `FF 10`  | IF statement | Yes            | No             | No             |                                                    |              |     |
-| `FF 11`  | ELSE IF      | Yes            | Yes            | No             |                                                    |              |     |
-| `FF 12`  | ELSE ...     | Yes            | Yes            | No             |                                                    |              |     |
-| `FF 30`  | Case switch  |                |                |                |                                                    |              |     |
-| `FF 31`  | Case X       |                |                |                |                                                    |              |     |
-| `FF 32`  | ?            |                |                |                |                                                    |              |     |
-| `FF 40`  | EVAL ?       |                |                |                |                                                    |              |     |
-| `FF 80`? |              |                |                |                |                                                    |              |     |
-| `FF FF`? |              |                |                |                |                                                    |              |     |
+| Command | Name         | is container?* | Static Header? | Static length? | Example                                            | offset (int) |     |
+| ------- | ------------ | -------------- | -------------- | -------------- | -------------------------------------------------- | ------------ | --- |
+| `FF 01` | SUBTITLE     | No             | Yes            | No             | `ff 01 00 17 21 ca 59 F8 00 00 This is Snake.\x00` | 293578       |     |
+| `FF 02` | VOX_START    | Yes            | Yes            | No             | `ff 02 03 1a 00 00 1f 25 80 03 13`                 | 293567       |     |
+| `FF 03` | ANIMATE      | No             | Yes            | Yes            | `ff 03 00 08 21 ca 59 f8 00 00`                    | 293547       |     |
+| `FF 04` | ADD FREQ     | No             | Yes            | No             | `ff 04 00 0d 37 05 43 41 4d 50 42 45 4c 4c 00`     | 294363       |     |
+| `FF 05` | ?            |                |                |                |                                                    |              |     |
+| `FF 06` | MUSIC CUE?   |                |                |                |                                                    |              |     |
+| `FF 07` | PROMPT       |                |                |                |                                                    |              |     |
+| `FF 08` | SAVEGAME ?   |                |                |                |                                                    |              |     |
+| `FF 10` | IF statement | Yes            | No             | No             |                                                    |              |     |
+| `FF 11` | ELSE IF      | Yes            | Yes            | No             |                                                    |              |     |
+| `FF 12` | ELSE ...     | Yes            | Yes            | No             |                                                    |              |     |
+| `FF 30` | Case switch  |                |                |                |                                                    |              |     |
+| `FF 31` | Case X       |                |                |                |                                                    |              |     |
+| `FF 40` | EVAL         |                |                |                |                                                    |              |     |
+
 \* Container implies that it contains other commands. For example `FF 01` is variable and contains a dialogue line, but not other commands, so its a form of container but not defined here as a container. 
 
 ## Headers in depth
@@ -165,25 +162,79 @@ This is the first container, it usually only contains Subtitle actions that go i
 #### FF03 // Animations
 
 EX:
-`FF01 0017 21CA 59F8 0000 5468 6973 2069 7320 536E 616B 652E 00`
-- 
-- 
+`FF03 0008 95F2 7D66 0000`
+(This one grabbed from the first call in the file)
 
-| Bytes                              | Meaning                                                                                                                       |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| FF01                               | Command: Subtitle                                                                                                             |
-| 0017                               | Length of 0x17 (NOTE! This is from this point until the 0x00 inclusive) so my script uses this +2 to account for the command. |
-| 21CA                               | Snake is the one talking (offset for face.dat)                                                                                |
-| 5978                               | Animation (offset for face.dat)                                                                                               |
-| 0000                               | Static                                                                                                                        |
-| 5468 6973 2069 7320 536E 616B 652E | "This is Snake."                                                                                                              |
-| 00                                 | End of string, or command? (we're in C code after all)                                                                        |
+- Animation for codec calls
+- Here's a common one, which should be Meryl uncovers her balaclava
 
+| Bytes | Meaning                                       |
+| ----- | --------------------------------------------- |
+| FF01  | Command: Animation                            |
+| 0008  | Length of 0x8                                 |
+| 95F2  | Meryl (which face moves, offset for face.dat) |
+| 7D66  | Animation (offset for face.dat)               |
+| 0000  | Static?                                       |
+#### FF04 // Add Frequency to Codec Memory
 
+Only added at the end of calls which should be either your first interaction or story reason (CAMPBELL is added after the 140.85 conversation)
+
+`FF04 000D 3705 4341 4D50 4245 4C4C 00`
+
+| Bytes               | Meaning                                      |
+| ------------------- | -------------------------------------------- |
+| FF04                | Command: Animation                           |
+| 000D                | Length of 0xd                                |
+| 3705                | frequency to add (3705 is hex for 14085)     |
+| 4341 4D50 4245 4C4C | CAMPBELL (we have 8 characters for the name) |
+| 00                  | end of line                                  |
+
+#### FF06 // Music Cue
+
+EX: offset 9032
+`ff06 0008 0001 ffff 0900`
+
+I don't really know the format. But if we search for these most are 0008 in length. So most of the time length (script) is 10
+
+Sometimes they do have an `FF 05` towards the end. Might just be coincidence, but this is when we start music during the Meryl introducton:
+`ff06 0008 0001 ffff 05 00`
+### Save Game Commands
+
+These are a pain. I'd say just don't touch them and you're good.
+#### FF05 // Save Game 
+
+This one is extremely long, but it seems that everywhere it appears it has the same value, at least in a per-file capacity. 
+
+#### FF07 // Prompt User
+
+EX: (offset 38649)
+ `FF07 0018 0705 5341 5645 0007 0c44 4f20 4e4f 5420 5341 5645 0000`
+- This one's easy because it has a length byte pair like some of the other containers.
+- Generally somewhere in here are the "SAVE" and "DO NOT SAVE" prompts. 
+
+#### FF08 // SAVE GAME
+- Also an easy one because it has a length byte pair like some of the other containers.
+- Ex: 46802
+`ff08001b110001f41404039c1405039c1406039c1407039c1400039d00`
 ### Conditionals
+
+FF10-FF12 all function like headers, with a `80 xx xx` length of container at the end.
 #### FF10 // IF statements
-- They end with TWO nulls
-- 
+- They end with TWO nulls in the container. 
+
+
+#### FF11 // Else If statement
+
+
+
+
+#### FF12 // Else...
+
+ex: 
+`ff11 80 08a0`
+- Note the 3 bytes at the end. This is the length of the container, much like other headers. 
+- This one has no pre-conditions, nature of the "ELSE"
+
 ## Understanding the Mei Ling clusterf
 TBD
 

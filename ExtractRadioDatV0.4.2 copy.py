@@ -1,7 +1,5 @@
 #!/bin/python
 
-# Assumes RADIO.DAT for filename
-
 """
 We can't get all the way through, so let's try parsing some calls.
 
@@ -9,6 +7,7 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 v0.3.9: Removed Chunk pull
 v0.4: Rebuild with FF as start of each command. 
 v0.4.1: Adding main() block, in preparation for translating any file length, including subsets including a single call
+v0.4.2: We get all the way through USA D1's Radio.dat! There are some unknown segments, those are probably 
 """
 # Project notes
 # TODO: Handle other cases, fix natashas script breaking shit (Cases)
@@ -46,8 +45,6 @@ def __init__(self, filename: str):
     radioFile = open(filename, 'rb')
     global radioData
     radioData = radioFile.read()
-
-
 
 # A lot of this is work in progress or guessing from existing scripts
 commandNamesEng = { b'\x01':'SUBTITLE',
@@ -161,7 +158,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     return count
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
-    global radioData
     global output
     global contDepth
     global layerNum
@@ -209,7 +205,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 dialogue = str(dialogue.hex()) # We'll translate when its working
             
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
-
             return length
         
         case b'\x02':
@@ -237,11 +232,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             face = line[4:6]
             anim = line[6:8]
             buff = line[8:10]
-
-            """# Just a safety since the length of this was hard-coded
-            if debugOutput:
-                if struct.unpack('>h', line[2:4])[0] != 8:
-                    print(f'ERROR! Offset {offset} has an ANIM that does not match its length!')"""
 
             output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
             return length
@@ -275,21 +265,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset)
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-
             return length
 
-        case b'\x10': # If, ElseIF, Else respectively
+        case b'\x10': # 
             output.write(commandToEnglish(commandByte))
             length = getLength(offset)
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-            """
-            # Containerizing!
-            contDepth += 1
-            container(offset + header, length - header - 2)
-            contDepth -= 1
-            """
             layerNum += 2
             return header
         
@@ -299,13 +282,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset + header - 2)
             line = radioData[offset : offset + header]
             output.write(f' -- Offset = {offset}, length = {header}, length = {length} Content = {line.hex()}\n')
-
-            """
-            # Containerizing!
-            contDepth += 1
-            container(offset + header - 2, length - header - 2)
-            contDepth -= 1
-            """
             layerNum += 1
             return header
         
@@ -338,7 +314,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
                 length += 1
             
-
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             return length
@@ -359,7 +334,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             return length
         
 
-def container(offset, length):
+def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
     global layerNum
     global contDepth
@@ -379,7 +354,6 @@ def outputCallHeaders(filename: str):
     return
 
 ## Translation Commands:
-
 def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move to separate file?
     i = 0
     messageString = ''
@@ -424,6 +398,10 @@ def main():
     if args.indent:
         indentToggle = True
     
+    if args.output:
+        output = open(args.output, 'w')
+        outputFilename = args.output
+    
     # Handle inputting radio file:
     global radioFile
     global radioData
@@ -453,7 +431,7 @@ def main():
         # MAIN LOGIC
         if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
             indentLines()
-            if radioData[offset + 1].to_bytes() == b'\x31':
+            if radioData[offset + 1].to_bytes() == b'\x31': # For some reason switch statements don't have an FF
                 length = handleCommand(offset)
             else:
                 output.write(f"Null! (Main loop) offset = {offset}\n")
@@ -464,15 +442,11 @@ def main():
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             length = handleCommand(offset)
-        # elif radioData[offset].to_bytes() == b'\xFF' and radioData[offset + 1].to_bytes() == b'\x31'
-        elif checkFreq(offset):
+        elif checkFreq(offset): # If we're at the start of a call
             nullCount = 0
             handleCallHeader(offset)
             length = 11 # In this context, we only want the header
             layerNum = 1
-        elif radioData[offset].to_bytes() == b'\x31': # An not so elegant solution to finding case \x31
-            nullCount = 0
-            length = handleCommand(offset - 1) + 1 # We need to parse the second byte as the argument. Then add 1 back to the length...
         else: # Something went wrong, we need to kinda reset
             length = handleUnknown(offset) # This will go until we find a call frequency
         offset += length
