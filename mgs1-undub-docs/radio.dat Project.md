@@ -130,11 +130,56 @@ Most of these will come from 140.85 or ???. Offsets are from the USA version, D1
 
 ### Actions
 
-FF01 // Subtitle
+#### FF01 // Subtitle
+
+EX:
+`FF01 0017 21CA 59F8 0000 5468 6973 2069 7320 536E 616B 652E 00`
 - These are the main things needed to change dialogue
+- There is a length byte!
+
+| Bytes                              | Meaning                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| FF01                               | Command: Subtitle                                                                                                             |
+| 0017                               | Length of 0x17 (NOTE! This is from this point until the 0x00 inclusive) so my script uses this +2 to account for the command. |
+| 21CA                               | Snake is the one talking (offset for face.dat)                                                                                |
+| 5978                               | Animation (offset for face.dat)                                                                                               |
+| 0000                               | Static                                                                                                                        |
+| 5468 6973 2069 7320 536E 616B 652E | "This is Snake."                                                                                                              |
+| 00                                 | End of string, or command? (we're in C code after all)                                                                        |
+
+#### FF02 // Voice 
+EX:
+`FF02 0056 0001 3CFB 8000 4F`
+
+This is a header. This means (usually) there are two lengths. One at the start, 
+
+| Bytes    | Meaning                                                    |
+| -------- | ---------------------------------------------------------- |
+| FF02     | Command: Subtitle                                          |
+| 0056     | First length, encompases these bytes through the last 0x00 |
+| 0001     | UNKNOWN                                                    |
+| 3CFB     | This might be the offset in VOX.dat? Have to confirm       |
+| 80 00 4F | Length of content. Starting with 00 4F                     |
+This is the first container, it usually only contains Subtitle actions that go in there, but can also contain Animations midway through. 
+
+#### FF03 // Animations
+
+EX:
+`FF01 0017 21CA 59F8 0000 5468 6973 2069 7320 536E 616B 652E 00`
+- 
 - 
 
-FF02 // 
+| Bytes                              | Meaning                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| FF01                               | Command: Subtitle                                                                                                             |
+| 0017                               | Length of 0x17 (NOTE! This is from this point until the 0x00 inclusive) so my script uses this +2 to account for the command. |
+| 21CA                               | Snake is the one talking (offset for face.dat)                                                                                |
+| 5978                               | Animation (offset for face.dat)                                                                                               |
+| 0000                               | Static                                                                                                                        |
+| 5468 6973 2069 7320 536E 616B 652E | "This is Snake."                                                                                                              |
+| 00                                 | End of string, or command? (we're in C code after all)                                                                        |
+
+
 ### Conditionals
 #### FF10 // IF statements
 - They end with TWO nulls

@@ -42,6 +42,13 @@ radioData = radioFile.read() # The byte stream is better to use than the file on
 fileSize = len(radioData)
 contDepth = 0
 
+def __init__(self, filename: str):
+    radioFile = open(filename, 'rb')
+    global radioData
+    radioData = radioFile.read()
+
+
+
 # A lot of this is work in progress or guessing from existing scripts
 commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x02':'VOX_CUES', 
@@ -56,10 +63,10 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x12':'ELSE_IFS', 
                     b'\x30':'SWITCH',
                     b'\x31':'SWITCHOP', 
-                    b'\x40':'EVAL_CMD', 
-                    b'\x80':'GCL_SCPT', 
-                    b'\xFF':'CMD_HEDR',
-                    b'\x00':'NULL' 
+                    b'\x40':'EVAL_CMD' 
+                    # b'\x80':'GCL_SCPT' 
+                    # b'\xFF':'CMD_HEDR',
+                    # b'\x00':'NULL' 
 }
 
 def commandToEnglish(hex: bytes) -> str:
@@ -100,7 +107,9 @@ def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 
     length = 0
     while True:
         length += 1
-        if radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 3].to_bytes() == b'\x80':
+        if radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 3].to_bytes() == b'\x80' and not checkFreq(offset + length):
+            return length
+        elif radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 1].to_bytes() == b'\x00' and radioData[offset + length + 1].to_bytes() in commandNamesEng:
             return length
 
 def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at the freq bytes
@@ -133,7 +142,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return False
 
-    output.write(f'\nCall Header: {humanFreq}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
+    output.write(f'\nCall Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
     return header
 
@@ -141,9 +150,9 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     count = 0
     output.write(f'ERROR! Unknown blcok at offset {offset}! ')
     while True:
-        if checkFreq(offset + count):
+        if checkFreq(offset + count + 1):
             break
-        elif radioData[offset + count].to_bytes() == b'\xff':
+        elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
             break
         else: 
             count += 1
@@ -158,18 +167,26 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     global layerNum
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
+    """
+    if radioData[offset].to_bytes() == b'\x31':
+        output.write(f'ERROR! Offset for \x31 was not sent the preceeding \x00! correcting...')
+        offset -= 1
+        commandByte = b'\x31'
+        """
+
     indentLines() # Indent before printing the command to our depth level.
 
     # We now deal with the byte
     match commandByte:
 
         case b'\x00': # AKA A null, May want to correct this to ending a \x02 segment
+            
             output.write(f'NULL (Command! offset = {offset})\n')
             if layerNum > 0:
                 layerNum -= 1
-            if radioData[offset + 1] == b'\x31':
+            """if radioData[offset + 1] == b'\x31':
                 length = handleCommand(offset + 1)
-                return length + 7
+                return length + 7"""
             return 1
         
         case b'\x01':
@@ -245,7 +262,15 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
         
-        case b'\x06' | b'\x07': 
+        case b'\x05':
+            output.write(commandToEnglish(commandByte))
+            # Content (USA): b'ff050565120000aa07098044806f8063806b0007098263828f8283828b00071180488065806c80698070806f8072807400071182678285828c82898290828f8292829400071780548061806e806b900180488061806e80678061807200071782738281828e828b814082678281828e82878281829200070980438065806c806c00070982628285828c828c000713804d80658064806990018072806f806f806d000713826c82858284828981408292828f828f828d00070d80418072806d806f8072807900070d82608292828d828f8292829900071580418072806d806f80728079900180538074806800071582608292828d828f82928299814082728294828800070d80438061806e8079806f806e00070d82628281828e8299828f828e000717804e8075806b806590018042806c8064806790018031000717826d8295828b828581408261828c828482878140825000071b804e8075806b806590018042806c80648067802e90018042803100071b826d8295828b828581408261828c8284828781448140826182500007178043806d806e80648065807290018072806f806f806d0007178262828d828e82848285829281408292828f828f828d00071b804e8075806b806590018042806c80648067802e90018042803200071b826d8295828b828581408261828c828482878144814082618251000707804c80618062000707826b82818282000709804380618076806500070982628281829682850007198055802e80478072806e80649001805080738073806780650007198274814482668292828e82848140826f82938293828782850007158043806f806d806d9001805480778072900180410007158262828f828d828d81408273829782928140826000071b8052806f806f806690168043806f806d806d900180548077807200071b8271828f828f8286815e8262828f828d828d81408273829782920007158043806f806d806d9001805480778072900180420007158262828f828d828d814082738297829281408261000715805480778072900180578061806c806c90018041000715827382978292814082768281828c828c8140826000070f80578061806c806b80778061807900070f82768281828c828b8297828182990007138053806e806f8077806680698065806c80640007138272828e828f8297828682898285828c828400071b8042806c8061807380749001804680758072806e80618063806500071b8261828c8281829382948140826582958292828e8281828382850007178043806180728067806f90018045806c80658076802e0007178262828182928287828f81408264828c82858296814400071380578061807280658068806f80758073806500071382768281829282858288828f82958293828500071b80578061807280658068806f8075807380659001804e8074806800071b82768281829282858288828f8295829382858140826d8294828800071b8055802e80478072806e8064900180428061807380659001803100071b8274814482668292828e8284814082618281829382858140825000071b8055802e80478072806e8064900180428061807380659001803200071b8274814482668292828e8284814082618281829382858140825100071b8055802e80478072806e8064900180428061807380659001803300071b8274814482668292828e828481408261828182938285814082520007138043806d806e806490018072806f806f806d0007138262828d828e828481408292828f828f828d000715805380708070806c80799001805280748065802e000715827282908290828c82998140827182948285814400071380458073806390018052806f80758074806500071382648293828381408271828f829582948285000000'
+            length = 1384 # Might be US specific?
+            line = radioData[offset:offset + length]
+            output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
+            return length
+
+        case b'\x06' | b'\x07' | b'\x08': 
             output.write(commandToEnglish(commandByte))
             length = getLength(offset)
             line = radioData[offset : offset + length]
@@ -285,36 +310,40 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             return header
         
         # This one is fugly. Time to look at containerizing these or something. 
-        case b'\x31':
-            if radioData[offset] == b'\xff':
-                length = getLengthManually()
-                line = radioData[offset : offset + length]
-                output.write(commandToEnglish(commandByte))
-                scriptLength = struct.unpack('>h',line[length - 2: length])[0]
+        case b'\x30' | b'\x31':
+            # 30 is handled different, as it has a container header
+            if commandByte == b'\x30':
+                length = getLengthManually(offset)
             else:
-                output.write(commandToEnglish(commandByte))
-                length = 7
-                line = radioData[offset : offset + length]
-                scriptLength = struct.unpack('>h',line[length - 2 : length])[0]
+                length = 7 # Hard code this for now, works in most cases.
+            line = radioData[offset : offset + length]
+            output.write(commandToEnglish(commandByte))
+            scriptLength = struct.unpack('>h',line[length - 2: length])[0]
+            
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
             return length 
         
         case b'\x40':
             output.write(commandToEnglish(commandByte))
             # The last bytes in the 0x40 expression are 14 31 00...
-            length = 0
+            length = 16
             while True:
-                length += 1
-                if radioData[offset + length].to_bytes() == b'\x00':
-                    if radioData[offset + length - 2].to_bytes() == b'\x14' and radioData[offset + length - 1].to_bytes() == b'\x31':
+                checkingOffset = offset + length
+                if checkFreq(checkingOffset):
+                    break
+
+                if radioData[checkingOffset].to_bytes() == b'\xff' or b'\x00':
+                    if radioData[checkingOffset - 3:checkingOffset] == b'\x14\x31\x00':
                         break
 
-            length += 1
+                length += 1
+            
+
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             return length
         
-        case b'\xFF':
+        case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
             output.write(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
             if debugOutput:
                 print(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
@@ -328,6 +357,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
+        
 
 def container(offset, length):
     counter = 0
@@ -399,6 +429,7 @@ def main():
     global radioData
 
     radioFile = open(args.filename, 'rb')
+    #radioFile = open(filename, 'rb')
     radioData = radioFile.read()
     fileSize = len(radioData)
 
@@ -410,10 +441,10 @@ def main():
     Too bad!
     """
 
-    while offset <= fileSize - 1: # We might need to change this to Case When... as well.
+    while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
         if debugOutput:
-            print(f'offset is {offset}')
+            print(f'Main loop: offset is {offset}')
 
         if nullCount == 4:
             output.write(f'ALERT!!! We just had 4x Nulls in a row at offset {offset}\n')
@@ -422,11 +453,14 @@ def main():
         # MAIN LOGIC
         if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
             indentLines()
-            output.write(f"Null! (Main loop) offset = {offset}\n")
-            nullCount += 1
-            if layerNum > 0:
-                layerNum -= 1
-            length = 1
+            if radioData[offset + 1].to_bytes() == b'\x31':
+                length = handleCommand(offset)
+            else:
+                output.write(f"Null! (Main loop) offset = {offset}\n")
+                nullCount += 1
+                if layerNum > 0:
+                    layerNum -= 1
+                length = 1
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             length = handleCommand(offset)
@@ -445,7 +479,7 @@ def main():
 
     output.close()
 
-    if offset == fileSize:
+    if offset >= fileSize - 1:
         print(f'File was parsed successfully! Written to {outputFilename}')
 
 # This doesn't work because i did not code with contextual variables in mind >:O

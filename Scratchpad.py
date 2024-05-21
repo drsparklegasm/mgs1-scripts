@@ -47,3 +47,5 @@ header = radioData[0:12]
 print(type(header.hex()))
 print(header.hex()) # Will work if there are no incorrect bytes
 
+freq = 140.80
+print(f'This is frequency {freq:.2f}')

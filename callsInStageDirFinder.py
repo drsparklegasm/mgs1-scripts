@@ -31,12 +31,11 @@ freqList = [
 
 def checkFreq(offset):
     global stageData
-    global freqList
-    for frequency in freqList:
-        if stageData[offset + 1 : offset + 3] == frequency:
-            return True
     
-    return False
+    if stageData[offset + 1 : offset + 3] in freqList:
+        return True
+    else:
+        return False
 
 def writeCall(offset):
     global stageData
