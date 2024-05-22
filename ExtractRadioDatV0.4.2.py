@@ -341,7 +341,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
-        
+
 
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
