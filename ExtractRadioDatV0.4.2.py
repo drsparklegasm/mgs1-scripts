@@ -27,7 +27,7 @@ import argparse
 jpn = False
 indentToggle = True
 debugOutput = True
-filename = "RADIO-usa.DAT"
+filename = "./Radio dat files/RADIO-usa-d2.DAT"
 outputFilename = "Radio-decrypted.txt"
 
 # Initalizing files
@@ -61,10 +61,19 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x30':'SWITCH',
                     b'\x31':'SWITCHOP', 
                     b'\x40':'EVAL_CMD' 
-                    # b'\x80':'GCL_SCPT' 
-                    # b'\xFF':'CMD_HEDR',
-                    # b'\x00':'NULL' 
 }
+
+# Hashes for each radio file. I did not include Integral, as it won't suit the needs of this project.
+radioHashes = {
+    "usa-d1":'9b6d223d8e1a9e562e2c188efa3e6425a87587f35c6bd1cfe62c5fa7ee9a0019',    # USA Disc 1
+    "usa-d2":'e6cf1b353db0bc7620251b6916577527debfdd5bdcd125b3ca9ef5c9a0aef61e',
+    "jpn-d1":'f588fb57ce6c5754c39ca5ec9d52fe2c5766a2e51bcb0ea7a343490e0769c6b2',    # Japanese Premium package seems to match the retail
+    "jpn-d2":'b46088c2c10e0552fcd6f248ea4fdf0bcf428691184dae053267f4d93f97cec9'
+}
+
+def getHash(): # Not yet implemented! 
+    hash = radioHashes
+    return hash
 
 def commandToEnglish(hex: bytes) -> str:
     global output
@@ -375,32 +384,12 @@ def main():
     global indentToggle
     global debugOutput
     global fileSize
+    global output
 
     nullCount = 0
 
     # Parser logic
-    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
-
-    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
-    parser.add_argument('-o', '--output', type=str, required=False, help="(Optional) Provides an output file (.txt)")
     
-    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
-    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
-    parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
-    args = parser.parse_args()
-
-    if args.verbose:
-        debugOutput = True
-    
-    if args.japanese:
-        jpn = True
-    
-    if args.indent:
-        indentToggle = True
-    
-    if args.output:
-        output = open(args.output, 'w')
-        outputFilename = args.output
     
     # Handle inputting radio file:
     global radioFile
@@ -459,4 +448,27 @@ def main():
 # This doesn't work because i did not code with contextual variables in mind >:O
 if __name__ == '__main__':
     # We should get args from user. Using argParse
+    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
+
+    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
+    parser.add_argument('-o', '--output', type=str, required=False, help="(Optional) Provides an output file (.txt)")
+    
+    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
+    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
+    parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
+    args = parser.parse_args()
+
+    if args.verbose:
+        debugOutput = True
+    
+    if args.japanese:
+        jpn = True
+    
+    if args.indent:
+        indentToggle = True
+    
+    if args.output:
+        output = open(args.output, 'w')
+        outputFilename = args.output
+        
     main()

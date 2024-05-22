@@ -8,7 +8,14 @@ v0.3.9: Removed Chunk pull
 v0.4: Rebuild with FF as start of each command. 
 v0.4.1: Adding main() block, in preparation for translating any file length, including subsets including a single call
 v0.4.2: We get all the way through USA D1's Radio.dat! There are some unknown segments, those are probably flukes
+
+THIS IS ONLY FOR TESTING PURPOSES! Will eventually repurpose the main ExtactRadioDat.py
+
 """
+
+
+
+
 # Project notes
 # TODO: Handle other cases, fix natashas script breaking shit (Cases)
 # TODO: Mei ling scripts fucked up
