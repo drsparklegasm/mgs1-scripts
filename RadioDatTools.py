@@ -80,6 +80,17 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x40':'EVAL_CMD' 
 }
 
+freqList = [
+    b'\x37\x05', # 140.85, Campbell
+    b'\x37\x10', # 140.96, Mei Ling
+    b'\x36\xbf', # 140.15, Meryl
+    b'\x36\xb7', # 141.12, Otacon
+    b'\x37\x48', # 141.52, Natasha
+    b'\x37\x64', # 141.80, Miller
+    b'\x36\xE0', # 140.48, Deepthroat
+    b'\x36\xb7'  # 140.07, Staff
+]
+
 # Hashes for each radio file. I did not include Integral, as it won't suit the needs of this project.
 radioHashes = {
     "usa-d1":'9b6d223d8e1a9e562e2c188efa3e6425a87587f35c6bd1cfe62c5fa7ee9a0019',    # USA Disc 1
@@ -108,9 +119,8 @@ def indentLines() -> None: # Purely formatting help
 # Analysis commands
 
 def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec number or not. Returns True or False.
-    # global radioData
-    freq = struct.unpack('>h', radioData[offset : offset + 2])[0] # INT from two bytes
-    if 14000 < freq < 14200:
+    global radioData
+    if radioData[offset:offset + 2] in freqList:
         return True
     else: 
         return False
@@ -526,5 +536,5 @@ if __name__ == '__main__':
     
     setRadioData(filename)
     analyzeRadioFile(outputFilename)
-    # extractRadioCallHeaders('RadioCallHeaders.txt')
+    extractRadioCallHeaders('RadioCallHeaders.txt')
     
