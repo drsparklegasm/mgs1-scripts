@@ -128,7 +128,7 @@ def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec 
 def getFreq(offset: int) -> float: # If freq is at offset, return frequency as 140.15
     global radioData
 
-    freq = struct.unpack('>h', radioData[ offset : offset + 2])[0]
+    freq = struct.unpack('>H', radioData[ offset : offset + 2])[0]
     return freq / 100
 
 def getLength(offset: int) -> int: # Returns COMMAND length, offset must be at the 0xff bytes, length is bytes 1 and 2.
@@ -150,7 +150,7 @@ def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 
 def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at the freq bytes
     global radioData
 
-    lengthT = struct.unpack('>h', radioData[offset + 2 : offset + 4])[0]
+    lengthT = struct.unpack('>H', radioData[offset + 2 : offset + 4])[0]
     return lengthT
 
 def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
@@ -169,7 +169,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     unk1 = line[4:6] # face 2
     unk2 = line[6:8] # Usually nulls
     callLength = line[9:11]
-    length = struct.unpack('>h', callLength)[0]
+    length = struct.unpack('>H', callLength)[0]
 
     # Quick error checking
     """if debugOutput:
@@ -250,8 +250,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = getLengthManually(offset)
             length = getLength(offset)
             line = radioData[offset : offset + header]
-            voxLength1 = struct.unpack('>h',line[2:4])[0]
-            voxLength2 = struct.unpack('>h',line[9:11])[0]
+            voxLength1 = struct.unpack('>H',line[2:4])[0]
+            voxLength2 = struct.unpack('>H',line[9:11])[0]
             
             # Check for even length numbers
             if debugOutput:
@@ -284,7 +284,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             # Just a safety since the length of this was hard-coded
             if debugOutput:
-                if struct.unpack('>h', line[2:4])[0] != length - 2:
+                if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
@@ -332,7 +332,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 length = 7 # Hard code this for now, works in most cases.
             line = radioData[offset : offset + length]
             output.write(commandToEnglish(commandByte))
-            scriptLength = struct.unpack('>h',line[length - 2: length])[0]
+            scriptLength = struct.unpack('>H',line[length - 2: length])[0]
             
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
             return length 
