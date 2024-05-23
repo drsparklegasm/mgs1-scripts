@@ -5,7 +5,7 @@ I find it's easier to study the raw hex on a subset of it, rather than the whole
 Have offsets ready or refer to the bin file. Modify the filename for your Radio.dat file.
 """
 
-import os, struct, re
+import os, struct, re, argparse
 
 filename = "RADIO-jpn.DAT"
 """
@@ -23,25 +23,14 @@ def __init__(self, radioFilename: str) -> None:
 
 
 
-def main():
+def main(filename, offset, length):
     
     print("Please provide offsets for the call in decimal forrmat (not hex)!")
 
     # Get in/out from user
-    startOffset = int(input("First offset? (Int): "))
-    endOffset = int(input("End offset? (Int): "))
-    outputFile = input("Name of extracted call? ")
-
-    """
-    General notes:
-
-    startOffset = 293536
-    endOffset = 294379
-    offset = 293536 # Freq 140.85 Hex 0x047AA0
-    140.85/jpn: 0x45460 --> 0x4572F // 283744 --> 284463
-
-    Offset = 1773852 # Deepthroat 140.48 Hex 0x1B111C, ends 
-    """
+    startOffset = offset
+    endOffset = offset + length
+    outputFile = str(offset) + '.bin'
 
     radioFile = open(filename, 'rb')
     output = open(outputFile, 'wb')
@@ -66,4 +55,10 @@ def splitCall(offset: int, length: int) -> None:
 
 
 if __name__ == '__main__':
+    """parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
+
+    # REQUIRED
+    parser.add_argument('offset', type=int, help="Offset of the start of the")
+    parser.add_argument('output', type=str, help="Output Filename (.txt)")
+    """
     main()

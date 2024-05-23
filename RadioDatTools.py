@@ -29,6 +29,7 @@ import argparse
 jpn = False
 indentToggle = True
 debugOutput = True
+splitCalls = False
 
 # Script variables 
 offset = 0
@@ -60,6 +61,15 @@ def setOutputFile(filename: str) -> bool:
     """if not output.closed():
         output.close()"""
     output = open(filename, 'w')
+
+def splitCall(offset: int, length: int) -> None:
+    global radioData
+    splitCall = radioData[offset:offset+length]
+    filename = 'extractedCallBins/' + str(offset) + '.bin'
+    f = open(filename, 'wb')
+    f.write(splitCall)
+    f.close()
+    return 0
 
 # Reference data
 
@@ -171,6 +181,8 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     callLength = line[9:11]
     length = struct.unpack('>H', callLength)[0]
 
+    if splitCalls:
+        splitCall(offset, length)
     # Quick error checking
     """if debugOutput:
         if line[8].to_bytes() != b'\x80':
@@ -517,6 +529,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
     parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
     parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
+    parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
 
     args = parser.parse_args()
 
@@ -532,9 +545,13 @@ if __name__ == '__main__':
     if args.indent:
         indentToggle = True
     
-
+    if args.split:
+        splitCalls = True
+    
+    if splitCalls:
+        os.makedirs('extractedCallBins', exist_ok=True)
     
     setRadioData(filename)
-    analyzeRadioFile(outputFilename)
+    # analyzeRadioFile(outputFilename)
     extractRadioCallHeaders('RadioCallHeaders.txt')
     
