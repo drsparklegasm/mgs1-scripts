@@ -1,7 +1,7 @@
 import os, struct
 # import progressbar, time
 
-filename = "build/MGS/DEMO.DAT"
+filename = "build-jpn/iso/MGS/DEMO.DAT"
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
@@ -36,7 +36,7 @@ def splitDemoFiles():
         f = open(f'extractedDemos/demo-{i + 1}.bin', 'wb')
         f.write(demoData[start:end])
         f.close()
-        print(f'Demo {i} written!')
+        print(f'Demo {i + 1} written!')
     
     print(f'{i+1} demo files written!')
 
