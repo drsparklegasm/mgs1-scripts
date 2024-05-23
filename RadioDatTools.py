@@ -120,7 +120,7 @@ def indentLines() -> None: # Purely formatting help
 
 def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec number or not. Returns True or False.
     global radioData
-    if radioData[offset:offset + 2] in freqList:
+    if radioData[offset:offset + 2] in freqList and radioData[offset + 8].to_bytes() == b'\x80':
         return True
     else: 
         return False
