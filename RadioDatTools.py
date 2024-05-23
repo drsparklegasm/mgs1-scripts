@@ -7,15 +7,10 @@ v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
 v0.3.9: Removed Chunk pull
 v0.4: Rebuild with FF as start of each command. 
 v0.4.1: Adding main() block, in preparation for translating any file length, including subsets including a single call
-v0.4.2: We get all the way through USA D1's Radio.dat! There are some unknown segments, those are probably flukes
-
-THIS IS ONLY FOR TESTING PURPOSES! Will eventually repurpose the main ExtactRadioDat.py
+v0.4.2: We get all the way through USA D1's Radio.dat! There are some unknown segments, those are probably 
+v0.5 switch to library, backup is 0.4.5
 
 """
-
-
-
-
 # Project notes
 # TODO: Handle other cases, fix natashas script breaking shit (Cases)
 # TODO: Mei ling scripts fucked up
@@ -26,7 +21,7 @@ THIS IS ONLY FOR TESTING PURPOSES! Will eventually repurpose the main ExtactRadi
 # TODO: work on recompiler
 
 import os, struct, re
-import radioDict
+import radioDict # May remove later
 import argparse
 
 ## Formatting Settings!
@@ -34,24 +29,39 @@ import argparse
 jpn = False
 indentToggle = True
 debugOutput = True
-filename = "RADIO-usa.DAT"
-outputFilename = "Radio-decrypted.txt"
-
-# Initalizing files
-radioFile = open(filename, 'rb')
-output = open(outputFilename, 'w')
 
 # Script variables 
 offset = 0
 layerNum = 0
-radioData = radioFile.read() # The byte stream is better to use than the file on disk if you can. 
-fileSize = len(radioData)
-contDepth = 0
+output = open('output.txt', 'w')
+radioData: bytes = ""
+fileSize = 0
 
 def __init__(self, filename: str):
     radioFile = open(filename, 'rb')
     global radioData
+    global fileSize
     radioData = radioFile.read()
+    fileSize = len(radioData)
+
+# FILE OPERATIONS
+
+def setRadioData(filename: str) -> bool:
+    global radioData
+    global fileSize
+    
+    radioFile = open(filename, 'rb')
+    radioData = radioFile.read()
+    fileSize = len(radioData)
+    return True
+
+def setOutputFile(filename: str) -> bool:
+    global output
+    """if not output.closed():
+        output.close()"""
+    output = open(filename, 'w')
+
+# Reference data
 
 # A lot of this is work in progress or guessing from existing scripts
 commandNamesEng = { b'\x01':'SUBTITLE',
@@ -68,10 +78,19 @@ commandNamesEng = { b'\x01':'SUBTITLE',
                     b'\x30':'SWITCH',
                     b'\x31':'SWITCHOP', 
                     b'\x40':'EVAL_CMD' 
-                    # b'\x80':'GCL_SCPT' 
-                    # b'\xFF':'CMD_HEDR',
-                    # b'\x00':'NULL' 
 }
+
+# Hashes for each radio file. I did not include Integral, as it won't suit the needs of this project.
+radioHashes = {
+    "usa-d1":'9b6d223d8e1a9e562e2c188efa3e6425a87587f35c6bd1cfe62c5fa7ee9a0019',    # USA Disc 1
+    "usa-d2":'e6cf1b353db0bc7620251b6916577527debfdd5bdcd125b3ca9ef5c9a0aef61e',
+    "jpn-d1":'f588fb57ce6c5754c39ca5ec9d52fe2c5766a2e51bcb0ea7a343490e0769c6b2',    # Japanese Premium package seems to match the retail
+    "jpn-d2":'b46088c2c10e0552fcd6f248ea4fdf0bcf428691184dae053267f4d93f97cec9'
+}
+
+def getHash(): # Not yet implemented! 
+    hash = radioHashes
+    return hash
 
 def commandToEnglish(hex: bytes) -> str:
     global output
@@ -86,8 +105,10 @@ def indentLines() -> None: # Purely formatting help
         for x in range(layerNum):
             output.write('\t')
 
+# Analysis commands
+
 def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec number or not. Returns True or False.
-    global radioData
+    # global radioData
     freq = struct.unpack('>h', radioData[offset : offset + 2])[0] # INT from two bytes
     if 14000 < freq < 14200:
         return True
@@ -141,12 +162,12 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     length = struct.unpack('>h', callLength)[0]
 
     # Quick error checking
-    if debugOutput:
+    """if debugOutput:
         if line[8].to_bytes() != b'\x80':
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
-            return False
+            return 1"""
 
-    output.write(f'\nCall Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
+    output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
     return header
 
@@ -339,7 +360,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
-        
 
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
@@ -356,9 +376,9 @@ def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion 
         counter += commandLength
     return length
 
-def outputCallHeaders(filename: str):
+"""def outputCallHeaders(filename: str):
     # Let's move this to a SplitRadioFile.py script
-    return
+    return"""
 
 ## Translation Commands:
 def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move to separate file?
@@ -375,66 +395,58 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
         
     return messageString
 
-def getRadioData(filename):
-    global radioFile
-    global radioData
-    if os.path.exists(filename):
-        radioFile = open(filename, 'rb')
-        radioData = radioFile.read()
-    else:
-        print(f'File {filename} doesn\'t exist! Check path.\n')
-    
-
-def main():
-    global offset
-    global layerNum
+def extractRadioCallHeaders(outputFilename: str) -> None:
+    offset = 0
     global jpn
     global indentToggle
     global debugOutput
     global fileSize
+    
+    setOutputFile(outputFilename)
 
-    nullCount = 0
-
-    # Parser logic
-    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
-
-    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
-    parser.add_argument('-o', '--output', type=str, required=False, help="(Optional) Provides an output file (.txt)")
-    
-    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
-    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
-    parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
-    args = parser.parse_args()
-
-    if args.verbose:
-        debugOutput = True
-    
-    if args.japanese:
-        jpn = True
-    
-    if args.indent:
-        indentToggle = True
-    
-    if args.output:
-        output = open(args.output, 'w')
-        outputFilename = args.output
-    
     # Handle inputting radio file:
-    global radioFile
     global radioData
 
-    radioFile = open(args.filename, 'rb')
-    #radioFile = open(filename, 'rb')
-    radioData = radioFile.read()
-    fileSize = len(radioData)
+    while offset < fileSize - 1: # We might need to change this to Case When... as well.
+        # Offset Tracking
+        if debugOutput:
+            print(f'offset is {offset}')
 
-    # END PARSING. Now onto the fun!
-    """
-    This is the main loop. Mostly it should just read either a frequency `3705` in two bytes, a command (`ff ??`), or a NULL (`00`)
-    Unfortunately there's a lot of odd cases, so I needed to keep adding logic. We should probably clean this up at some point.
+        # MAIN LOGIC
+        if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
+            length = 1
+        elif checkFreq(offset):
+            handleCallHeader(offset) 
+            length = 11
+        else:
+            length = 1
+        offset += length 
+        if offset == fileSize:
+            print(f'File was parsed successfully! Written to {outputFilename}')
+            break
+    
+    print(f'File was parsed successfully! Written to {outputFilename}')
+    output.close()
 
-    Too bad!
-    """
+def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name
+    offset = 0
+    global layerNum
+    # Settings
+    global jpn
+    global debugOutput
+    global indentToggle
+
+    global radioData
+    global fileSize
+    global output
+    nullCount = 0
+    
+    setOutputFile(outputFilename)
+
+    if radioData == None:
+        return "Command failed! Radiodata file not set!"
+
+    setOutputFile(outputFilename)
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
@@ -475,5 +487,44 @@ def main():
 
 # This doesn't work because i did not code with contextual variables in mind >:O
 if __name__ == '__main__':
+    """
+    This will parse arguments and run both headers extract and full analysis.
+    NOTE that args are required!
+    
+    Currently we write headers to a specific filename, in the end there will be a command to pick which output we want.
+    """
+    # Backup variables
+    filename = 'RADIO.DAT'
+    outputFilename = 'Radio-decrypted.txt'
+    
     # We should get args from user. Using argParse
-    main()
+    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
+
+    # REQUIRED
+    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
+    parser.add_argument('output', type=str, help="Output Filename (.txt)")
+    # Optionals
+    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
+    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
+    parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
+
+    args = parser.parse_args()
+
+    filename = args.filename
+    outputFilename = args.output
+
+    if args.verbose:
+        debugOutput = True
+    
+    if args.japanese:
+        jpn = True
+    
+    if args.indent:
+        indentToggle = True
+    
+
+    
+    setRadioData(filename)
+    analyzeRadioFile(outputFilename)
+    # extractRadioCallHeaders('RadioCallHeaders.txt')
+    
