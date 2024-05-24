@@ -1254,13 +1254,19 @@ graphicsData = {
 	'3feffc3aeeac3aeffc3feeac3aeffc3fdba93aeffe3fdaee2aaede7aebee249a3d000000'
 }
 
-def checkForGraphics(message: str) -> None:
+def countGraphics(message: str) -> None:
 	count = 0
 	for phrase in graphicsData:
 		if phrase in message:
 			print(f'Phrase {phrase} found!')
 			count += 1
 	return count
+
+def checkForGraphics(message: str) -> bool:
+	for phrase in graphicsData:
+		if phrase in message:
+			return True	
+	return False
 					  
 def getRadioChar(hexString):
 	return radioChar[hexString]
