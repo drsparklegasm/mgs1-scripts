@@ -28,8 +28,9 @@ import argparse
 
 jpn = False
 indentToggle = True
-debugOutput = True
+debugOutput = False
 splitCalls = False
+exportGraphics = False
 
 # Script variables 
 offset = 0
@@ -198,6 +199,7 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     """
     count = 0
     global fileSize
+    global exportGraphics
     output.write(f'ERROR! Unknown blcok at offset {offset}! ')
     while True:
         if offset + count == fileSize:
@@ -209,12 +211,15 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
         else: 
             count += 1
     content = radioData[offset: offset + count]
-    if len(content) % 36 == 0:
-        radioDict.outputManyGraphics(str(offset), content)
-    else:
-        output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ')
 
-    output.write(f'Length = {count}, Graphics = {str(count / 36)} Unknown block: {content.hex()}\n')
+    if exportGraphics:
+        if len(content) % 36 == 0:
+            radioDict.outputManyGraphics(str(offset), content)
+            output.write('Graphics output! -- ')
+        else:
+            output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ')
+
+        output.write(f'Length = {count}, Graphics = {str(count / 36)} Unknown block: {content.hex()}\n')
     return count
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
@@ -537,6 +542,8 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
     parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
     parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
+    parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
+    parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
 
     args = parser.parse_args()
 
@@ -558,7 +565,13 @@ if __name__ == '__main__':
     if splitCalls:
         os.makedirs('extractedCallBins', exist_ok=True)
     
-    setRadioData(filename)
-    analyzeRadioFile(outputFilename)
-    # extractRadioCallHeaders('RadioCallHeaders.txt')
+    if args.graphics:
+        exportGraphics = True
     
+    setRadioData(filename)
+    radioDict.openRadioFile(filename)
+    
+    if args.headers:
+        extractRadioCallHeaders(outputFilename)
+    else:
+        analyzeRadioFile(outputFilename)
