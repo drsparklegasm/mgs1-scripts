@@ -2,6 +2,13 @@
 
 import os, struct
 
+# GLOBAL STUFF
+
+os.makedirs('graphicsTest', exist_ok=True)
+
+radioData = bytes
+
+
 radioChar = {
 	'824f': "0",
 	'8250': "1",
@@ -1254,6 +1261,11 @@ graphicsData = {
 	'3feffc3aeeac3aeffc3feeac3aeffc3fdba93aeffe3fdaee2aaede7aebee249a3d000000'
 }
 
+def openRadioFile(filename: str) -> None:
+	global radioData
+	radioFile = open(filename, 'rb')
+	radioData = radioFile.read()
+
 def countGraphics(message: str) -> None:
 	count = 0
 	for phrase in graphicsData:
@@ -1271,46 +1283,44 @@ def checkForGraphics(message: str) -> bool:
 def getRadioChar(hexString):
 	return radioChar[hexString]
 
-def outputGraphic() -> None: 
-	"""
-	# Partially generated from chatGPT but it had the endianness of the width/12 wrong.
-	Stolen from https://github.com/metalgeardev/MGS1/blob/master/unRadio_v2.rb and converted by gpt
-	"""
+def outputEmbeddedGraphics() -> None:
 	i = 1
 	for data in graphicsData:
-		file_data = bytes.fromhex(data)
-		# Convert binary data to bit string
-		bit_string = ''.join(format(byte, '08b') for byte in file_data)
-		width = len(bit_string) // 2
-
-		with open(f"graphicsTest/{i}.tga", "wb") as data:
-			# Create and write TGA header
-			header = "0000020000000000000000000c00" + struct.pack('<H', width // 12).hex() + "2020"
-			data.write(bytes.fromhex(header))
-
-			for byte in range(width):
-				bits = bit_string[byte * 2 : byte * 2 + 2]
-				if bits == "00":
-					data.write(bytes.fromhex("000000ff"))
-				elif bits == "01":
-					data.write(bytes.fromhex("555555ff"))
-				elif bits == "10":
-					data.write(bytes.fromhex("aaaaaaff"))
-				else:
-					data.write(bytes.fromhex("ffffffff"))
+		outputGraphic(str(i), bytes.fromhex(data))
 		i += 1
 
-# Example usage
-# dat2tga("example.dat")
+def outputManyGraphics(filename: str, data: bytes) -> None:
+	count = 0
+	if len(data) % 36 == 0:
+		count = int(len(data) / 36)
+		for x in range(count):
+			outputGraphic(f'{filename}-{x}', data[x * 36: (x + 1) * 36 ])
 
-os.makedirs('graphicsTest', exist_ok=True)
+def outputGraphic(filename: str, file_data: bytes) -> None: 
+	"""
+	Partially generated from chatGPT but it had the endianness of the width/12 wrong.
+	Stolen from https://github.com/metalgeardev/MGS1/blob/master/unRadio_v2.rb and converted by gpt
+	"""
+	# Convert binary data to bit string
+	bit_string = ''.join(format(byte, '08b') for byte in file_data)
+	width = len(bit_string) // 2
 
+	with open(f"graphicsTest/{filename}.tga", "wb") as data:
+		# Create and write TGA header
+		header = "0000020000000000000000000c00" + struct.pack('<H', width // 12).hex() + "2020"
+		data.write(bytes.fromhex(header))
 
+		for byte in range(width):
+			bits = bit_string[byte * 2 : byte * 2 + 2]
+			if bits == "00":
+				data.write(bytes.fromhex("000000ff"))
+			elif bits == "01":
+				data.write(bytes.fromhex("555555ff"))
+			elif bits == "10":
+				data.write(bytes.fromhex("aaaaaaff"))
+			else:
+				data.write(bytes.fromhex("ffffffff"))
+		
 
-radioFile = open('Radio dat files/RADIO-jpn-d1.DAT', 'rb')
-radioData = radioFile.read()
-
-count = checkForGraphics(radioData.hex())
-
-print(count)
-print(len(graphicsData))
+openRadioFile('Radio dat files/RADIO-jpn-d1.DAT')
+# outputManyGraphics()
