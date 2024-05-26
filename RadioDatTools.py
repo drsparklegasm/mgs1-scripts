@@ -70,7 +70,6 @@ def splitCall(offset: int, length: int) -> None:
     f = open(filename, 'wb')
     f.write(splitCall)
     f.close()
-    return 0
 
 # Reference data
 
@@ -179,7 +178,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     unk0 = line[2:4] # face 1
     unk1 = line[4:6] # face 2
     unk2 = line[6:8] # Usually nulls
-    length = struct.unpack('>H', line[9:11])[0] + header
+    length = getLengthManually(offset) + 9 # Header - 2
 
     if splitCalls:
         splitCall(offset, length)
@@ -267,7 +266,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             # Write to file
             if jpn:
-                dialogue = str(dialogue.hex()) # We'll translate when its working
+                dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
             return length
@@ -376,8 +375,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if radioData[checkingOffset].to_bytes() == b'\xff' or b'\x00':
                     if radioData[checkingOffset - 3:checkingOffset] == b'\x14\x31\x00':
                         break
-
-
+                
                 length += 1
             
             line = radioData[offset : offset + length]
@@ -423,7 +421,8 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
         try:
             messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
         except:
-            output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
+            if debugOutput:
+                output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
             messageString += '[?]'
         i += 2
         

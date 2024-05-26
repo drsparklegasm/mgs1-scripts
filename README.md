@@ -8,9 +8,11 @@ Script is VERY WORK IN PROGRESS! I'm still working on figuring out how the RADIO
 
 ### RadioDatTools.py
 
-This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. Usage:
+This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. Usage:
 
-RadioDatTools.py path/to/Radio.dat outputfilename.txt [-j, -i, -d]
+`
+$ RadioDatTools.py path/to/Radio.dat outputfilename.txt [-j, -i, -d, ...]
+`
 
 ### callsInStageDirFinder.py
 
