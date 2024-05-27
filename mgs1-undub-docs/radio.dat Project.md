@@ -7,7 +7,6 @@ We now (sort of) handle all commands
 - [ ] Find a way to trace offsets
 - [ ] Verify where offsets occur in stage.dir
 
-
 Notes on stage.dir:
 - The code for the codec call is `01 XX XX 0A ` followed by the HEX offset of the start of the call, so for example:
 - 140.85 conversation is found in Stage.dir at hex `0x744858` and again at `0x7473B5` 

@@ -4,10 +4,21 @@ import os, struct
 
 # GLOBAL STUFF
 
-os.makedirs('graphicsTest', exist_ok=True)
-
+os.makedirs('graphicsExport', exist_ok=True)
 radioData = bytes
 
+class graphicSegment:
+
+	def __init__(self, offset, callGraphicNum, graphicBytesHex) -> None:
+		self.callOffset = offset
+		self.indexNum = callGraphicNum
+		self.bytesHex = graphicBytesHex
+		pass
+
+	def __str__(self):
+		return f'{self.callOffset}, {self.indexNum}, {self.bytesHex}'
+
+foundGraphics = []
 
 radioChar = {
 	'824f': "0",
@@ -1294,7 +1305,10 @@ def outputManyGraphics(filename: str, data: bytes) -> None:
 	if len(data) % 36 == 0:
 		count = int(len(data) / 36)
 		for x in range(count):
-			outputGraphic(f'{filename}-{x}', data[x * 36: (x + 1) * 36 ])
+			segment = data[x * 36: (x + 1) * 36 ]
+			outputGraphic(f'{filename}-{x}', segment)
+			a = graphicSegment(filename, x, segment.hex())
+			foundGraphics.append(a)
 
 def outputGraphic(filename: str, file_data: bytes) -> None: 
 	"""
@@ -1305,7 +1319,7 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 	bit_string = ''.join(format(byte, '08b') for byte in file_data)
 	width = len(bit_string) // 2
 
-	with open(f"graphicsTest/{filename}.tga", "wb") as data:
+	with open(f"graphicsExport/{filename}.tga", "wb") as data:
 		# Create and write TGA header
 		header = "0000020000000000000000000c00" + struct.pack('<H', width // 12).hex() + "2020"
 		data.write(bytes.fromhex(header))
@@ -1321,6 +1335,29 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 			else:
 				data.write(bytes.fromhex("ffffffff"))
 		
+def printFoundGraphics():
+	output = open('foundGraphics.csv', 'w' )
+	for graphic in foundGraphics:
+		output.write(f'{str(graphic)}\n')
 
 openRadioFile('Radio dat files/RADIO-jpn-d1.DAT')
 # outputManyGraphics()
+
+"""
+
+This only used for working with the graphics data found in jpn-d1, it was combined with the bash script to ocr the characters
+
+def exportuniquegraphics():
+	uniqueGraphics = open("translation/unique graphics", 'r')
+	uniqueGraphics2 = open("translation/unique graphics 2", 'w')
+	lineNum = 1
+	for line in uniqueGraphics:
+		f = open(f'graphicsExport/output/{lineNum}.txt', 'r')
+		uniqueGraphics2.write(f'\"{line.strip()}\": \"{f.read().strip()}\"\n')
+		lineNum += 1
+		f.close()
+	uniqueGraphics2.close()
+	
+
+exportuniquegraphics()
+"""

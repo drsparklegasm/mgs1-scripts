@@ -574,3 +574,6 @@ if __name__ == '__main__':
         extractRadioCallHeaders(outputFilename)
     else:
         analyzeRadioFile(outputFilename)
+    
+    if args.graphics:
+        radioDict.printFoundGraphics()
