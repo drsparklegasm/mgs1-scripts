@@ -272,10 +272,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
-            # Write to file
+            # Translate
             if jpn:
                 dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             
+            # Write to file
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
             return length
         
