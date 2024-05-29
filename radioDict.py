@@ -22,7 +22,7 @@ class graphicSegment:
 foundGraphics = []
 
 radioChar = {
-	'd003': "。"
+	'd003': "。",
 	'824f': "0",
 	'8250': "1",
 	'8251': "2",
