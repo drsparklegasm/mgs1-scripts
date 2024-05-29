@@ -37,6 +37,7 @@ offset = 0
 layerNum = 0
 output = open('output.txt', 'w')
 radioData: bytes = ""
+callDict = {}
 fileSize = 0
 
 def __init__(self, filename: str):
@@ -178,7 +179,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     unk0 = line[2:4] # face 1
     unk1 = line[4:6] # face 2
     unk2 = line[6:8] # Usually nulls
-    length = getLengthManually(offset) + 9 # Header - 2
+    length = struct.unpack('>H', line[9:11])[0] + 9 # Header - 2
 
     if splitCalls:
         splitCall(offset, length)
@@ -187,6 +188,11 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         if line[8].to_bytes() != b'\x80':
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return 1"""
+
+    # Get graphics data and write to a global dict:
+    global callDict 
+    graphicsData = getGraphicsData(offset + length)
+    callDict = radioDict.makeCallDictionary(graphicsData)
 
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
@@ -218,7 +224,9 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
         else:
             output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ')
 
-        output.write(f'Length = {count}, Graphics = {str(count / 36)} Unknown block: {content.hex()}\n')
+        output.write(f'Length = {count}, Graphics = {str(count / 36)} ')
+    output.write(f'Unknown block: {content.hex()}')
+    output.write('\n')
     return count
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
@@ -397,6 +405,26 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
 
+def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, but we return the string and hope its the graphics data 
+    """
+    copied from handleUnknown() but we return the bytestring of the graphics data
+    """
+    count = 0
+    global fileSize
+    global exportGraphics
+    output.write(f'ERROR! Unknown blcok at offset {offset}! ')
+    while True:
+        if offset + count == fileSize:
+            break
+        elif checkFreq(offset + count): # Why the +1 ?
+            break
+        elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
+            break
+        else: 
+            count += 1
+    content = radioData[offset: offset + count]
+    return content
+
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
     global layerNum
@@ -418,13 +446,17 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     messageString = ''
 
     while i < len(bytestring) :
-        try:
-            messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
-        except:
-            if debugOutput:
-                output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
-            messageString += '[?]'
-        i += 2
+        if bytestring[i] == b'\x96':
+            messageString += callDict.get(int(bytestring[i+1]))
+            i += 2
+        else:
+            try:
+                messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
+            except:
+                if debugOutput:
+                    output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
+                messageString += '[?]'
+            i += 2
         
     return messageString
 
