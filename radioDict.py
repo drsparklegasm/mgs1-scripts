@@ -2331,14 +2331,14 @@ def openRadioFile(filename: str) -> None:
 
 def countGraphics(message: str) -> None:
 	count = 0
-	for phrase in graphicsData:
+	for phrase in characters.graphicsData:
 		if phrase in message:
 			print(f'Phrase {phrase} found!')
 			count += 1
 	return count
 
 def checkForGraphics(message: str) -> bool:
-	for phrase in graphicsData:
+	for phrase in characters.graphicsData:
 		if phrase in message:
 			return True	
 	return False
@@ -2348,7 +2348,7 @@ def getRadioChar(hexString):
 
 def outputEmbeddedGraphics() -> None:
 	i = 1
-	for data in graphicsData:
+	for data in characters.graphicsData:
 		outputGraphic(str(i), bytes.fromhex(data))
 		i += 1
 
