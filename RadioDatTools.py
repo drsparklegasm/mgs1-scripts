@@ -233,6 +233,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     global output
     global contDepth
     global layerNum
+    global jpn
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
     """
@@ -448,14 +449,14 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
 
     while i < len(bytestring) :
         if bytestring[i] == b'\x96':
-            messageString += callDict.get(int(bytestring[i+1]))
+            messageString += callDict.get(int(bytestring[i + 1]))
             i += 2
         else:
             try:
                 messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
             except:
                 if debugOutput:
-                    output.write(f'Unable to translate Japanese byte code {bytestring[i : i+2].hex()}!!!\n')
+                    output.write(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
                 messageString += '[?]'
             i += 2
         
