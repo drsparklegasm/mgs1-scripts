@@ -231,7 +231,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global output
-    global contDepth
     global layerNum
     global jpn
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
@@ -275,6 +274,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             # Translate
             if jpn:
+                if b'\x96\x00' in dialogue:
+                    print(f'{offset} has a 0x9600 in dialogue! Check binary')
                 dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             
             # Write to file
@@ -448,8 +449,12 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     messageString = ''
 
     while i < len(bytestring) :
-        if bytestring[i] == b'\x96':
-            messageString += callDict.get(int(bytestring[i + 1]))
+        if bytestring[i].to_bytes() == b'\x96':
+            customCharacter = callDict.get(int(bytestring[i + 1]))
+            if customCharacter == None:
+                messageString += '[ERROR!]'
+            else:
+                messageString += customCharacter
             i += 2
         else:
             try:
