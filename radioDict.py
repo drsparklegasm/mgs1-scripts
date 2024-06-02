@@ -24,6 +24,7 @@ foundGraphics = []
 radioChar = {
 	'd002': "、",
 	'd003': "。",
+	'd006': "ー",
 	'd017': "...", # may need to see if there's an equivelant symbol for this to keep character consistency
 	'824f': "0",
 	'8250': "1",
@@ -2423,6 +2424,7 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
 """
 
 This only used for working with the graphics data found in jpn-d1, it was combined with the bash script to ocr the characters
+
 """
 
 def exportuniquegraphics():
@@ -2453,6 +2455,5 @@ for x in range(len(campbellDict)):
 
 translatedText = translateJapaneseHex(bytes.fromhex('8144 812f 814a d002 906a 9606 8138 812e 824b d006 8228 812f 9607 9608 812e 9609 960a 906e 5c72 5c6e 8120 8111 8149 8117 8104 d003 00'))
 print(translatedText)
-
 
 
