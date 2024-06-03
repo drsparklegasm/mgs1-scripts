@@ -4,6 +4,7 @@ Credit for matching all of the graphic characters goes to Green Goblin!
 """
 
 radioChar = {
+    'c03f': '?',
 	'd002': "、",
 	'd003': "。",
 	'd006': "ー",
@@ -90,7 +91,7 @@ radioChar = {
 	'803a': "：",
 	'803b': "；",
 	'803c': "＜",
-	'803d': "＝",
+	'803d': "＝",c03f
 	'803e': "＞",
 	'803f': "？",
 	'8040': "²",
