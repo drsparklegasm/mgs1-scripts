@@ -49,6 +49,8 @@ def __init__(self, filename: str):
 
 # FILE OPERATIONS
 
+missingChars = open('KanjiStillMissing.txt', 'w')
+
 def setRadioData(filename: str) -> bool:
     global radioData
     global fileSize
@@ -192,7 +194,10 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     # Get graphics data and write to a global dict:
     global callDict 
     graphicsData = getGraphicsData(offset + length)
-    callDict = radioDict.makeCallDictionary(graphicsData)
+    if len(graphicsData) % 36 == 0:
+        callDict = radioDict.makeCallDictionary(graphicsData)
+    else:
+        print(f'Graphics parse error offset {offset}! \n')
 
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
@@ -276,10 +281,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             if jpn:
                 if b'\x96\x00' in dialogue:
                     print(f'{offset} has a 0x9600 in dialogue! Check binary')
-                dialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+                translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             
             # Write to file
-            output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
+            if jpn:
+                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(translatedDialogue)}, hex: {dialogue.hex()} \n')
+            else:
+                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
             return length
         
         case b'\x02':
@@ -449,10 +457,14 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     messageString = ''
 
     while i < len(bytestring) :
-        if bytestring[i].to_bytes() == b'\x96':
+        if bytestring[i].to_bytes() == b'\x00':
+            break
+        elif bytestring[i].to_bytes() == b'\x20':
+            i += 1
+        elif bytestring[i].to_bytes() == b'\x96':
             customCharacter = callDict.get(int(bytestring[i + 1]))
             if customCharacter == None:
-                messageString += '[ERROR!]'
+                messageString += '[??]'
             else:
                 messageString += customCharacter
             i += 2
@@ -462,9 +474,10 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
             except:
                 if debugOutput:
                     output.write(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
+                missingChars.write(f'{bytestring[i : i + 2].hex()}=\n')
                 messageString += '[?]'
             i += 2
-        
+    # Return translated message
     return messageString
 
 def extractRadioCallHeaders(outputFilename: str) -> None:
