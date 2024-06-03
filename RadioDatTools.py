@@ -277,7 +277,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             dialogue = line[10 : length]
             
             lineBreakRepace = False
-            if b'\x80\x23\x80\x4e' in dialogue and not jpn:  # this replaces the in-game hex for new line with a \\r\\n
+            if b'\x80\x23\x80\x4e' in dialogue:  # this replaces the in-game hex for new line with a \\r\\n
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
