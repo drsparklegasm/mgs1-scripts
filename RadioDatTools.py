@@ -104,10 +104,10 @@ freqList = [
     b'\x37\x48', # 141.52, Natasha
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
-    b'\x36\xb7'  # 140.07, Staff
+    b'\x36\xb7'  # 140.07, Staff, Integral exclusive
 ]
 
-# Hashes for each radio file. I did not include Integral, as it won't suit the needs of this project.
+# Hashes for each radio file. I did not include Integral yet, as it won't suit the needs of this project. We'll need to write something to hash the files when ingested.
 radioHashes = {
     "usa-d1":'9b6d223d8e1a9e562e2c188efa3e6425a87587f35c6bd1cfe62c5fa7ee9a0019',    # USA Disc 1
     "usa-d2":'e6cf1b353db0bc7620251b6916577527debfdd5bdcd125b3ca9ef5c9a0aef61e',
@@ -277,7 +277,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             dialogue = line[10 : length]
             
             lineBreakRepace = False
-            if b'\x80\x23\x80\x4e' in dialogue:  # this replaces the in-game hex for new line with a \\r\\n
+            if b'\x80\x23\x80\x4e' in dialogue and not jpn:  # this replaces the in-game hex for new line with a \\r\\n
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
