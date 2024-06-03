@@ -76,7 +76,7 @@ radioChar = {
 	'8298': "x",
 	'8299': "y",
 	'829a': "z",
-    '8023': '\\n',# I think this means new line, but we're not sure yet as it has different meanings between US/jpn
+    # '8023': '\\n',# I think this means new line, but we're not sure yet as it has different meanings between US/jpn
 	'8030': "０",
 	'8031': "１",
 	'8032': "２",
