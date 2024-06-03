@@ -49,7 +49,10 @@ def __init__(self, filename: str):
 
 # FILE OPERATIONS
 
+# Debugging files:
 missingChars = open('KanjiStillMissing.txt', 'w')
+dialogueOnly = open('iseevaStyle.json', 'w')
+dialogueOnly.write('{\n')
 
 def setRadioData(filename: str) -> bool:
     global radioData
@@ -210,7 +213,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     count = 0
     global fileSize
     global exportGraphics
-    output.write(f'ERROR! Unknown blcok at offset {offset}! ')
     while True:
         if offset + count == fileSize:
             break
@@ -221,6 +223,8 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
         else: 
             count += 1
     content = radioData[offset: offset + count]
+    if len(content) % 36 != 0:
+        output.write(f'ERROR! Unknown blcok at offset {offset}! ')
 
     if exportGraphics:
         if len(content) % 36 == 0:
@@ -279,9 +283,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             # Translate
             if jpn:
-                if b'\x96\x00' in dialogue:
+                if b'\x96\x00' in dialogue: # We need this because we should never see 0x9600
                     print(f'{offset} has a 0x9600 in dialogue! Check binary')
+                print(f'Offset is {offset}\n')
                 translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+                dialogueOnly.write(f'  "{offset}": "{translatedDialogue}",\n')
             
             # Write to file
             if jpn:
@@ -423,7 +429,6 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
     count = 0
     global fileSize
     global exportGraphics
-    output.write(f'ERROR! Unknown blcok at offset {offset}! ')
     while True:
         if offset + count == fileSize:
             break
@@ -459,7 +464,13 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     while i < len(bytestring) :
         if bytestring[i].to_bytes() == b'\x00':
             break
-        elif bytestring[i].to_bytes() == b'\x20':
+        elif bytestring[i:i+4] == b'\\r\\n':
+            i += 4
+            messageString += "\\r\\n"  
+                
+        elif bytestring[i].to_bytes() < b'\x80': # Need to tweak this
+            print(f'({i}, {bytestring[i].to_bytes()}, {bytestring[i]}) single character translation!\n')
+            messageString += f'{str(bytestring[i].to_bytes())}'
             i += 1
         elif bytestring[i].to_bytes() == b'\x96':
             customCharacter = callDict.get(int(bytestring[i + 1]))
@@ -470,12 +481,13 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
             i += 2
         else:
             try:
-                messageString += radioDict.getRadioChar(bytestring[ i : i + 2 ].hex())
+                messageString += radioDict.getRadioCharacter(bytestring[ i : i + 2 ].hex())
             except:
                 if debugOutput:
-                    output.write(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
-                missingChars.write(f'{bytestring[i : i + 2].hex()}=\n')
-                messageString += '[?]'
+                    print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
+                text = bytestring[i : i + 2].hex()
+                missingChars.write(f'{text}\n')
+                messageString += f'[{text}]'
             i += 2
     # Return translated message
     return messageString
@@ -629,3 +641,5 @@ if __name__ == '__main__':
     
     if args.graphics:
         radioDict.printFoundGraphics()
+
+    dialogueOnly.write('}')
