@@ -1949,3 +1949,49 @@ graphicsData = {
 	"3ffffe3aaaa9380b00380b003aaba83bfffc380b00380b00740b00bbfffe26aaa9000000": "圧",
 	"2babf43ffbba3ab62d7bbffc7bb2acbabaf926e7682ffff82eebb86eebb9bffffe000000": "?",
 }
+
+
+# Chat GPT $#!+ below
+def print_hiragana_shiftjis_with_offset():
+    # Starting and ending Shift-JIS values for Hiragana
+    start_sjis = 0x829F  # Shift-JIS value for 'あ'
+    end_sjis = 0x82F1  # Shift-JIS value for 'ん'
+    offset = -414  # Decimal offset
+
+    print("Hiragana | Shift-JIS | Custom Hex")
+    print("---------------------------------")
+    
+    for sjis_code in range(start_sjis, end_sjis + 1):
+        # Convert Shift-JIS to character assuming direct mapping in Python environment might not always hold
+        try:
+            # Decode from Shift-JIS to Unicode and get character
+            hiragana_char = bytes([sjis_code >> 8, sjis_code & 0xFF]).decode('shift_jis')
+            custom_hex = hex(sjis_code + offset)
+            print(f"{hiragana_char}       | 0x{sjis_code:04X}  | {custom_hex}")
+        except UnicodeDecodeError:
+            # Handle possible decoding errors if sjis_code is not a valid Shift-JIS byte pair
+            print(f"Invalid  | 0x{sjis_code:04X}  | N/A")
+
+# MODIFIED to print in dict format
+def print_hiragana_shiftjis_with_offset_in_dict_format():
+    # Starting and ending Shift-JIS values for Hiragana
+    start_sjis = 0x829F  # Shift-JIS value for 'あ'
+    end_sjis = 0x82F1  # Shift-JIS value for 'ん'
+    offset = -414  # Decimal offset
+
+    print("Hiragana | Shift-JIS | Custom Hex")
+    print("---------------------------------")
+    
+    for sjis_code in range(start_sjis, end_sjis + 1):
+        # Convert Shift-JIS to character assuming direct mapping in Python environment might not always hold
+        try:
+            # Decode from Shift-JIS to Unicode and get character
+            hiragana_char = bytes([sjis_code >> 8, sjis_code & 0xFF]).decode('shift_jis')
+            custom_hex = hex(sjis_code + offset)
+            print(f"'{custom_hex}': '{hiragana_char}',")
+        except UnicodeDecodeError:
+            # Handle possible decoding errors if sjis_code is not a valid Shift-JIS byte pair
+            print(f"Invalid  | 0x{sjis_code:04X}  | N/A")
+
+# Call the function to display the data
+print_hiragana_shiftjis_with_offset_in_dict_format()
