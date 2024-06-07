@@ -36,7 +36,7 @@ exportGraphics = False
 offset = 0
 layerNum = 0
 output = open('output.txt', 'w')
-radioData: bytes = ""
+radioData = b''
 callDict = {}
 fileSize = 0
 
@@ -50,7 +50,7 @@ def __init__(self, filename: str):
 # FILE OPERATIONS
 
 # Debugging files:
-missingChars = open('KanjiStillMissing.txt', 'w')
+
 dialogueOnly = open('iseevaStyle.json', 'w')
 dialogueOnly.write('{\n')
 
@@ -458,39 +458,8 @@ def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion 
 
 ## Translation Commands:
 def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move to separate file?
-    i = 0
-    messageString = ''
-
-    while i < len(bytestring) :
-        if bytestring[i].to_bytes() == b'\x00':
-            break
-        elif bytestring[i:i+4] == b'\\r\\n':
-            i += 4
-            messageString += "\\r\\n"  
-                
-        elif bytestring[i].to_bytes() < b'\x80': # Need to tweak this
-            print(f'({i}, {bytestring[i].to_bytes()}, {bytestring[i]}) single character translation!\n')
-            messageString += f'{str(bytestring[i].to_bytes())}'
-            i += 1
-        elif bytestring[i].to_bytes() == b'\x96':
-            customCharacter = callDict.get(int(bytestring[i + 1]))
-            if customCharacter == None:
-                messageString += '[??]'
-            else:
-                messageString += customCharacter
-            i += 2
-        else:
-            try:
-                messageString += radioDict.getRadioCharacter(bytestring[ i : i + 2 ].hex())
-            except:
-                if debugOutput:
-                    print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
-                text = bytestring[i : i + 2].hex()
-                missingChars.write(f'{text}\n')
-                messageString += f'[{text}]'
-            i += 2
-    # Return translated message
-    return messageString
+    global callDict
+    return radioDict.translateJapaneseHex(bytestring, callDict)
 
 def extractRadioCallHeaders(outputFilename: str) -> None:
     offset = 0
