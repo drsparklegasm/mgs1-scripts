@@ -1,7 +1,7 @@
 import os, struct
 # import progressbar, time
 
-filename = "build-jpn/iso/MGS/DEMO.DAT"
+filename = "build/MGS/DEMO.DAT"
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()

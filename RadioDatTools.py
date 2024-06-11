@@ -437,7 +437,7 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
         elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
             break
         else: 
-            count += 1
+            count += 36
     content = radioData[offset: offset + count]
     return content
 
