@@ -1,7 +1,7 @@
 #!/bin/python
 
 import os, struct
-import charactersTest as characters
+import myScripts.characters as characters
 
 # GLOBAL STUFF
 missingChars = open('KanjiStillMissing.txt', 'w')
