@@ -612,3 +612,4 @@ if __name__ == '__main__':
         radioDict.printFoundGraphics()
 
     dialogueOnly.write('}')
+    dialogueOnly.close()
