@@ -312,7 +312,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             if jpn:
                 dialogue = str(translatedDialogue)
             else:
-                dialogue = str(dialogue)
+                dialogue = dialogue.decode('ascii')
 
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
             
@@ -322,7 +322,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 'face': face.hex(),
                 "anim": anim.hex(),
                 "unk3": unk3.hex(),
-                "Text": str(dialogue)
+                "Text": dialogue
             })
 
             return length
