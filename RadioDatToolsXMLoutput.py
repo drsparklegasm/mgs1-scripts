@@ -380,6 +380,10 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             containerLength = getLength(offset)
             freq = getFreq(offset + 4)
             entryName = line[6 : length - 1]
+            if jpn:
+                entryNameStr = translateJapaneseHex(entryName)
+            else:
+                entryNameStr = entryName.decode('ascii')
 
             # Just a safety since the length of this was hard-coded
             if debugOutput:
@@ -390,7 +394,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "offset": str(offset),
                 "length": str(length),
                 "freq": str(freq),
-                "name": entryName.hex()
+                "name": entryNameStr
             })
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
