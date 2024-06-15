@@ -93,15 +93,15 @@ def makeCallDictionary(graphicsBytes: bytes):
 		print(f'Error! LENGTH is not even number of graphics! Assuming nulls...')
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
-	print(len(graphicsBytes))
+	# print(len(graphicsBytes))
 	count = int(len(graphicsBytes) / 36)
 	for x in range(count):
 		segment = graphicsBytes[x * 36: (x + 1) * 36 ]
-		if segment.hex() not in characters.graphicsData:
+		"""if segment.hex() not in characters.graphicsData:
 			outputGraphic(f'newKanji-{x}', segment)
 			print(f'Kanji {x} = {segment.hex()}')
 		else:
-			outputGraphic(f'foundKanji-{x}', segment)
+			outputGraphic(f'foundKanji-{x}', segment)"""
 		result = characters.graphicsData.get(segment.hex())
 		callDictionary.update({x + 1: result})
 	return callDictionary
@@ -165,10 +165,11 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 
 """
 
+"""
 if __name__ == '__main__':
 	# Use this to test all characters in a radio call
 	testingDict = makeCallDictionary(bytes.fromhex(''))
 	outputManyGraphics("test", bytes.fromhex(''))
 
 	for x in range(len(testingDict) + 1):
-		print(f'{testingDict.get(x)}', end=" ")
+		print(f'{testingDict.get(x)}', end=" ")"""
