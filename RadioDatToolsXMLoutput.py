@@ -261,6 +261,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     global root
     global elementStack
 
+    def checkElement(length):
+        current_element, current_length = elementStack.pop()
+        newElementLength = current_length - length
+        if newElementLength > 1:
+            elementStack.append((current_element, newElementLength))
+
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
     """
@@ -322,10 +328,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "UNK3": unk3.hex(),
                 "Dialogue": str(dialogue)
             })
-            current_element, current_length = elementStack.pop()
-            newElementLength = current_length - length
-            if newElementLength > 1:
-                elementStack.append((current_element, newElementLength))
+            checkElement(length)
 
             return length
         
@@ -352,11 +355,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
             
-            current_element, current_length = elementStack.pop()
-            newElementLength = current_length - length
-            if newElementLength > 1:
-                elementStack.append((current_element, newElementLength))
-            
+            checkElement(length)
             return length
         
         case b'\x03':
@@ -368,7 +367,16 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             buff = line[8:10]
 
+            Anim_Element = ET.SubElement(elementStack[-1][0], "Animation", {
+                "offset": str(offset),
+                "length": str(length),
+                'face': line[4:6].hex(),
+                'anim': line[6:8].hex(),
+                'buff': line[8:10].hex(),
+            })
+
             output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
+            checkElement(length)
             return length
         
         case b'\x04':
@@ -660,9 +668,11 @@ if __name__ == '__main__':
     dialogueOnly.write('}')
     dialogueOnly.close()
 
-    xmlOut = ET.ElementTree(root)
-    xmlOut.write("Radio-Decrypted.xml")
+    # xmlOut = ET.ElementTree(root)
+    # xmlOut.write("Radio-Decrypted.xml")
     # Optional print the string: 
     from xml.dom.minidom import parseString
     xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="   ")
-    print(xmlstr)
+    xmlFile = open('Radio-Decrypted.xml', 'w')
+    xmlFile.write(xmlstr)
+    xmlFile.close()
