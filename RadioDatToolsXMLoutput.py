@@ -40,7 +40,6 @@ exportGraphics = False
 # Script variables 
 offset = 0
 layerNum = 0
-output = open('output.txt', 'w')
 radioData = b''
 callDict = {}
 fileSize = 0
@@ -177,6 +176,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     global layerNum
     global root
     global elementStack
+    global splitCalls
 
     # OPTIONAL Add an offset tracker output?
     
@@ -262,7 +262,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     def checkElement(length):
         current_element, current_length = elementStack.pop()
         newElementLength = current_length - length
-        if newElementLength > 1:
+        if newElementLength > 0:
             elementStack.append((current_element, newElementLength))
 
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
@@ -273,7 +273,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         offset -= 1
         commandByte = b'\x31'
         """
-
+    
     indentLines() # Indent before printing the command to our depth level.
 
     # We now deal with the byte
@@ -310,21 +310,22 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     print(f'{offset} has a 0x9600 in dialogue! Check binary')
                 print(f'Offset is {offset}\n')
                 translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-                dialogueOnly.write(f'  "{offset}": "{translatedDialogue}",\n')
             
             # Write to file
             if jpn:
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(translatedDialogue)}, hex: {dialogue.hex()} \n')
+                dialogue = str(translatedDialogue)
             else:
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
+                dialogue = str(dialogue)
+
+            output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
             
             subtitle_element = ET.SubElement(elementStack[-1][0], "Subtitle", {
                 "offset": str(offset),
                 "length": str(length),
-                'FACE': face.hex(),
-                "ANIM": anim.hex(),
-                "UNK3": unk3.hex(),
-                "Dialogue": str(dialogue)
+                'face': face.hex(),
+                "anim": anim.hex(),
+                "unk3": unk3.hex(),
+                "Text": str(dialogue)
             })
             checkElement(length)
 
@@ -394,7 +395,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "offset": str(offset),
                 "length": str(length),
                 "freq": str(freq),
-                "name": entryName.decode('ascii')
+                "name": entryName.hex()
             })
             checkElement(length)
 
@@ -687,7 +688,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     filename = args.filename
-    outputFilename = args.output
+    outputFilename = f'{args.output}.txt'
 
     if args.verbose:
         debugOutput = True
@@ -729,7 +730,7 @@ if __name__ == '__main__':
     if args.xmloutput:
         from xml.dom.minidom import parseString
         xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
-        xmlFile = open('Radio-Decrypted.xml', 'w')
+        xmlFile = open(f'{args.output}.xml', 'w')
         xmlFile.write(xmlstr)
         xmlFile.close()
     
@@ -738,8 +739,8 @@ if __name__ == '__main__':
         dialogueData = {}
         for subs in root.findall('.//Subtitle'):
             offset = subs.get('offset')
-            text = subs.get('Dialogue')
+            text = subs.get('Text')
             dialogueData[int(offset)] = text
         
-        with open("Iseevastyle.json", 'w') as f:
-            json.dump(dialogueData, f, indent=4)
+        with open(f"{args.output}IseevaStyle.json", 'w') as f:
+            json.dump(dialogueData, f, ensure_ascii=False, indent=4)

@@ -138,7 +138,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 				try:
 					messageString += characters.kanji.get(bytestring[i:i+2].hex())
 				except:
-					print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
+					# print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
 					missingChars.write(f'[{bytestring[i : i + 2].hex()}]\n')
 					messageString += f'[{bytestring[i : i + 2].hex()}]'
 			i += 2
