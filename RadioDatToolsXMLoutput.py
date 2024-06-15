@@ -56,9 +56,6 @@ def __init__(self, filename: str):
 
 # Debugging files:
 
-dialogueOnly = open('iseevaStyle.json', 'w')
-dialogueOnly.write('{\n')
-
 def setRadioData(filename: str) -> bool:
     global radioData
     global fileSize
@@ -462,7 +459,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
-                "content": header.hex(),
+                "content": line.hex(),
             })
             checkElement(length)
             elementStack.append((elseElement, length))  
@@ -480,6 +477,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             scriptLength = struct.unpack('>H',line[length - 2: length])[0]
             
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
+
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex()
+            })
+            checkElement(length)
             return length 
         
         case b'\x40':
@@ -499,6 +503,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex()
+            })
+            checkElement(length)
             return length
         
         case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
@@ -670,6 +680,9 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
     parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
     parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
+    parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
+    parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
+    
 
     args = parser.parse_args()
 
@@ -705,14 +718,28 @@ if __name__ == '__main__':
     if args.graphics:
         radioDict.printFoundGraphics()
 
-    dialogueOnly.write('}')
-    dialogueOnly.close()
+    """
+    # THE OLD METHOD! 
 
-    # xmlOut = ET.ElementTree(root)
-    # xmlOut.write("Radio-Decrypted.xml")
+    xmlOut = ET.ElementTree(root)
+    xmlOut.write("Radio-Decrypted.xml")
+    """
+
     # Optional print the string: 
-    from xml.dom.minidom import parseString
-    xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="   ")
-    xmlFile = open('Radio-Decrypted.xml', 'w')
-    xmlFile.write(xmlstr)
-    xmlFile.close()
+    if args.xmloutput:
+        from xml.dom.minidom import parseString
+        xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
+        xmlFile = open('Radio-Decrypted.xml', 'w')
+        xmlFile.write(xmlstr)
+        xmlFile.close()
+    
+    if args.iseeeva:
+        import json
+        dialogueData = {}
+        for subs in root.findall('.//Subtitle'):
+            offset = subs.get('offset')
+            text = subs.get('Dialogue')
+            dialogueData[int(offset)] = text
+        
+        with open("Iseevastyle.json", 'w') as f:
+            json.dump(dialogueData, f, indent=4)
