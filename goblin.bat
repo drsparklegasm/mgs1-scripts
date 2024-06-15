@@ -13,7 +13,7 @@ for %%f in (%input_dir%\*.bin) do (
     set base_filename=%%~nf
     set output=%input_dir%\%base_filename%-decrypted.txt
 
-    python myScripts\RadioDatTools.py %%f %output%
+    python myScripts\RadioDatTools.py %%f %output% -zx
 )
 
 endlocal
