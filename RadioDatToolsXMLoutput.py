@@ -24,6 +24,7 @@ import os, struct, re
 import radioDict # May remove later
 import argparse
 import xml.etree.ElementTree as ET
+import base64
 
 root = ET.Element("RadioData")
 elementStack = [(root, -1)]
@@ -392,6 +393,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
+            SaveFreqElement = ET.SubElement(elementStack[-1][0], "Freq-add", {
+                "offset": str(offset),
+                "length": str(length),
+                "freq": str(freq),
+                "name": entryName.decode('ascii')
+            })
+            checkElement(length)
+
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
         
@@ -401,6 +410,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset) # Might be US specific?
             line = radioData[offset:offset + length]
             output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
+
+            SaveCommand = ET.SubElement(elementStack[-1][0], "Freq-add", {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
+            checkElement(length)
             return length
 
         case b'\x06' | b'\x07' | b'\x08': 
@@ -408,6 +424,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset)
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+
+            cuesElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
+            checkElement(length)
+            elementStack.append((cuesElement, length))
             return length
 
         case b'\x10': # 
@@ -417,6 +441,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + header]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 2
+
+            conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
+            checkElement(length)
+            elementStack.append((conditionalElement, length))  
             return header
         
         case b'\x11' | b'\x12': # If, ElseIF, Else respectively
@@ -424,8 +456,16 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = getLengthManually(offset) # Maybe not ?
             length = getLength(offset + header - 2)
             line = radioData[offset : offset + header]
-            output.write(f' -- Offset = {offset}, length = {header}, length = {length} Content = {line.hex()}\n')
+            output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
+
+            elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": header.hex(),
+            })
+            checkElement(length)
+            elementStack.append((elseElement, length))  
             return header
         
         # This one is fugly. Time to look at containerizing these or something. 
