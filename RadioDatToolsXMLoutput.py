@@ -252,18 +252,18 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     output.write('\n')
     return count
 
+def checkElement(length):
+    current_element, current_length = elementStack.pop()
+    newElementLength = current_length - length
+    if newElementLength > 1:
+        elementStack.append((current_element, newElementLength))
+
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global output
     global layerNum
     global jpn
     global root
     global elementStack
-
-    def checkElement(length):
-        current_element, current_length = elementStack.pop()
-        newElementLength = current_length - length
-        if newElementLength > 0:
-            elementStack.append((current_element, newElementLength))
 
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
@@ -327,7 +327,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "unk3": unk3.hex(),
                 "Text": str(dialogue)
             })
-            checkElement(length)
 
             return length
         
@@ -344,14 +343,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if voxLength1 - voxLength2 != 7:
                     print(f'ERROR!! OFFSET {offset} HAS A \\x02 that does not evenly fit!')
 
-            checkElement(length)
             voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(voxLength1),
                 "LengthB": str(voxLength2),
                 "Content": f'{line.hex()}'
             })
-            elementStack.append((voxElement, length))
+            elementStack.append((voxElement, length - header))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
             
@@ -366,7 +364,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             buff = line[8:10]
 
-            checkElement(length)
             Anim_Element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -391,7 +388,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
-            checkElement(length)
             SaveFreqElement = ET.SubElement(elementStack[-1][0], "Freq-add", {
                 "offset": str(offset),
                 "length": str(length),
@@ -409,7 +405,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset:offset + length]
             output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
 
-            checkElement(length)
             SaveCommand = ET.SubElement(elementStack[-1][0], "Freq-add", {
                 "offset": str(offset),
                 "length": str(length),
@@ -423,7 +418,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
 
-            checkElement(length)
             cuesElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -440,13 +434,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 2
 
-            checkElement(length)
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
-            elementStack.append((conditionalElement, length))  
+            elementStack.append((conditionalElement, length))
             return header
         
         case b'\x11' | b'\x12': # If, ElseIF, Else respectively
@@ -457,7 +450,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
 
-            checkElement(length)
             elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -479,7 +471,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
 
-            checkElement(length)
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -505,7 +496,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             
-            checkElement(length)
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -592,7 +582,8 @@ def extractRadioCallHeaders(outputFilename: str) -> None:
             length = 11
         else:
             length = 1
-        offset += length 
+        offset += length
+        checkElement(length)
         if offset == fileSize:
             print(f'File was parsed successfully! Written to {outputFilename}')
             break
@@ -617,8 +608,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
 
     if radioData == None:
         return "Command failed! Radiodata file not set!"
-
-    setOutputFile(outputFilename)
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
@@ -651,6 +640,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         else: # Something went wrong, we need to kinda reset
             length = handleUnknown(offset) # This will go until we find a call frequency
         offset += length
+        checkElement(length)
 
     output.close()
 
