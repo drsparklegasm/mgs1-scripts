@@ -44,13 +44,6 @@ radioData = b''
 callDict = {}
 fileSize = 0
 
-def __init__(self, filename: str):
-    radioFile = open(filename, 'rb')
-    global radioData
-    global fileSize
-    radioData = radioFile.read()
-    fileSize = len(radioData)
-
 # FILE OPERATIONS
 
 # Debugging files:
@@ -261,12 +254,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     output.write(f'Unknown block: {content.hex()}')
     output.write('\n')
     return count
-
-def checkElement(length):
-    current_element, current_length = elementStack.pop()
-    newElementLength = current_length - length
-    if newElementLength > 0:
-        elementStack.append((current_element, newElementLength))
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global output
@@ -559,6 +546,12 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
 
     return content
 
+def checkElement(length):
+    current_element, current_length = elementStack.pop()
+    newElementLength = current_length - length
+    if newElementLength > 0:
+        elementStack.append((current_element, newElementLength))
+
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
     global layerNum
@@ -758,5 +751,5 @@ if __name__ == '__main__':
             text = subs.get('Text')
             dialogueData[int(offset)] = text
         
-        with open(f"{args.output}IseevaStyle.json", 'w') as f:
+        with open(f"{args.output}-Iseeva.json", 'w') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=4)
