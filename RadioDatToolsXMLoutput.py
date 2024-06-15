@@ -319,7 +319,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
             
-            subtitle_element = ET.SubElement(elementStack[-1][0], "Subtitle", {
+            subtitle_element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 'face': face.hex(),
@@ -344,7 +344,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if voxLength1 - voxLength2 != 7:
                     print(f'ERROR!! OFFSET {offset} HAS A \\x02 that does not evenly fit!')
 
-            voxElement = ET.SubElement(elementStack[-1][0], "Dialogue", {
+            checkElement(length)
+            voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(voxLength1),
                 "LengthB": str(voxLength2),
@@ -354,7 +355,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
             
-            checkElement(length)
             return length
         
         case b'\x03':
@@ -366,7 +366,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             buff = line[8:10]
 
-            Anim_Element = ET.SubElement(elementStack[-1][0], "Animation", {
+            checkElement(length)
+            Anim_Element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 'face': line[4:6].hex(),
@@ -375,7 +376,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             })
 
             output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
-            checkElement(length)
             return length
         
         case b'\x04':
@@ -391,13 +391,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
+            checkElement(length)
             SaveFreqElement = ET.SubElement(elementStack[-1][0], "Freq-add", {
                 "offset": str(offset),
                 "length": str(length),
                 "freq": str(freq),
                 "name": entryName.hex()
             })
-            checkElement(length)
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
@@ -409,12 +409,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset:offset + length]
             output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
 
+            checkElement(length)
             SaveCommand = ET.SubElement(elementStack[-1][0], "Freq-add", {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
-            checkElement(length)
             return length
 
         case b'\x06' | b'\x07' | b'\x08': 
@@ -423,12 +423,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
 
+            checkElement(length)
             cuesElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
-            checkElement(length)
             elementStack.append((cuesElement, length))
             return length
 
@@ -440,12 +440,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 2
 
+            checkElement(length)
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
-            checkElement(length)
             elementStack.append((conditionalElement, length))  
             return header
         
@@ -457,12 +457,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
 
+            checkElement(length)
             elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
-            checkElement(length)
             elementStack.append((elseElement, length))  
             return header
         
@@ -479,12 +479,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
 
+            checkElement(length)
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex()
             })
-            checkElement(length)
             return length 
         
         case b'\x40':
@@ -504,12 +504,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+            
+            checkElement(length)
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex()
             })
-            checkElement(length)
             return length
         
         case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
@@ -737,7 +738,7 @@ if __name__ == '__main__':
     if args.iseeeva:
         import json
         dialogueData = {}
-        for subs in root.findall('.//Subtitle'):
+        for subs in root.findall(f'.//SUBTITLE'):
             offset = subs.get('offset')
             text = subs.get('Text')
             dialogueData[int(offset)] = text
