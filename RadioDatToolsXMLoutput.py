@@ -349,6 +349,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "LengthB": str(voxLength2),
                 "Content": f'{line.hex()}'
             })
+            checkElement(length)
             elementStack.append((voxElement, length - header))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
@@ -437,9 +438,10 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
+                "header": str(header),
                 "content": line.hex(),
             })
-            elementStack.append((conditionalElement, length))
+            elementStack.append((conditionalElement, length - header - 2))
             return header
         
         case b'\x11' | b'\x12': # If, ElseIF, Else respectively
