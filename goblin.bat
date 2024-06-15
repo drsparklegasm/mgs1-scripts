@@ -3,7 +3,7 @@ setlocal
 
 REM This script runs the python script recursively, first to export all calls, then translate individual calls
 
-set SCRIPT=myScripts\RadioDatTools.py
+set SCRIPT=myScripts\RadioDatToolsXMLoutput.py
 set RADIODAT=%1
 set input_dir=extractedCallBins
 
