@@ -241,13 +241,14 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     
     if len(content) % 36 != 0:
         output.write(f'ERROR! Unknown blcok at offset {offset}! ')
-    else:
+    """else:
         if args.xmloutput and len(content) > 0:
             graphics = {}
             graphics_element = ET.SubElement(elementStack[-1][0], "CallGraphics")
             for x in range(0, int(len(content) / 36)):
                 data = content[x * 36 : (x+1) * 36]
-                graphic_element = ET.SubElement(graphics_element, "Graphic", {f'char-{x}': f'{data.hex()}'})
+                graphic_element = ET.SubElement(graphics_element, "Graphic", {f'char-{x}': f'{data.hex()}'})"""
+    # The above works, but it's Fucking painful on the eyes. Better off just exporting the kanji
 
     if exportGraphics:
         if len(content) % 36 == 0:
