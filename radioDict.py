@@ -165,11 +165,13 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 
 """
 
-"""
-if __name__ == '__main__':
+
+"""if __name__ == '__main__':
 	# Use this to test all characters in a radio call
-	testingDict = makeCallDictionary(bytes.fromhex(''))
-	outputManyGraphics("test", bytes.fromhex(''))
+	test = open('26213.bin', 'rb')
+	testbytes = test.read()
+	testingDict = makeCallDictionary(testbytes)
+	outputManyGraphics("test", testbytes)
 
 	for x in range(len(testingDict) + 1):
-		print(f'{testingDict.get(x)}', end=" ")"""
+		print(f'{x} = {testingDict.get(x)}', end=" ")"""

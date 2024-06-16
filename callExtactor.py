@@ -61,4 +61,5 @@ if __name__ == '__main__':
     parser.add_argument('offset', type=int, help="Offset of the start of the")
     parser.add_argument('output', type=str, help="Output Filename (.txt)")
     """
-    main()
+    main("", int(), int())
+    # main("radioDatFiles/RADIO-usa-d1.DAT", int(26213), int(324))
