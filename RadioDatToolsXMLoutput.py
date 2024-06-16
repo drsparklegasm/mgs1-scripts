@@ -379,7 +379,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             containerLength = getLength(offset)
             freq = getFreq(offset + 4)
-            entryName = line[6 : length - 1]
+            entryName = line[6 : length]
             if jpn:
                 entryNameStr = translateJapaneseHex(entryName)
             else:
@@ -407,7 +407,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset:offset + length]
             output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
 
-            SaveCommand = ET.SubElement(elementStack[-1][0], "Freq-add", {
+            SaveCommand = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
@@ -647,7 +647,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
                 if layerNum > 0:
                     layerNum -= 1
                 length = 1
-                nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Length": "1"})
+                nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             length = handleCommand(offset)
