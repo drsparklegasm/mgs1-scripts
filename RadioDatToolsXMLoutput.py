@@ -96,6 +96,7 @@ freqList = [
     b'\x36\xbf', # 140.15, Meryl
     b'\x36\xb7', # 141.12, Otacon
     b'\x37\x48', # 141.52, Natasha
+    b'\x37\xac', # 142.52, Natasha ACCIDENT
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
