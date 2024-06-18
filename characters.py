@@ -2053,5 +2053,8 @@ def print_hiragana_shiftjis_with_offset_in_dict_format():
             # Handle possible decoding errors if sjis_code is not a valid Shift-JIS byte pair
             print(f"Invalid  | 0x{sjis_code:04X}  | N/A")
 
-# Call the function to display the data
-# print_hiragana_shiftjis_with_offset_in_dict_format()
+"""
+
+Any code here is kinda meaningless. It's exclusively for testing and finding any unidentified characters. 
+
+"""
