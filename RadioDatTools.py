@@ -339,7 +339,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             checkElement(length)
             elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
-            # container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
             
             return length
         
@@ -452,7 +451,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             elementStack.append((elseElement, length))
             return header
         
-        # This one is fugly. Time to look at containerizing these or something. 
         case b'\x30' | b'\x31':
             # 30 is handled different, as it has a container header
             if commandByte == b'\x30':
