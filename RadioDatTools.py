@@ -554,10 +554,11 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
     return content
 
 def checkElement(length):
-    current_element, current_length = elementStack.pop()
-    newElementLength = current_length - length
-    if newElementLength > 0:
-        elementStack.append((current_element, newElementLength))
+    if len(elementStack) > 0:
+        current_element, current_length = elementStack.pop()
+        newElementLength = current_length - length
+        if newElementLength > 0:
+            elementStack.append((current_element, newElementLength))
 
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
