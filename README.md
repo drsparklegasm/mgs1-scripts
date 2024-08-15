@@ -13,7 +13,7 @@ Currently this will analyze the RADIO.DAT file and output in several ways. -H wi
 This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. Usage:
 
 ```
-$ RadioDatTools.py path/to/Radio.dat {outputfilename.txt} [-j, -i, -d, ...]
+$ RadioDatTools.py path/to/Radio.dat [outputfilename] [-h, -i, -d, ...]
 ```
 
 ### callsInStageDirFinder.py
@@ -43,7 +43,7 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 Known issues:
 - Work not yet started for recompiling.
-- For the time being, please always use -j flag, it will parse english text fine but currently without it we don't properly handle two-byte text characters in USA version.
+- For the time being, please always use -j flag, it will parse english text fine but currently without it we don't properly handle two-byte text characters in USA version. [Currently can only be run in -j mode!]
 - Still missing several kanji characters that need to be OCR'd from their graphics files.
 - Possibly a known mistake: 
 `ERROR! Unknown blcok at offset 1734005! Length = 11, Unknown block: 37ac2d0001ac000080075c` 

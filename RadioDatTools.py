@@ -33,7 +33,7 @@ customGraphicsData = []
 
 ## Formatting Settings!
 
-jpn = False
+jpn = True # For now, lock to True until bug parsing in english is resolved. 
 indentToggle = True
 debugOutput = False
 splitCalls = False
