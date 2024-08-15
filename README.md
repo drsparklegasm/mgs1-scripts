@@ -41,10 +41,30 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 `RadioDatTools.py -H` for help.
 
-Known issues:
-- Work not yet started for recompiling.
+```
+usage: RadioDatTools.py [-h] [-v] [-i] [-s] [-H] [-g] [-x] [-z] filename [output]
+
+Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>
+
+positional arguments:
+  filename         The call file to parse. Can be RADIO.DAT or a portion of it.
+  output           Output Filename (.txt)
+
+options:
+  -h, --help       show this help message and exit
+  -v, --verbose    Write any errors to stdout for help parsing the file
+  -i, --indent     Indents container blocks, WORK IN PROGRESS!
+  -s, --split      Split calls into individual bin files
+  -H, --headers    Extract call headers ONLY!
+  -g, --graphics   export graphics
+  -x, --xmloutput  Exports the call data into XML format
+  -z, --iseeeva    Exports the dialogue in a json like Iseeeva's script
+  ```
+
+## Known issues:
+- Work not yet started for recompiling. Need to figure out some of the if/then line ending formats
 - For the time being, please always use -j flag, it will parse english text fine but currently without it we don't properly handle two-byte text characters in USA version. [Currently can only be run in -j mode!]
 - Still missing several kanji characters that need to be OCR'd from their graphics files.
 - Possibly a known mistake: 
-`ERROR! Unknown blcok at offset 1734005! Length = 11, Unknown block: 37ac2d0001ac000080075c` 
+  `ERROR! Unknown blcok at offset 1734005! Length = 11, Unknown block: 37ac2d0001ac000080075c`  
     This evaluates to 142.52, and it's a nastasha call header. Probably a mistake in the original game! Still, the conversation is a duplicate. Currently I have 142.52 as a known codec frequency which will parse the data as if this were a valid call. 

@@ -6,6 +6,7 @@ This is the main script. See bottom for command arguments and how we parse the c
 
 - Project notes
 - TODO: Fix -j flag or remove entirely? Might be easier to just remove.
+- TODO: Add base64 hashing to determine input file 
 - TODO: Handle other cases, fix natashas script breaking shit (Cases)
 - TODO: Mei ling scripts fucked up
 - TODO: work on recompiler
@@ -19,15 +20,19 @@ Completed stuff:
 """
 
 import os, struct
-# import re # Not used?
 import radioDict 
 import argparse
 import xml.etree.ElementTree as ET
-# import base64
 
+### UNUSED ?
+# import re # Not used?
+# import base64 # We will eventually hash the files and verify they will run properly. 
+
+# XML Globals
 root = ET.Element("RadioData")
 elementStack = [(root, -1)]
 
+# Graphics data variable list
 customGraphicsData = []
 
 ## Formatting Settings!
@@ -60,9 +65,6 @@ def setRadioData(filename: str) -> bool:
 
 def setOutputFile(filename: str) -> bool:
     global output
-    """if not output.closed():
-        output.close()"""
-    
     output = open(f'{filename}.txt', 'w')
 
 def splitCall(offset: int, length: int) -> None:
