@@ -6,13 +6,15 @@ So far, mostly scoped on RADIO.DAT extraction.
 
 Script is VERY WORK IN PROGRESS! I'm still working on figuring out how the RADIO file is layered, and the proper lossless way to pull it.
 
+Currently this will analyze the RADIO.DAT file and output in several ways. -H will output only the radio call headers. -x will use an XML format (all). -i will output in a json format (dialogue with offsets only). No change will output in a readable text form. 
+
 ### RadioDatTools.py
 
 This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. Usage:
 
-`
-$ RadioDatTools.py path/to/Radio.dat outputfilename.txt [-j, -i, -d, ...]
-`
+```
+$ RadioDatTools.py path/to/Radio.dat {outputfilename.txt} [-j, -i, -d, ...]
+```
 
 ### callsInStageDirFinder.py
 
@@ -25,7 +27,7 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 ### splitRadioFile.py
 
-(WORK IN PROGRESS) This will split all calls into individual bin files with an offset name.
+(WORK IN PROGRESS) This will split all calls into individual bin files with an offset name. Split files should also run properly in the main RadioDatTools.py parser script.
 
 ## Goals
 
@@ -37,11 +39,12 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 ## Usage
 
-Run it? It's not gonna get very far unless you're on the USA version. I am testing in both USA and Japanese base versions. 
-End result will be extracting from Japanese, then re-inserting new subtitles in english. 
+`RadioDatTools.py -H` for help.
 
 Known issues:
-- We do not correctly parse graphics/font data embedded.
+- Work not yet started for recompiling.
+- For the time being, please always use -j flag, it will parse english text fine but currently without it we don't properly handle two-byte text characters in USA version.
+- Still missing several kanji characters that need to be OCR'd from their graphics files.
 - Possibly a known mistake: 
 `ERROR! Unknown blcok at offset 1734005! Length = 11, Unknown block: 37ac2d0001ac000080075c` 
-This evaluates to 142.52, and it's a nastasha call header. Probably a mistake in the original game! Still, the conversation is a duplicate.
+    This evaluates to 142.52, and it's a nastasha call header. Probably a mistake in the original game! Still, the conversation is a duplicate. Currently I have 142.52 as a known codec frequency which will parse the data as if this were a valid call. 
