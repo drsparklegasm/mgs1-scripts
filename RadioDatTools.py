@@ -63,7 +63,8 @@ def setOutputFile(filename: str) -> bool:
     global output
     """if not output.closed():
         output.close()"""
-    output = open(filename, 'w')
+    
+    output = open(f'{filename}.txt', 'w')
 
 def splitCall(offset: int, length: int) -> None:
     global radioData
@@ -708,9 +709,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     filename = args.filename
-    outputFilename = 'output.txt'
+    outputFilename = 'output'
     if args.output:
-        outputFilename = f'{args.output}.txt'
+        outputFilename = f'{args.output}'
 
     if args.verbose:
         debugOutput = True
@@ -754,7 +755,7 @@ if __name__ == '__main__':
         else:
             # THE OLD METHOD! 
             xmlOut = ET.ElementTree(root)
-            xmlOut.write(f"{args.output}.xml")
+            xmlOut.write(f"{outputFilename}.xml")
     
     if args.iseeeva:
         import json
@@ -764,7 +765,7 @@ if __name__ == '__main__':
             text = subs.get('Text')
             dialogueData[int(offset)] = text
         
-        with open(f"{args.output}-Iseeva.json", 'w') as f:
+        with open(f"{outputFilename}-Iseeva.json", 'w') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=4)
     
     if args.graphics:
