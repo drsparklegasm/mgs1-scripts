@@ -1,30 +1,29 @@
 #!/bin/python
 
 """
-We can't get all the way through, so let's try parsing some calls.
 
-v0.3.6: Adding a "Chunk pull" and "chunk analyzer"
-v0.3.9: Removed Chunk pull
-v0.4: Rebuild with FF as start of each command. 
-v0.4.1: Adding main() block, in preparation for translating any file length, including subsets including a single call
-v0.4.2: We get all the way through USA D1's Radio.dat! There are some unknown segments, those are probably 
-v0.5 switch to library, backup is 0.4.5
+This is the main script. See bottom for command arguments and how we parse the command. 
+
+- Project notes
+- TODO: Fix -j flag or remove entirely? Might be easier to just remove.
+- TODO: Handle other cases, fix natashas script breaking shit (Cases)
+- TODO: Mei ling scripts fucked up
+- TODO: work on recompiler
+
+Completed stuff:
+- Parses english and Japanese characters
+- Multiple outputs: Text (indented), Headers only, Iseeva style json (Dialogue only), XML heirarchical format
+
+
 
 """
-# Project notes
-# TODO: Handle other cases, fix natashas script breaking shit (Cases)
-# TODO: Mei ling scripts fucked up
-# TODO: CASE switching study
-# TODO: Container looping ? # IF Statements break these right now
-# TODO: Change this to a library to parse on command
-# TODO: Shift to export as XML
-# TODO: work on recompiler
 
-import os, struct, re
-import radioDict # May remove later
+import os, struct
+# import re # Not used?
+import radioDict 
 import argparse
 import xml.etree.ElementTree as ET
-import base64
+# import base64
 
 root = ET.Element("RadioData")
 elementStack = [(root, -1)]
