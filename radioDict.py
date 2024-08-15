@@ -9,6 +9,7 @@ missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w')
 missingGFX = open('graphicsExport/KanjiStillMissing.txt', 'w')
 radioData = b''
 foundGraphics = []
+unidentifiedGraphics = []
 
 class graphicSegment:
 
@@ -87,23 +88,30 @@ def makeCallDictionary(graphicsBytes: bytes):
 	"""
 	Returns a DICT specific to the call where we sent the data. 
 	"""
-	charDict = {}
+	
 	# We need to ensure this is evenly divisible by 36 bytes:
 	if len(graphicsBytes) % 36 != 0:
 		print(f'Error! LENGTH is not even number of graphics! Assuming nulls...')
+
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
+
 	# print(len(graphicsBytes))
 	count = int(len(graphicsBytes) / 36)
 	for x in range(count):
 		segment = graphicsBytes[x * 36: (x + 1) * 36 ]
-		"""if segment.hex() not in characters.graphicsData:
-			outputGraphic(f'newKanji-{x}', segment)
-			print(f'Kanji {x} = {segment.hex()}')
-		else:
-			outputGraphic(f'foundKanji-{x}', segment)"""
+
+		# This section only necessary if outputtting graphics we haven't identified.
+		global foundGraphics
+		global unidentifiedGraphics
+		if segment.hex() not in characters.graphicsData:
+			foundGraphics.append(segment.hex())
+		elif characters.graphicsData.get(segment.hex()) == "?":
+			unidentifiedGraphics.append(segment.hex())
+		
 		result = characters.graphicsData.get(segment.hex())
 		callDictionary.update({x + 1: result})
+	
 	return callDictionary
 
 def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: # Needs fixins, maybe move to separate file?
@@ -116,7 +124,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 				messageString += callDict.get(int(bytestring[i + 1]))
 			except:
 				# print(f'Cound not translate {bytestring[i + 1]}')
-				messageString += f'{bytestring[i:i+2].hex()}'
+				messageString += f'[{bytestring[i:i+2].hex()}]'
 			i += 2
 		else:
 			# print(f'i = {i}, category: {bytestring[i].to_bytes()} byte = {bytestring[i+1].to_bytes().hex()}')
@@ -175,3 +183,10 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 
 	for x in range(len(testingDict) + 1):
 		print(f'{x} = {testingDict.get(x)}', end=" ")"""
+
+data = open('unknownGraphics.txt', 'r')
+i = 1
+for line in data.readlines():
+	line = line.strip()
+	outputGraphic(f'unkownChar-{i}', bytes.fromhex(line))
+	i += 1

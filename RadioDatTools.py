@@ -23,6 +23,13 @@ v0.5 switch to library, backup is 0.4.5
 import os, struct, re
 import radioDict # May remove later
 import argparse
+import xml.etree.ElementTree as ET
+import base64
+
+root = ET.Element("RadioData")
+elementStack = [(root, -1)]
+
+customGraphicsData = []
 
 ## Formatting Settings!
 
@@ -35,24 +42,13 @@ exportGraphics = False
 # Script variables 
 offset = 0
 layerNum = 0
-output = open('output.txt', 'w')
 radioData = b''
 callDict = {}
 fileSize = 0
 
-def __init__(self, filename: str):
-    radioFile = open(filename, 'rb')
-    global radioData
-    global fileSize
-    radioData = radioFile.read()
-    fileSize = len(radioData)
-
 # FILE OPERATIONS
 
 # Debugging files:
-
-dialogueOnly = open('iseevaStyle.json', 'w')
-dialogueOnly.write('{\n')
 
 def setRadioData(filename: str) -> bool:
     global radioData
@@ -102,6 +98,7 @@ freqList = [
     b'\x36\xbf', # 140.15, Meryl
     b'\x36\xb7', # 141.12, Otacon
     b'\x37\x48', # 141.52, Natasha
+    b'\x37\xac', # 142.52, Natasha ACCIDENT
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
@@ -110,9 +107,9 @@ freqList = [
 # Hashes for each radio file. I did not include Integral yet, as it won't suit the needs of this project. We'll need to write something to hash the files when ingested.
 radioHashes = {
     "usa-d1":'9b6d223d8e1a9e562e2c188efa3e6425a87587f35c6bd1cfe62c5fa7ee9a0019',    # USA Disc 1
-    "usa-d2":'e6cf1b353db0bc7620251b6916577527debfdd5bdcd125b3ca9ef5c9a0aef61e',
-    "jpn-d1":'f588fb57ce6c5754c39ca5ec9d52fe2c5766a2e51bcb0ea7a343490e0769c6b2',    # Japanese Premium package seems to match the retail
-    "jpn-d2":'b46088c2c10e0552fcd6f248ea4fdf0bcf428691184dae053267f4d93f97cec9'
+    "usa-d2":'e6cf1b353db0bc7620251b6916577527debfdd5bdcd125b3ca9ef5c9a0aef61e',    # USA Disc 2
+    "jpn-d1":'f588fb57ce6c5754c39ca5ec9d52fe2c5766a2e51bcb0ea7a343490e0769c6b2',    # Japanese Disc 1 ## Premium package seems to match the retail
+    "jpn-d2":'b46088c2c10e0552fcd6f248ea4fdf0bcf428691184dae053267f4d93f97cec9',    # Japanese Disc 2 
 }
 
 def getHash(): # Not yet implemented! 
@@ -173,7 +170,10 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     global radioData
     global output
     global layerNum
-    
+    global root
+    global elementStack
+    global splitCalls
+
     # OPTIONAL Add an offset tracker output?
     
     header = 11 # Call headers are static 11
@@ -193,6 +193,16 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         if line[8].to_bytes() != b'\x80':
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return 1"""
+    
+    call_element = ET.SubElement(root, "Call", {
+        "Offset": f'{offset}',
+        "Freq": f'{humanFreq}',
+        "Length": f'{length}', 
+        "UnknownVal1": unk0.hex(),
+        "UnknownVal2": unk1.hex(),
+        "UnknownVal3": unk2.hex(),
+        })
+    elementStack.append((call_element, length))
 
     # Get graphics data and write to a global dict:
     global callDict 
@@ -201,14 +211,15 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         callDict = radioDict.makeCallDictionary(graphicsData)
     else:
         print(f'Graphics parse error offset {offset}! \n')
-
+    
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
+
     return header
 
 def handleUnknown(offset: int) -> int: # Iterates checking frequency until we get one that is valid.... hopefully this gets us past a chunk of unknown data.
     """
-    More than likely this should be graphics data. For now, assuming each graphic is separated by 4x nulls (\x00)
+    More than likely this should be graphics data. 
     """
     count = 0
     global fileSize
@@ -223,8 +234,17 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
         else: 
             count += 1
     content = radioData[offset: offset + count]
+    
     if len(content) % 36 != 0:
         output.write(f'ERROR! Unknown blcok at offset {offset}! ')
+    """else:
+        if args.xmloutput and len(content) > 0:
+            graphics = {}
+            graphics_element = ET.SubElement(elementStack[-1][0], "CallGraphics")
+            for x in range(0, int(len(content) / 36)):
+                data = content[x * 36 : (x+1) * 36]
+                graphic_element = ET.SubElement(graphics_element, "Graphic", {f'char-{x}': f'{data.hex()}'})"""
+    # The above works, but it's Fucking painful on the eyes. Better off just exporting the kanji
 
     if exportGraphics:
         if len(content) % 36 == 0:
@@ -242,6 +262,9 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     global output
     global layerNum
     global jpn
+    global root
+    global elementStack
+
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
     """
@@ -250,7 +273,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         offset -= 1
         commandByte = b'\x31'
         """
-
+    
     indentLines() # Indent before printing the command to our depth level.
 
     # We now deal with the byte
@@ -275,7 +298,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             unk3 = line[8:10]
             dialogue = line[10 : length]
-            
+            2144
             lineBreakRepace = False
             if b'\x80\x23\x80\x4e' in dialogue:  # this replaces the in-game hex for new line with a \\r\\n
                 lineBreakRepace = True
@@ -285,15 +308,26 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             if jpn:
                 if b'\x96\x00' in dialogue: # We need this because we should never see 0x9600
                     print(f'{offset} has a 0x9600 in dialogue! Check binary')
-                print(f'Offset is {offset}\n')
+                # print(f'Offset is {offset}\n')
                 translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-                dialogueOnly.write(f'  "{offset}": "{translatedDialogue}",\n')
             
             # Write to file
             if jpn:
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(translatedDialogue)}, hex: {dialogue.hex()} \n')
+                dialogue = str(translatedDialogue)
             else:
-                output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {str(dialogue)}\n')
+                dialogue = dialogue.decode('ascii')
+
+            output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
+            
+            subtitle_element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                'face': face.hex(),
+                "anim": anim.hex(),
+                "unk3": unk3.hex(),
+                "Text": dialogue
+            })
+
             return length
         
         case b'\x02':
@@ -309,8 +343,17 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if voxLength1 - voxLength2 != 7:
                     print(f'ERROR!! OFFSET {offset} HAS A \\x02 that does not evenly fit!')
 
+            voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(voxLength1),
+                "LengthB": str(voxLength2),
+                "Content": f'{line.hex()}'
+            })
+            checkElement(length)
+            elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
+            
             return length
         
         case b'\x03':
@@ -322,6 +365,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             buff = line[8:10]
 
+            Anim_Element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                'face': line[4:6].hex(),
+                'anim': line[6:8].hex(),
+                'buff': line[8:10].hex(),
+            })
+
             output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
             return length
         
@@ -331,12 +382,23 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             containerLength = getLength(offset)
             freq = getFreq(offset + 4)
-            entryName = line[6 : length - 1]
+            entryName = line[6 : length]
+            if jpn:
+                entryNameStr = translateJapaneseHex(entryName)
+            else:
+                entryNameStr = entryName.decode('ascii')
 
             # Just a safety since the length of this was hard-coded
             if debugOutput:
                 if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
+
+            SaveFreqElement = ET.SubElement(elementStack[-1][0], "Freq-add", {
+                "offset": str(offset),
+                "length": str(length),
+                "freq": str(freq),
+                "name": entryNameStr
+            })
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
@@ -347,6 +409,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset) # Might be US specific?
             line = radioData[offset:offset + length]
             output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
+
+            SaveCommand = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
             return length
 
         case b'\x06' | b'\x07' | b'\x08': 
@@ -354,6 +422,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset)
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+
+            cuesElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
             return length
 
         case b'\x10': # 
@@ -363,15 +437,32 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + header]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 2
+
+            conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "header": str(header),
+                "content": line.hex(),
+            })
+            checkElement(length)
+            elementStack.append((conditionalElement, length))
             return header
         
-        case b'\x11' | b'\x12': # If, ElseIF, Else respectively
+        case b'\x11' | b'\x12': # Elseif, Else respectively
             output.write(commandToEnglish(commandByte))
             header = getLengthManually(offset) # Maybe not ?
-            length = getLength(offset + header - 2)
+            length = getLength(offset + 1)
             line = radioData[offset : offset + header]
-            output.write(f' -- Offset = {offset}, length = {header}, length = {length} Content = {line.hex()}\n')
+            output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
+
+            elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
+            checkElement(length)
+            elementStack.append((elseElement, length))
             return header
         
         # This one is fugly. Time to look at containerizing these or something. 
@@ -386,6 +477,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             scriptLength = struct.unpack('>H',line[length - 2: length])[0]
             
             output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
+
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex()
+            })
             return length 
         
         case b'\x40':
@@ -405,6 +502,12 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+            
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex()
+            })
             return length
         
         case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
@@ -429,6 +532,7 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
     count = 0
     global fileSize
     global exportGraphics
+    global call_element
     while True:
         if offset + count == fileSize:
             break
@@ -439,7 +543,21 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
         else: 
             count += 36
     content = radioData[offset: offset + count]
+
+    """if args.xmloutput and len(content) > 0:
+        graphics = {}
+        graphics_element = ET.SubElement(elementStack[-1][0], "CallGraphics")
+        for x in range(0, int(len(content) / 36)):
+            data = content[x * 36 : (x+1) * 36]
+            graphic_element = ET.SubElement(graphics_element, "Graphic", {f'{x}': f'{data.hex()}'})"""
+
     return content
+
+def checkElement(length):
+    current_element, current_length = elementStack.pop()
+    newElementLength = current_length - length
+    if newElementLength > 0:
+        elementStack.append((current_element, newElementLength))
 
 def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
     counter = 0
@@ -486,13 +604,15 @@ def extractRadioCallHeaders(outputFilename: str) -> None:
             length = 11
         else:
             length = 1
-        offset += length 
+        offset += length
         if offset == fileSize:
             print(f'File was parsed successfully! Written to {outputFilename}')
             break
     
     print(f'File was parsed successfully! Written to {outputFilename}')
     output.close()
+
+
 
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
@@ -511,8 +631,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
 
     if radioData == None:
         return "Command failed! Radiodata file not set!"
-
-    setOutputFile(outputFilename)
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
@@ -534,6 +652,8 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
                 if layerNum > 0:
                     layerNum -= 1
                 length = 1
+                nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
+                checkElement(1)
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             length = handleCommand(offset)
@@ -544,7 +664,11 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             layerNum = 1
         else: # Something went wrong, we need to kinda reset
             length = handleUnknown(offset) # This will go until we find a call frequency
+            offset += length
+            continue
+            
         offset += length
+        checkElement(length)
 
     output.close()
 
@@ -576,11 +700,14 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
     parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
     parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
+    parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
+    parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
+    
 
     args = parser.parse_args()
 
     filename = args.filename
-    outputFilename = args.output
+    outputFilename = f'{args.output}.txt'
 
     if args.verbose:
         debugOutput = True
@@ -609,7 +736,36 @@ if __name__ == '__main__':
         analyzeRadioFile(outputFilename)
     
     if args.graphics:
-        radioDict.printFoundGraphics()
+        exportGraphics = True
 
-    dialogueOnly.write('}')
-    dialogueOnly.close()
+
+    fancy = True
+    # Optional print the string: 
+    if args.xmloutput:
+        if fancy:
+            from xml.dom.minidom import parseString
+            xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
+            xmlFile = open(f'{args.output}.xml', 'w')
+            xmlFile.write(xmlstr)
+            xmlFile.close()
+        else:
+            # THE OLD METHOD! 
+            xmlOut = ET.ElementTree(root)
+            xmlOut.write(f"{args.output}.xml")
+    
+    if args.iseeeva:
+        import json
+        dialogueData = {}
+        for subs in root.findall(f'.//SUBTITLE'):
+            offset = subs.get('offset')
+            text = subs.get('Text')
+            dialogueData[int(offset)] = text
+        
+        with open(f"{args.output}-Iseeva.json", 'w') as f:
+            json.dump(dialogueData, f, ensure_ascii=False, indent=4)
+    
+    if args.graphics:
+        print("Not in dictionary:")
+        print(radioDict.foundGraphics)
+        print("Not in dictionary:")
+        print(radioDict.unidentifiedGraphics)
