@@ -593,8 +593,11 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     
     setOutputFile(outputFilename)
 
+    """
+    # Probably unused/superfluous
     if radioData == None:
         return "Command failed! Radiodata file not set!"
+    """
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
@@ -642,10 +645,8 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
 # This doesn't work because i did not code with contextual variables in mind >:O
 if __name__ == '__main__':
     """
-    This will parse arguments and run both headers extract and full analysis.
-    NOTE that args are required!
-    
-    Currently we write headers to a specific filename, in the end there will be a command to pick which output we want.
+    This will parse arguments and run both headers extract and full analysis. 
+    Output is now "[input filename]-output" unless otherwise specified
     """
     # Backup variables
     filename = 'RADIO.DAT'
@@ -670,10 +671,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Set input filename
     filename = args.filename
-    outputFilename = 'output'
+
+    # Set output Filename
     if args.output:
         outputFilename = f'{args.output}'
+    else:
+        outputFilename = f'{filename}-output'
 
     if args.verbose:
         debugOutput = True
