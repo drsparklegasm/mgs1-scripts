@@ -221,7 +221,9 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
 
 def handleUnknown(offset: int) -> int: # Iterates checking frequency until we get one that is valid.... hopefully this gets us past a chunk of unknown data.
     """
-    More than likely this should be graphics data. 
+    Assuming at this point that this is graphics data. Graphics data is always evenly divisble by 36 bytes. 
+    Each grouping of 36 bytes creates a TGA image file. These can be output to individual files using the 
+    RadioDict module.
     """
     count = 0
     global fileSize
@@ -237,23 +239,15 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
             count += 1
     content = radioData[offset: offset + count]
     
-    if len(content) % 36 != 0:
-        output.write(f'ERROR! Unknown blcok at offset {offset}! ')
-    """else:
-        if args.xmloutput and len(content) > 0:
-            graphics = {}
-            graphics_element = ET.SubElement(elementStack[-1][0], "CallGraphics")
-            for x in range(0, int(len(content) / 36)):
-                data = content[x * 36 : (x+1) * 36]
-                graphic_element = ET.SubElement(graphics_element, "Graphic", {f'char-{x}': f'{data.hex()}'})"""
-    # The above works, but it's Fucking painful on the eyes. Better off just exporting the kanji
+    if len(content) % 36 != 0: # Alert user if the graphics content not evenly divisible by 36 bytes
+        output.write(f'ERROR! Unknown block at offset {offset}! ')
 
     if exportGraphics:
         if len(content) % 36 == 0:
             radioDict.outputManyGraphics(str(offset), content)
             output.write('Graphics output! -- ')
         else:
-            output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ')
+            output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ') # Redunant?
 
         output.write(f'Length = {count}, Graphics = {str(count / 36)} ')
     output.write(f'Unknown block: {content.hex()}')
@@ -271,7 +265,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
     
     indentLines() # Indent before printing the command to our depth level.
-    
+
     # We now deal with the byte
     match commandByte:
 
@@ -306,9 +300,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     print(f'{offset} has a 0x9600 in dialogue! Check binary')
                 # print(f'Offset is {offset}\n')
                 translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-            
-            # Write to file
-            if jpn:
                 dialogue = str(translatedDialogue)
             else:
                 dialogue = dialogue.decode('ascii')
@@ -348,7 +339,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             checkElement(length)
             elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
-            container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
+            # container(offset + header, length - header) # ACCOUNT FOR HEADER AND LENGTH BYTES! This may be off... too bad!
             
             return length
         
@@ -540,13 +531,6 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
             count += 36
     content = radioData[offset: offset + count]
 
-    """if args.xmloutput and len(content) > 0:
-        graphics = {}
-        graphics_element = ET.SubElement(elementStack[-1][0], "CallGraphics")
-        for x in range(0, int(len(content) / 36)):
-            data = content[x * 36 : (x+1) * 36]
-            graphic_element = ET.SubElement(graphics_element, "Graphic", {f'{x}': f'{data.hex()}'})"""
-
     return content
 
 def checkElement(length):
@@ -555,21 +539,6 @@ def checkElement(length):
         newElementLength = current_length - length
         if newElementLength > 0:
             elementStack.append((current_element, newElementLength))
-
-def container(offset, length): # THIS DOESNT WORK YET! We end up with recursion issues...
-    counter = 0
-    global layerNum
-    global contDepth
-    internalOffset = offset
-    layerNum += 1
-    while counter < length:
-        if radioData[internalOffset].to_bytes() == b'\x00':
-            commandLength = handleCommand(internalOffset - 1) # This is to still write a null (as an end of line) as a command.
-        else:
-            commandLength = handleCommand(internalOffset)
-        internalOffset += commandLength
-        counter += commandLength
-    return length
 
 ## Translation Commands:
 def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move to separate file?
@@ -737,8 +706,7 @@ if __name__ == '__main__':
     if args.graphics:
         exportGraphics = True
 
-
-    fancy = True
+    fancy = True # For now this is the only way to properly output the file. 
     # Optional print the string: 
     if args.xmloutput:
         if fancy:
