@@ -269,15 +269,9 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
     # output.write(f'Offset is {offset}\n') # print for checking offset each loop
     commandByte = radioData[offset + 1].to_bytes() # Could add .hex() to just give hex digits
-    """
-    if radioData[offset].to_bytes() == b'\x31':
-        output.write(f'ERROR! Offset for \x31 was not sent the preceeding \x00! correcting...')
-        offset -= 1
-        commandByte = b'\x31'
-        """
     
     indentLines() # Indent before printing the command to our depth level.
-
+    
     # We now deal with the byte
     match commandByte:
 
@@ -614,8 +608,6 @@ def extractRadioCallHeaders(outputFilename: str) -> None:
     
     print(f'File was parsed successfully! Written to {outputFilename}')
     output.close()
-
-
 
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
