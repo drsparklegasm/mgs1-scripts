@@ -693,7 +693,7 @@ if __name__ == '__main__':
 
     # REQUIRED
     parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
-    parser.add_argument('output', type=str, help="Output Filename (.txt)")
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     # Optionals
     parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
     parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings")
@@ -708,7 +708,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     filename = args.filename
-    outputFilename = f'{args.output}.txt'
+    outputFilename = 'output.txt'
+    if args.output:
+        outputFilename = f'{args.output}.txt'
 
     if args.verbose:
         debugOutput = True
