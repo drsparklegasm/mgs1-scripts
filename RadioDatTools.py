@@ -37,7 +37,6 @@ customGraphicsData = []
 
 ## Formatting Settings!
 
-jpn = True # For now, lock to True until bug parsing in english is resolved. 
 indentToggle = True
 debugOutput = False
 splitCalls = False
@@ -242,16 +241,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     if len(content) % 36 != 0: # Alert user if the graphics content not evenly divisible by 36 bytes
         output.write(f'ERROR! Unknown block at offset {offset}! ')
 
-    """ Taking this out temporarily, we're exporting another way
-    if exportGraphics: 
-        if len(content) % 36 == 0:
-            radioDict.outputManyGraphics(str(offset), content)
-            output.write('Graphics output! -- ')
-        else:
-            output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ') # Redunant?
-
-        output.write(f'Length = {count}, Graphics = {str(count / 36)} ')
-        """
     output.write(f'Unknown block: {content.hex()}')
     output.write('\n')
     return count
@@ -259,7 +248,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global output
     global layerNum
-    jpn = True
     global root
     global elementStack
 
@@ -297,15 +285,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
             # Translate
-            if jpn:
-                if b'\x96\x00' in dialogue: # We need this because we should never see 0x9600
-                    print(f'{offset} has a 0x9600 in dialogue! Check binary')
-                # print(f'Offset is {offset}\n')
-                translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
-                dialogue = str(translatedDialogue)
-            else:
-                dialogue = dialogue.decode('ascii')
+            if b'\x96\x00' in dialogue: # We need this because we should never see 0x9600
+                print(f'{offset} has a 0x9600 in dialogue! Check binary')
+            # print(f'Offset is {offset}\n')
+            translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
+            dialogue = str(translatedDialogue)
 
+            # Output to text file
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
             
             subtitle_element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
@@ -371,10 +357,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             containerLength = getLength(offset)
             freq = getFreq(offset + 4)
             entryName = line[6 : length]
-            if jpn:
-                entryNameStr = translateJapaneseHex(entryName)
-            else:
-                entryNameStr = entryName.decode('ascii')
+            entryNameStr = translateJapaneseHex(entryName)
 
             # Just a safety since the length of this was hard-coded
             if debugOutput:
@@ -547,7 +530,6 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
 
 def extractRadioCallHeaders(outputFilename: str) -> None:
     offset = 0
-    global jpn
     global indentToggle
     global debugOutput
     global fileSize
@@ -582,7 +564,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     offset = 0
     global layerNum
     # Settings
-    global jpn
     global debugOutput
     global indentToggle
 
@@ -632,10 +613,13 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             handleCallHeader(offset)
             length = 11 # In this context, we only want the header
             layerNum = 1
+        
+        # TEMPORARY SHIFT TO SEE IF WE FIXED THIS
         else: # Something went wrong, we need to kinda reset
             length = handleUnknown(offset) # This will go until we find a call frequency
             offset += length
             continue
+        
             
         offset += length
         checkElement(length)
@@ -686,11 +670,6 @@ if __name__ == '__main__':
 
     if args.verbose:
         debugOutput = True
-    
-    """ # BUG! Renable later when fixed
-    if args.japanese:
-        jpn = True
-        """
     
     if args.indent:
         indentToggle = True
