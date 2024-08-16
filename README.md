@@ -63,7 +63,6 @@ options:
 
 ## Known issues:
 - Work not yet started for recompiling. Need to figure out some of the if/then line ending formats
-- For the time being, please always use -j flag, it will parse english text fine but currently without it we don't properly handle two-byte text characters in USA version. [Currently can only be run in -j mode!]
 - Still missing several kanji characters that need to be OCR'd from their graphics files.
 - Possibly a known mistake: 
   `ERROR! Unknown blcok at offset 1734005! Length = 11, Unknown block: 37ac2d0001ac000080075c`  

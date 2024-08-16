@@ -5,7 +5,6 @@
 This is the main script. See bottom for command arguments and how we parse the command. 
 
 - Project notes
-- TODO: Fix -j flag or remove entirely? Might be easier to just remove.
 - TODO: Add base64 hashing to determine input file 
 - TODO: Handle other cases, fix natashas script breaking shit (Cases)
 - TODO: Mei ling scripts fucked up
