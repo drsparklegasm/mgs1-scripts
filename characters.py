@@ -520,6 +520,7 @@ punctuation = { # 0xd0
 	'02': "、",
 	'03': "。",
     '04': "，",
+    '05': "々",
 	'06': "ー",
     '07': "〜",
     '08': "‥",
@@ -536,7 +537,7 @@ punctuation = { # 0xd0
 	'13': "］",
 	'14': "《",
 	'15': "》",
-	'16': "",
+	'16': "／",
 	'17': "…", 
 	#'8023': '\\n',# I think this means new line, but we're not sure yet as it has different meanings between US/jpn
     #'9005': "",
