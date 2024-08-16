@@ -110,10 +110,10 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 		global unidentifiedGraphics
 		if segment.hex() not in characters.graphicsData:
 			foundGraphics.append(segment.hex())
-			result = segment.hex()
+			result = f'[{segment.hex()}]'
 		elif characters.graphicsData.get(segment.hex()) == "?":
 			unidentifiedGraphics.append(segment.hex())
-			result = segment.hex()
+			result = f'[{segment.hex()}]'
 		else:
 			result = characters.graphicsData.get(segment.hex())
 
