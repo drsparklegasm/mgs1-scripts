@@ -210,7 +210,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     global callDict 
     graphicsData = getGraphicsData(offset + length)
     if len(graphicsData) % 36 == 0:
-        callDict = radioDict.makeCallDictionary(graphicsData)
+        callDict = radioDict.makeCallDictionary(offset, graphicsData)
     else:
         print(f'Graphics parse error offset {offset}! \n')
     
@@ -259,7 +259,7 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
     global output
     global layerNum
-    global jpn
+    jpn = True
     global root
     global elementStack
 
@@ -338,11 +338,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "LengthB": str(voxLength2),
                 "Content": f'{line.hex()}'
             })
-            checkElement(length)
+            # checkElement(header)
             elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             
-            return length
+            return header
         
         case b'\x03':
             output.write('ANIMATE -- ')
@@ -623,7 +623,10 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
                 checkElement(1)
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
-            length = handleCommand(offset)
+            if radioData[offset + 1].to_bytes() == b'\x01':
+                length = handleCommand(offset)
+            else:
+                length = handleCommand(offset)
         elif checkFreq(offset): # If we're at the start of a call
             nullCount = 0
             handleCallHeader(offset)
@@ -673,12 +676,13 @@ if __name__ == '__main__':
 
     # Set input filename
     filename = args.filename
+    baseFilename = filename.split("/")[-1]
 
     # Set output Filename
     if args.output:
         outputFilename = f'{args.output}'
     else:
-        outputFilename = f'{filename}-output'
+        outputFilename = f'{baseFilename}-output'
 
     if args.verbose:
         debugOutput = True
@@ -749,8 +753,7 @@ if __name__ == '__main__':
             for item in unidentifiedGraphicsLocal:
                 num += 1
                 f.write(str(item))
-                newFilename = filename.split("/")[-1]
-                newFile = f'{newFilename}-{num}'
+                newFile = f'{outputFilename}-{num}'
                 radioDict.outputGraphic(newFile, bytes.fromhex(item))
                 f.write('\n')
             f.close()

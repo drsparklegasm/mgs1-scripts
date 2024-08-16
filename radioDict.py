@@ -11,6 +11,8 @@ radioData = b''
 foundGraphics = []
 unidentifiedGraphics = []
 
+context = open("graphicsExport/contextList.txt", 'w')
+
 class graphicSegment:
 
 	def __init__(self, offset, callGraphicNum, graphicBytesHex) -> None:
@@ -84,7 +86,7 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 			else:
 				data.write(bytes.fromhex("ffffffff"))
 
-def makeCallDictionary(graphicsBytes: bytes):
+def makeCallDictionary(offset: int, graphicsBytes: bytes):
 	"""
 	Returns a DICT specific to the call where we sent the data. 
 	"""
@@ -95,6 +97,8 @@ def makeCallDictionary(graphicsBytes: bytes):
 
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
+	# Output a dictionary file for each dictionary we create
+	dictFile = open(f'graphicsExport/Dict-{offset}.txt', 'w')
 
 	# print(len(graphicsBytes))
 	count = int(len(graphicsBytes) / 36)
@@ -106,17 +110,22 @@ def makeCallDictionary(graphicsBytes: bytes):
 		global unidentifiedGraphics
 		if segment.hex() not in characters.graphicsData:
 			foundGraphics.append(segment.hex())
+			result = segment.hex()
 		elif characters.graphicsData.get(segment.hex()) == "?":
 			unidentifiedGraphics.append(segment.hex())
-		
-		result = characters.graphicsData.get(segment.hex())
+			result = segment.hex()
+		else:
+			result = characters.graphicsData.get(segment.hex())
+
 		callDictionary.update({x + 1: result})
-	
+		dictFile.write(f'{x + 1}: {result}\n')
+
 	return callDictionary
 
 def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: # Needs fixins, maybe move to separate file?
 	i = 0
 	messageString = ''
+	customCharacter = False
 	while i < len(bytestring) - 1:
 		# print(f'i is {i}\n') # For debugging
 		if bytestring[i].to_bytes() == b'\x96':
@@ -125,6 +134,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 			except:
 				# print(f'Cound not translate {bytestring[i + 1]}')
 				messageString += f'[{bytestring[i:i+2].hex()}]'
+				customCharacter = True
 			i += 2
 		else:
 			# print(f'i = {i}, category: {bytestring[i].to_bytes()} byte = {bytestring[i+1].to_bytes().hex()}')
@@ -149,7 +159,11 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 					# print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
 					missingChars.write(f'[{bytestring[i : i + 2].hex()}]\n')
 					messageString += f'[{bytestring[i : i + 2].hex()}]'
+					customCharacter = True
 			i += 2
+	
+	if customCharacter == True:
+		context.write(f'{messageString}\n')
 	return messageString
 
 """
