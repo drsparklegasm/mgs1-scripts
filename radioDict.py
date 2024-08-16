@@ -183,10 +183,11 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 
 	for x in range(len(testingDict) + 1):
 		print(f'{x} = {testingDict.get(x)}', end=" ")"""
-
+"""
 data = open('unknownGraphics.txt', 'r')
 i = 1
 for line in data.readlines():
 	line = line.strip()
 	outputGraphic(f'unkownChar-{i}', bytes.fromhex(line))
 	i += 1
+"""

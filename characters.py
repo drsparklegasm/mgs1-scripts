@@ -2008,6 +2008,7 @@ graphicsData = {
 	"002c00bffffebaaaae6bffe906aa903ffffc2aaea8076dd06e2cb929ac2800f800000000": "宗",
 	"0e3ffc0e3aac3fbffc2e7aac2f7aac3fbffcbe7ac82e39fd0e38b40e7fad0eba58000000": "根",
 	"003ff02ffaa82ebaac2efaa82dbff42eebb82eebb83daaa43ebb4dbbbaba2a7fe5000000": "?",
+    "6ba3a96babfe3feaec3ba1f86febae2b52083ffffc2aaea80b2ff06baea9bffffe000000": "整" # Thanks google translate? Hope this is correct.
 }
 
 

@@ -242,7 +242,8 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     if len(content) % 36 != 0: # Alert user if the graphics content not evenly divisible by 36 bytes
         output.write(f'ERROR! Unknown block at offset {offset}! ')
 
-    if exportGraphics:
+    """ Taking this out temporarily, we're exporting another way
+    if exportGraphics: 
         if len(content) % 36 == 0:
             radioDict.outputManyGraphics(str(offset), content)
             output.write('Graphics output! -- ')
@@ -250,6 +251,7 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
             output.write('ERROR! Graphics data was not even multiple of 36 bytes! -- ') # Redunant?
 
         output.write(f'Length = {count}, Graphics = {str(count / 36)} ')
+        """
     output.write(f'Unknown block: {content.hex()}')
     output.write('\n')
     return count
@@ -735,7 +737,20 @@ if __name__ == '__main__':
             json.dump(dialogueData, f, ensure_ascii=False, indent=4)
     
     if args.graphics:
-        print("Not in dictionary:")
-        print(radioDict.foundGraphics)
-        print("Not in dictionary:")
-        print(radioDict.unidentifiedGraphics)
+        with open("graphicsExport/GraphicsFound.txt", 'w') as f:
+            f.write(f'=================================\n')
+            f.write(f"{filename} has these graphics that were unmatched:\n")
+            # f.write(str(radioDict.foundGraphics))
+            num = 0
+            unidentifiedGraphicsLocal = []
+            for item in radioDict.unidentifiedGraphics:
+                if item not in unidentifiedGraphicsLocal:
+                    unidentifiedGraphicsLocal.append(item)
+            for item in unidentifiedGraphicsLocal:
+                num += 1
+                f.write(str(item))
+                newFilename = filename.split("/")[-1]
+                newFile = f'{newFilename}-{num}'
+                radioDict.outputGraphic(newFile, bytes.fromhex(item))
+                f.write('\n')
+            f.close()
