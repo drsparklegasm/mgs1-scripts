@@ -711,10 +711,14 @@ if __name__ == '__main__':
     if args.iseeeva:
         import json
         dialogueData = {}
-        for subs in root.findall(f'.//SUBTITLE'):
-            offset = subs.get('offset')
-            text = subs.get('Text')
-            dialogueData[int(offset)] = text
+        for call in root.findall(f'.//Call'):
+            callOffset = call.get('Offset')
+            callText = {}
+            for subs in call.findall(f'.//SUBTITLE'):
+                offset = subs.get('offset')
+                text = subs.get('Text')
+                callText[int(offset)] = text
+            dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=4)
