@@ -5,10 +5,11 @@
 This is the main script. See bottom for command arguments and how we parse the command. 
 
 - Project notes
+- TODO: Remove handleUnknown() or replace with different logic.
 - TODO: Add base64 hashing to determine input file 
 - TODO: Handle other cases, fix natashas script breaking shit (Cases)
 - TODO: Mei ling scripts fucked up
-- TODO: work on recompiler
+- TODO: Work on recompiler
 
 Completed stuff:
 - Parses english and Japanese characters
@@ -97,8 +98,8 @@ freqList = [
     b'\x37\x10', # 140.96, Mei Ling
     b'\x36\xbf', # 140.15, Meryl
     b'\x36\xb7', # 141.12, Otacon
-    b'\x37\x48', # 141.52, Natasha
-    b'\x37\xac', # 142.52, Natasha ACCIDENT
+    b'\x37\x48', # 141.52, Nastasha
+    b'\x37\xac', # 142.52, Nastasha ACCIDENT
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
