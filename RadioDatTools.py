@@ -23,6 +23,7 @@ import os, struct
 import radioDict 
 import argparse
 import xml.etree.ElementTree as ET
+# import google.trans
 
 ### UNUSED ?
 # import re # Not used?
@@ -647,7 +648,7 @@ if __name__ == '__main__':
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     # Optionals
     parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
-    # parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings [BUG! CURRENTLY ALWAYS ENABLED!]") # Remove later when issue with english resolved
+    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings") # Remove later when issue with english resolved
     parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
     parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
     parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
@@ -718,6 +719,8 @@ if __name__ == '__main__':
                 offset = subs.get('offset')
                 text = subs.get('Text')
                 callText[int(offset)] = text
+                if args.japanese:
+                #    callText = translate(callText)
             dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
