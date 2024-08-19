@@ -2,7 +2,7 @@
 
 # This script runs the python script recursively, first to export all calls, then translate individual calls
 
-SCRIPT="./myScripts/RadioDatToolsXMLoutput.py"
+SCRIPT="./myScripts/RadioDatTools.py"
 RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
 input_dir='extractedCallBins'
 

@@ -15,8 +15,6 @@ Completed stuff:
 - Parses english and Japanese characters
 - Multiple outputs: Text (indented), Headers only, Iseeva style json (Dialogue only), XML heirarchical format
 
-
-
 """
 
 import os, struct

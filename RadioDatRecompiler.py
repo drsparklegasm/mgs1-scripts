@@ -32,4 +32,5 @@ radioSource = ET.parse(inputXML)
 
 for call in radioSource.findall(".//Call"):
     callHeader = b''
+    
 
