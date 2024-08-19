@@ -719,8 +719,8 @@ if __name__ == '__main__':
                 offset = subs.get('offset')
                 text = subs.get('Text')
                 callText[int(offset)] = text
-                if args.japanese:
-                #    callText = translate(callText)
+                #if args.japanese:
+                #   callText = translate(callText)
             dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
