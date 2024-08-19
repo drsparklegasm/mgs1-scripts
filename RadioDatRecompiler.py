@@ -29,11 +29,12 @@ import xml.etree.ElementTree as ET
 # inputXML = 'extractedCallBins/1119995-decrypted.xml'
 inputXML = 'usaD1Analyze.xml'
 
-
 radioSource = ET.parse(inputXML)
 
-# Recompile call headers:
-for call in radioSource.findall(".//Call"):
+def getCallHeaderBytes(call: ET.Element) -> bytes:
+    """
+    Returns the bytes used for a call header. Should always return bytes object with length 11.
+    """
     callHeader = b''
     callAtts = call.attrib
     frequency = int(float(callAtts.get("Freq")) * 100)
@@ -46,4 +47,9 @@ for call in radioSource.findall(".//Call"):
 
     # Assemble all pieces
     callHeader = freqBytes + unk1 + unk2 + unk3 + bytes.fromhex('80') + lengthBytes
-    print(callHeader.hex())
+    return callHeader
+
+# Recompile call headers:
+for call in radioSource.findall(".//Call"):
+    bytesToPrint = getCallHeaderBytes(call)
+    print(bytesToPrint.hex())
