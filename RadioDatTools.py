@@ -299,7 +299,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 'face': face.hex(),
                 "anim": anim.hex(),
                 "unk3": unk3.hex(),
-                "Text": dialogue
+                "text": dialogue
             })
 
             return length
@@ -320,8 +320,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(voxLength1),
-                "LengthB": str(voxLength2),
-                "Content": f'{line.hex()}'
+                "lengthB": str(voxLength2),
+                "content": f'{line.hex()}'
             })
             # checkElement(header)
             elementStack.append((voxElement, length))

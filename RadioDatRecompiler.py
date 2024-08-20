@@ -78,7 +78,7 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     anim = bytes.fromhex(attrs.get("anim"))
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
-    text = attrs.get("Text").encode('utf-8')
+    text = attrs.get("text").encode('utf-8')
     text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
 
     subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
@@ -102,7 +102,7 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     subsContent = subsContent + b'\x00' # there's always an extra null here.
     print(subsContent.hex())
 
-    length = int(attrs.get("LengthB")) # TODO: Check this is equal to what we intend!
+    length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
     headerLength = struct.unpack(">H", header[-2:len(header)])[0]
     print(length)
     print(headerLength)
