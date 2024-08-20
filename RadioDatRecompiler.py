@@ -58,10 +58,11 @@ def getCallHeaderBytes(call: ET.Element) -> bytes:
 def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
     Returns the hex for an entire subtitle command. Starts with FF01 and always ends with one null byte (\x00)
+    It should be exclusively used within the getVoxBytes() def.
     """
     attrs = subtitle.attrib
     subtitleBytes = bytes.fromhex('ff01')
-    lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2)
+    lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2) # TODO: Check this is equal to what we intend!
     face = bytes.fromhex(attrs.get("face"))
     anim = bytes.fromhex(attrs.get("anim"))
     unk3 = bytes.fromhex(attrs.get("unk3"))
@@ -72,8 +73,35 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
     return subtitleBytes
 
+def getVoxBytes(vox: ET.Element) -> bytes:
+    """
+    Returns the hex for a VOX container (FF02). 
+    Because it is a container that contains Subtitle elements, we will compile that hex here.
+
+    """
+    attrs = vox.attrib
+    header = bytes.fromhex(attrs.get('Content'))
+    
+    subsContent = b''
+    for sub in vox.findall('.//SUBTITLE'):
+        subsContent = subsContent + getSubtitleBytes(sub)
+
+    subsContent = subsContent + b'\x00' # there's always an extra null here.
+    print(subsContent.hex())
+
+    length = int(attrs.get("LengthB")) # TODO: Check this is equal to what we intend!
+    headerLength = struct.unpack(">H", header[-2:len(header)])[0]
+    print(length)
+    print(headerLength)
+    
+    # Insert code that grabs all subtitle bytes
+
+    voxBytes = header + subsContent
+
+    return voxBytes
+
 # Test code: Recompile call headers
-for subs in radioSource.findall(".//SUBTITLE"):
-    subtitle = getSubtitleBytes(subs)
-    print(subtitle)
-    print(subtitle.hex())
+for vox in radioSource.findall(".//VOX_CUES"):
+    content = getVoxBytes(vox)
+    print(content)
+    print(content.hex())
