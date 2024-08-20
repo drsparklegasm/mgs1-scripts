@@ -18,8 +18,8 @@ import radioDict
 import argparse
 import xml.etree.ElementTree as ET
 
-# inputXML = 'extractedCallBins/1119995-decrypted.xml'
-inputXML = 'usaD1Analyze.xml'
+inputXML = 'extractedCallBins/1119995-decrypted.xml'
+# inputXML = 'usaD1Analyze.xml'
 
 radioSource = ET.parse(inputXML)
 
@@ -61,12 +61,19 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
     attrs = subtitle.attrib
     subtitleBytes = bytes.fromhex('ff01')
-    
+    lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2)
+    face = bytes.fromhex(attrs.get("face"))
+    anim = bytes.fromhex(attrs.get("anim"))
+    unk3 = bytes.fromhex(attrs.get("unk3"))
 
+    text = attrs.get("Text").encode('utf-8')
+    text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
 
-
+    subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
+    return subtitleBytes
 
 # Test code: Recompile call headers
-for call in radioSource.findall(".//Call"):
-    bytesToPrint = getCallHeaderBytes(call)
-    print(bytesToPrint.hex())
+for subs in radioSource.findall(".//SUBTITLE"):
+    subtitle = getSubtitleBytes(subs)
+    print(subtitle)
+    print(subtitle.hex())
