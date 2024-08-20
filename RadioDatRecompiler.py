@@ -93,7 +93,7 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     how to identify the type of element and return the correct hex. 
     """
     attrs = vox.attrib
-    header = bytes.fromhex(attrs.get('Content'))
+    header = bytes.fromhex(attrs.get('content'))
     
     subsContent = b''
     for sub in vox.findall('.//SUBTITLE'):
@@ -114,11 +114,15 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     return voxBytes
 
 # Test code: Recompile call headers
+
+
+
+
 for vox in radioSource.findall(".//VOX_CUES"):
     content = getVoxBytes(vox)
     print(content)
     if content in callToCheck:
-        print('Worked!')
+        continue
     else:
         print(f'Didn\'t work!')
         print(vox)
