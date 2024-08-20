@@ -23,6 +23,9 @@ inputXML = 'extractedCallBins/1119995-decrypted.xml'
 
 radioSource = ET.parse(inputXML)
 
+checkBinFile = 'extractedCallBins/1119995.bin'
+callToCheck = open(checkBinFile, 'rb').read()
+
 # ==== DEFS ==== #
 
 # Large steps here
@@ -78,6 +81,8 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     Returns the hex for a VOX container (FF02). 
     Because it is a container that contains Subtitle elements, we will compile that hex here.
 
+    TODO: MUS_CUES and ANI_FACE could both be included here. We'll need to figure out 
+    how to identify the type of element and return the correct hex. 
     """
     attrs = vox.attrib
     header = bytes.fromhex(attrs.get('Content'))
@@ -104,4 +109,8 @@ def getVoxBytes(vox: ET.Element) -> bytes:
 for vox in radioSource.findall(".//VOX_CUES"):
     content = getVoxBytes(vox)
     print(content)
-    print(content.hex())
+    if content in callToCheck:
+        print('Worked!')
+    else:
+        print(f'Didn\'t work!')
+        print(vox)
