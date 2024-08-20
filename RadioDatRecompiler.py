@@ -11,6 +11,14 @@ We will output to RADIO.DAT or optionally a filename of your choice.
 
 """
 
+"""
+To do list:
+TODO: Methods for integrity check against original bin file
+TODO: Element checker
+TODO: Binary compilers for other methods. 
+TODO: Handle nulls somehow. 
+"""
+
 # ==== Dependencies ==== #
 
 import os, struct
