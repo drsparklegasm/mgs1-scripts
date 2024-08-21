@@ -9,9 +9,7 @@ Steps to use for translation:
 
 We will output to RADIO.DAT or optionally a filename of your choice. 
 
-"""
 
-"""
 To do list:
 TODO: Methods for integrity check against original bin file
 TODO: Element checker
