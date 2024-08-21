@@ -222,12 +222,26 @@ def handleElement(elem: ET.Element) -> bytes:
     return binary
 
 # Test code: Recompile call headers
+parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
+parser.add_argument('input', type=str, help="Input XML to be recompiled.")
+parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
 
+args = parser.parse_args()
+
+# Read new radio source
+radioSource = ET.parse(args.input)
+
+if args.output:
+    outputFilename = args.output
+else:
+    outputFilename = args.input.split("/")[-1].split(".")[0] + '-mod.bin'
+
+outputContent = b''
 for element in radioSource.iter():
     content = handleElement(element)
-    """print(content)
-    if content in callToCheck:
-        continue
-    else:
-        print(f'Didn\'t work!')
-        print(vox)"""
+    outputContent = outputContent + content
+    print(content)
+
+f = open(outputFilename, 'wb')
+f.write(outputContent)
+f.close()
