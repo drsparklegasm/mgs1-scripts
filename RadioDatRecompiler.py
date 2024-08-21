@@ -104,7 +104,7 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     for child in vox:
         print(child.tag)
         binary = handleElement(child)
-        print(binary)
+        # print(binary)
         subsContent = subsContent + binary
     
     """
@@ -113,12 +113,12 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     """
 
     subsContent = subsContent + b'\x00' # there's always an extra null here.
-    print(subsContent.hex())
+    # print(subsContent.hex())
 
     length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
     headerLength = struct.unpack(">H", header[-2:len(header)])[0]
-    print(length)
-    print(headerLength)
+    # print(length)
+    # print(headerLength)
     
     # Insert code that grabs all subtitle bytes
 
@@ -240,7 +240,7 @@ outputContent = b''
 for element in radioSource.iter():
     content = handleElement(element)
     outputContent = outputContent + content
-    print(content)
+    # print(content)
 
 f = open(outputFilename, 'wb')
 f.write(outputContent)
