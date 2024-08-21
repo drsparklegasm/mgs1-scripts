@@ -14,13 +14,9 @@ for input in "$input_dir"/*.bin; do
     output="$input_dir/$base_filename-decrypted"
 
     python3 $SPLITSCRIPT $input $output -xz
-
-for input in "$input_dir"/*.xml; do
-    python3 $RECOMPILESCRIPT $input 
-
 done
 
 for input in "$input_dir"/*.xml; do
-    base_filename=$(basename "$input" .bin)
-    diff $input $base_filename-mod.bin
+    python3 $RECOMPILESCRIPT $input $input_dir/$base_filename-mod.bin
+    diff $input $input_dir/$base_filename-mod.bin
 done
