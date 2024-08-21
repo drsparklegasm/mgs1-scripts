@@ -346,7 +346,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 'buff': line[8:10].hex(),
             })
 
-            output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, FullContent: {str(line.hex())}\n')
+            output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, content: {str(line.hex())}\n')
             return length
         
         case b'\x04':

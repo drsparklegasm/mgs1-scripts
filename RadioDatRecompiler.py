@@ -26,8 +26,8 @@ import radioDict
 import argparse
 import xml.etree.ElementTree as ET
 
-inputXML = 'extractedCallBins/1119995-decrypted.xml'
-# inputXML = 'usaD1Analyze.xml'
+# inputXML = 'extractedCallBins/1119995-decrypted.xml'
+inputXML = 'usaD1Analyze.xml'
 
 radioSource = ET.parse(inputXML)
 
@@ -48,22 +48,25 @@ def outputFile():
 
 # ==== Byte Encoding Defs ==== #
 
+def getFreqbytes(freq: str) -> bytes:
+    frequency = int(float(freq) * 100)
+    freqBytes = struct.pack('>H', frequency)
+    return freqBytes
+
 def getCallHeaderBytes(call: ET.Element) -> bytes:
     """
     Returns the bytes used for a call header. Should always return bytes object with length 11.
     """
     callHeader = b''
     attrs = call.attrib
-    frequency = int(float(attrs.get("Freq")) * 100)
-    freqBytes = struct.pack('>H', frequency)
-
+    freq = getFreqbytes(attrs.get('Freq'))
     unk1 = bytes.fromhex(attrs.get("UnknownVal1"))
     unk2 = bytes.fromhex(attrs.get("UnknownVal2"))
     unk3 = bytes.fromhex(attrs.get("UnknownVal3"))
     lengthBytes = struct.pack('>H', int(attrs.get("Length")) - 9) # The header is 11 bytes, not in the length as shown in bytes
 
     # Assemble all pieces
-    callHeader = freqBytes + unk1 + unk2 + unk3 + bytes.fromhex('80') + lengthBytes
+    callHeader = freq + unk1 + unk2 + unk3 + bytes.fromhex('80') + lengthBytes
     return callHeader
 
 def getSubtitleBytes(subtitle: ET.Element) -> bytes:
@@ -94,10 +97,20 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     """
     attrs = vox.attrib
     header = bytes.fromhex(attrs.get('content'))
-    
+
     subsContent = b''
+
+    binary = b''
+    for child in vox:
+        print(child.tag)
+        binary = handleElement(child)
+        print(binary)
+        subsContent = subsContent + binary
+    
+    """
     for sub in vox.findall('.//SUBTITLE'):
         subsContent = subsContent + getSubtitleBytes(sub)
+    """
 
     subsContent = subsContent + b'\x00' # there's always an extra null here.
     print(subsContent.hex())
@@ -110,19 +123,115 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     # Insert code that grabs all subtitle bytes
 
     voxBytes = header + subsContent
-
     return voxBytes
+
+def getAnimBytes(mus: ET.Element) -> bytes: 
+    """
+    Animation hex command 0xFF03
+    """
+    attrs = mus.attrib
+
+    animBytes = bytes.fromhex('FF03')
+    length = int(attrs.get('length')) - 2
+    face = bytes.fromhex(attrs.get('face'))
+    anim = bytes.fromhex(attrs.get('anim'))
+    buff = bytes.fromhex(attrs.get('buff'))
+    
+    if length == 8:
+        animBytes =  animBytes + struct.pack('>H', length) + face + anim + buff
+    
+    return animBytes
+
+def getFreqAddBytes(elem: ET.Element) -> bytes:
+    """
+    freq-add hex command 0xFF04
+    """
+    attrs = elem.attrib
+
+    elemBytes = bytes.fromhex('FF04')
+    length = int(attrs.get('length')) - 2
+    
+    freq = getFreqbytes(attrs.get('freq'))
+    name = attrs.get('name').encode('utf8')
+    
+    if length == 8:
+        elemBytes =  elemBytes + struct.pack('>H', length) + freq + name + b'\x00'
+    
+    return elemBytes
+
+def getContentBytes(elem: ET.Element) -> bytes: 
+    """
+    This one is to get binary when we specifically mark a 'content' field.
+    =====
+    Full list of what this works for:
+    - FF06, FF07, FF08
+    """
+    name = elem.tag
+    attrs = elem.attrib
+    """
+    # We may not need this but if we need the name it's elem.tag
+    match name:
+        case "MUS_CUES":
+            elemBytes = bytes.fromhex('FF06')
+        case "ASK_USER":
+            elemBytes = bytes.fromhex('FF07')
+        case "SAVEGAME":
+            elemBytes = bytes.fromhex('FF08')
+    
+
+    length = int(attrs.get('length')) - 2
+    face = bytes.fromhex(attrs.get('face'))
+    anim = bytes.fromhex(attrs.get('anim'))
+    buff = bytes.fromhex(attrs.get('buff'))
+    
+    if length == 8:
+        animBytes =  animBytes + struct.pack('>H', length) + face + anim + buff
+
+    """
+    elemBytes = bytes.fromhex(attrs.get('content'))
+
+    return elemBytes
+
+def handleElement(elem: ET.Element) -> bytes:
+
+    binary = b''
+    match elem.tag:
+        case 'SUBTITLE':
+            binary = getSubtitleBytes(elem)
+        case 'VOX_CUES': 
+            binary = getVoxBytes(elem)
+        case 'ANI_FACE': 
+            binary = getAnimBytes(elem)
+        case 'ADD_FREQ':
+            binary = getFreqAddBytes(elem)
+        case 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER': 
+            binary = getContentBytes(elem)
+        case 'SAVEGAME':
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'IF_CHECK': 
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'ELSE': 
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'ELSE_IFS':
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'SWITCH':
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'SWITCHOP':
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'EVAL_CMD':
+            print(f'{elem.tag} NOT YET IMPLEMENTED')
+        case 'NULL':
+            binary = b'\x00'
+    
+    return binary
 
 # Test code: Recompile call headers
 
-
-
-
 for vox in radioSource.findall(".//VOX_CUES"):
     content = getVoxBytes(vox)
-    print(content)
+    """print(content)
     if content in callToCheck:
         continue
     else:
         print(f'Didn\'t work!')
-        print(vox)
+        print(vox)"""
