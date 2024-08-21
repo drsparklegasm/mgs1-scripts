@@ -438,21 +438,24 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         case b'\x30' | b'\x31':
             # 30 is handled different, as it has a container header
             if commandByte == b'\x30':
-                length = getLengthManually(offset)
+                header = getLengthManually(offset)
             else:
-                length = 7 # Hard code this for now, works in most cases.
-            line = radioData[offset : offset + length]
+                header = 7 # Hard code this for now, works in most cases.
+            line = radioData[offset : offset + header]
             output.write(commandToEnglish(commandByte))
-            scriptLength = struct.unpack('>H',line[length - 2: length])[0]
+            scriptLength = struct.unpack('>H',line[header - 2: header])[0]
             
-            output.write(f' -- offset = {offset}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
+            output.write(f' -- offset = {offset}, Header is {header}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
 
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
-                "length": str(length),
+                "headerLength": str(header),
+                "length": str(scriptLength),
                 "content": line.hex()
             })
-            return length 
+            checkElement(scriptLength)
+            elementStack.append((randomElement, scriptLength))
+            return header 
         
         case b'\x40':
             output.write(commandToEnglish(commandByte))
@@ -639,7 +642,7 @@ if __name__ == '__main__':
     outputFilename = 'Radio-decrypted.txt'
     
     # We should get args from user. Using argParse
-    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> <output.txt>')
+    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> [output.txt] -?')
 
     # REQUIRED
     parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")

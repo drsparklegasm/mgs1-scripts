@@ -26,8 +26,8 @@ import radioDict
 import argparse
 import xml.etree.ElementTree as ET
 
-# inputXML = 'extractedCallBins/1119995-decrypted.xml'
-inputXML = 'usaD1Analyze.xml'
+inputXML = 'extractedCallBins/1119995-decrypted.xml'
+# inputXML = 'usaD1Analyze.xml'
 
 radioSource = ET.parse(inputXML)
 
@@ -204,10 +204,8 @@ def handleElement(elem: ET.Element) -> bytes:
             binary = getAnimBytes(elem)
         case 'ADD_FREQ':
             binary = getFreqAddBytes(elem)
-        case 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER': 
+        case 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER' | 'SAVEGAME' | 'EVAL_CMD': 
             binary = getContentBytes(elem)
-        case 'SAVEGAME':
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
         case 'IF_CHECK': 
             print(f'{elem.tag} NOT YET IMPLEMENTED')
         case 'ELSE': 
@@ -218,8 +216,6 @@ def handleElement(elem: ET.Element) -> bytes:
             print(f'{elem.tag} NOT YET IMPLEMENTED')
         case 'SWITCHOP':
             print(f'{elem.tag} NOT YET IMPLEMENTED')
-        case 'EVAL_CMD':
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
         case 'NULL':
             binary = b'\x00'
     
@@ -227,8 +223,8 @@ def handleElement(elem: ET.Element) -> bytes:
 
 # Test code: Recompile call headers
 
-for vox in radioSource.findall(".//VOX_CUES"):
-    content = getVoxBytes(vox)
+for element in radioSource.iter():
+    content = handleElement(element)
     """print(content)
     if content in callToCheck:
         continue
