@@ -285,9 +285,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
             # Translate
-            if b'\x96\x00' in dialogue: # We need this because we should never see 0x9600
-                print(f'{offset} has a 0x9600 in dialogue! Check binary')
-            # print(f'Offset is {offset}\n')
             translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             dialogue = str(translatedDialogue)
 
@@ -427,13 +424,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
 
-            elseElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+            conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex(),
             })
             checkElement(length)
-            elementStack.append((elseElement, length))
+            elementStack.append((conditionalElement, length))
             return header
         
         case b'\x30' | b'\x31':
@@ -520,6 +517,11 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
     return content
 
 def checkElement(length):
+    """
+    Pops the top element off the stack (if its longer than 1)
+    Removes the last amount of length from it
+    If there is still length remaining, we add it back to the stack.
+    """
     if len(elementStack) > 0:
         current_element, current_length = elementStack.pop()
         newElementLength = current_length - length
