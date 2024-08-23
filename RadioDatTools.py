@@ -322,6 +322,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "content": f'{line.hex()}'
             })
             # checkElement(header)
+            checkElement(length)
             elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
             
@@ -601,13 +602,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             if radioData[offset + 1].to_bytes() == b'\x31': # For some reason switch statements don't have an FF
                 length = handleCommand(offset)
             else:
-                output.write(f"Null! (Main loop) offset = {offset}\n")
-                nullCount += 1
-                if layerNum > 0:
-                    layerNum -= 1
                 length = 1
-                nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
-                checkElement(1)
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             if radioData[offset + 1].to_bytes() == b'\x01':
@@ -628,7 +623,14 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         
             
         offset += length
+        checkStack = len(elementStack)
         checkElement(length)
+        if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
+            output.write(f"Null! (Main loop) offset = {offset}\n")
+            nullCount += 1
+            if layerNum > 0:
+                layerNum -= 1
+            nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
 
     output.close()
 
