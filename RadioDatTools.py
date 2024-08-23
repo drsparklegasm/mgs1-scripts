@@ -76,20 +76,21 @@ def splitCall(offset: int, length: int) -> None:
 # Reference data
 
 # A lot of this is work in progress or guessing from existing scripts
-commandNamesEng = { b'\x01':'SUBTITLE',
-                    b'\x02':'VOX_CUES', 
-                    b'\x03':'ANI_FACE', 
-                    b'\x04':'ADD_FREQ',
-                    b'\x05':'MEM_SAVE', 
-                    b'\x06':'MUS_CUES', 
-                    b'\x07':'ASK_USER', 
-                    b'\x08':'SAVEGAME',
-                    b'\x10':'IF_CHECK', 
-                    b'\x11':'ELSE', 
-                    b'\x12':'ELSE_IFS', 
-                    b'\x30':'SWITCH',
-                    b'\x31':'SWITCHOP', 
-                    b'\x40':'EVAL_CMD' 
+commandNamesEng = { 
+    b'\x01':'SUBTITLE',
+    b'\x02':'VOX_CUES', 
+    b'\x03':'ANI_FACE', 
+    b'\x04':'ADD_FREQ',
+    b'\x05':'MEM_SAVE', 
+    b'\x06':'MUS_CUES', 
+    b'\x07':'ASK_USER', 
+    b'\x08':'SAVEGAME',
+    b'\x10':'IF_CHECK', 
+    b'\x11':'ELSE', 
+    b'\x12':'ELSE_IFS', 
+    b'\x30':'RND_SWCH',
+    b'\x31':'RND_OPTN', 
+    b'\x40':'EVAL_CMD' 
 }
 
 freqList = [
