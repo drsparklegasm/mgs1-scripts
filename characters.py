@@ -2012,7 +2012,6 @@ graphicsData = {
     "6ba3a96babfe3feaec3ba1f86febae2b52083ffffc2aaea80b2ff06baea9bffffe000000": "整" # Thanks google translate? Hope this is correct.
 }
 
-
 # Chat GPT $#!+ below
 def print_hiragana_shiftjis_with_offset():
     # Starting and ending Shift-JIS values for Hiragana

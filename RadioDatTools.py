@@ -647,8 +647,8 @@ if __name__ == '__main__':
 
     # REQUIRED
     parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
-    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     # Optionals
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
     parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings") # Remove later when issue with english resolved
     parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
@@ -657,7 +657,6 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
     parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
     parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
-    
 
     args = parser.parse_args()
 
