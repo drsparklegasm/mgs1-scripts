@@ -400,9 +400,10 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
         case b'\x10': # 
             output.write(commandToEnglish(commandByte))
-            length = getLength(offset)
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
+            length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
+
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
             layerNum += 2
 
