@@ -421,7 +421,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         case b'\x11' | b'\x12': # Elseif, Else respectively
             output.write(commandToEnglish(commandByte))
             header = getLengthManually(offset) # Maybe not ?
-            length = getLength(offset + 1)
             line = radioData[offset : offset + header]
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
