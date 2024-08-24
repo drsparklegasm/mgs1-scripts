@@ -159,10 +159,8 @@ def getFreqAddBytes(elem: ET.Element) -> bytes:
 
 def getContentBytes(elem: ET.Element) -> bytes: 
     """
-    This one is to get binary when we specifically mark a 'content' field.
-    =====
-    Full list of what this works for:
-    - FF06, FF07, FF08
+    This one is to get binary when we specifically mark a 'content' field. Full list of what this works for:
+    FF04, FF05, FF06, FF07, FF08
     """
     name = elem.tag
     attrs = elem.attrib
@@ -191,7 +189,9 @@ def getContentBytes(elem: ET.Element) -> bytes:
     return elemBytes
 
 def handleElement(elem: ET.Element) -> bytes:
-
+    """
+    Takes an element and returns the bytes for that element and all subelements. 
+    """
     binary = b''
     match elem.tag:
         case 'SUBTITLE':
