@@ -134,7 +134,11 @@ def indentLines() -> None: # Purely formatting help
 
 # Analysis commands
 
-def checkFreq(offset: int) -> bool:  # Checks if the next two bytes are a codec number or not. Returns True or False.
+def checkFreq(offset: int) -> bool:  
+    """ 
+    Checks if the offset is the start of a codec call or not. 
+    Returns True or False.
+    """
     global radioData
     if radioData[offset:offset + 2] in freqList and radioData[offset + 8].to_bytes() == b'\x80':
         return True
@@ -605,12 +609,8 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         if debugOutput:
             print(f'Main loop: offset is {offset}')
 
-        if nullCount == 4:
-            output.write(f'ALERT!!! We just had 4x Nulls in a row at offset {offset}\n')
-            nullCount = 0
-
         # MAIN LOGIC
-        if len(elementStack) < 1 and not checkFreq(offset) and radioData[offset] != 255:
+        if len(elementStack) == 1 and not checkFreq(offset) and radioData[offset] != 255:
             length = handleUnknown(offset)
         elif radioData[offset].to_bytes() == b'\x31':
             length = handleCommand(offset - 1) # offset shift for 0x31
