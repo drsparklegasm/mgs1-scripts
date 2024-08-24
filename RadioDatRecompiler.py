@@ -210,12 +210,10 @@ def handleElement(elem: ET.Element) -> bytes:
             print(f'{elem.tag} NOT YET IMPLEMENTED')
         case 'ELSE_IFS':
             print(f'{elem.tag} NOT YET IMPLEMENTED')
-        case 'SWITCH':
+        case 'RND_SWCH':
             print(f'{elem.tag} NOT YET IMPLEMENTED')
-        case 'SWITCHOP':
+        case 'RND_OPTN':
             print(f'{elem.tag} NOT YET IMPLEMENTED')
-        case 'NULL':
-            binary = b'\x00'
     
     return binary
 
