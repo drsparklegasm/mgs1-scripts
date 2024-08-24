@@ -692,6 +692,7 @@ if __name__ == '__main__':
     # Set input filename
     filename = args.filename
     baseFilename = filename.split("/")[-1]
+    baseFilename = baseFilename.split(".")[0]
 
     # Set output Filename
     if args.output:
