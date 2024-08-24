@@ -8,7 +8,7 @@ This is the main script. See bottom for command arguments and how we parse the c
 - TODO: Remove handleUnknown() or replace with different logic.
 - TODO: Add base64 hashing to determine input file 
 - TODO: Handle other cases, fix natashas script breaking shit (Cases)
-- TODO: Mei ling scripts fucked up
+- TODO: Mei ling scripts fucked up # BETTER NOW!
 - TODO: Work on recompiler
 
 Completed stuff:
@@ -248,6 +248,12 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     return count
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
+    """
+    TERMINOLOGY:
+    length  = length of the entire container (including header and subcontainers)
+    header = header length
+    line = Usually their header text/content
+    """
     global output
     global layerNum
     global root
@@ -303,19 +309,20 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + header]
             voxLength1 = struct.unpack('>H',line[2:4])[0]
             voxLength2 = struct.unpack('>H',line[9:11])[0]
+            containerLength = voxLength2 - 3
             
             # Check for even length numbers
             if debugOutput:
                 if voxLength1 - voxLength2 != 7:
-                    print(f'ERROR!! OFFSET {offset} HAS A \\x02 that does not evenly fit!')
+                    print(f'ERROR!! OFFSET {offset} HAS A 0x02 that does not evenly fit!')
 
             voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(voxLength1),
-                "lengthB": str(voxLength2),
-                "content": f'{line.hex()}'
+                "header": str(header),
+                "containerLength": str(containerLength),
+                "headerContent": f'{line.hex()}'
             })
-            # checkElement(header)
             checkElement(length)
             elementStack.append((voxElement, length))
             output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
@@ -324,6 +331,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         
         case b'\x03':
             length = getLength(offset)
+            header = 10 # Should be static
             line = radioData[offset : offset + length]
             containerLength = line[2:4]
             face = line[4:6]
@@ -333,9 +341,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             Anim_Element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
+                "header": str(header),
                 'face': line[4:6].hex(),
                 'anim': line[6:8].hex(),
                 'buff': line[8:10].hex(),
+                'content': line.hex()
             })
 
             output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, content: {str(line.hex())}\n')
@@ -358,7 +368,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "offset": str(offset),
                 "length": str(length),
                 "freq": str(freq),
-                "name": entryNameStr
+                "name": entryNameStr,
+                "content": line.hex()
             })
 
             output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
@@ -392,6 +403,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         case b'\x10': # 
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
+            containerLength = struct.unpack(">H", line[-2:len(line)])[0] - 3
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
 
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
@@ -401,6 +413,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "offset": str(offset),
                 "length": str(length),
                 "header": str(header),
+                "containerLength": str(containerLength),
                 "content": line.hex(),
             })
             checkElement(length)
@@ -411,12 +424,15 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
+            containerLength = struct.unpack(">H", line[-2:len(line)])[0] - 3
+            containerLength = header + struct.unpack('>H', line[header - 2 : header])[0] - 3
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
             layerNum += 1
 
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
+                "containerLength": str(containerLength),
                 "content": line.hex(),
             })
             checkElement(length)
