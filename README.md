@@ -38,9 +38,9 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 ## Goals
 
-1. Be able to extract all instructions and dialogue
-2. Have a readable format by another tool to adjust the dialogue and replace
-3. Be able to recreate a 1:1 copy of the RADIO.DAT file when created from the tool 
+1. Be able to extract all instructions and dialogue >> DONE
+2. Have a readable format by another tool to adjust the dialogue and replace >> Exported to json >> DONE
+3. Be able to recreate a 1:1 copy of the RADIO.DAT file when created from the tool >> IN PROGRESS
 4. Be able to create a new RADIO.DAT file with translations, offsets agnostic!
 5. Insert offsets into stage.dir for seamless integration, regardless of subtitle length
 
