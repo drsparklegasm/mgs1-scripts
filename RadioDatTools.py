@@ -501,14 +501,14 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             })
             return length
         
-        case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
+        # case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
             output.write(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
             if debugOutput:
                 print(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
             length = 1
             return length
 
-        case _:
+        # case _:
             output.write(f'ERROR! Command is not yet cased! Command = {commandByte} -- ')
             
             length = getLengthManually(offset)
@@ -599,12 +599,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     nullCount = 0
     
     setOutputFile(outputFilename)
-
-    """
-    # Probably unused/superfluous
-    if radioData == None:
-        return "Command failed! Radiodata file not set!"
-    """
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
