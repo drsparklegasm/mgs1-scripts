@@ -743,7 +743,7 @@ if __name__ == '__main__':
             callText = {}
             for subs in call.findall(f'.//SUBTITLE'):
                 offset = subs.get('offset')
-                text = subs.get('Text')
+                text = subs.get('text')
                 callText[int(offset)] = text
                 #if args.japanese:
                 #   callText = translate(callText)
