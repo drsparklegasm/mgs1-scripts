@@ -10,11 +10,18 @@ Currently this will analyze the RADIO.DAT file and output in several ways. -H wi
 
 ### RadioDatTools.py
 
-This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. Usage:
+This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. This should be mostly complete now. Remaining work will be adjusting XML container data as needed for recompilation.
+
+Usage:
 
 ```
 $ RadioDatTools.py path/to/Radio.dat [outputfilename] [-h, -i, -d, ...]
 ```
+
+### RadioDatRecompiler.py -- WORK IN PROGRESS
+Recompiles a given XML document (exported from RadioDatTools) into a binary file. 
+
+Eventually, it will inject the json data and recompute the lengths for all containers.
 
 ### callsInStageDirFinder.py
 
