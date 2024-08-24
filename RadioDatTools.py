@@ -55,10 +55,12 @@ fileSize = 0
 def setRadioData(filename: str) -> bool:
     global radioData
     global fileSize
+    global elementStack
     
     radioFile = open(filename, 'rb')
     radioData = radioFile.read()
     fileSize = len(radioData)
+    elementStack = [(root, fileSize)]
     return True
 
 def setOutputFile(filename: str) -> bool:
@@ -435,27 +437,43 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             elementStack.append((conditionalElement, length))
             return header
         
-        case b'\x30' | b'\x31':
+        case b'\x30':
             # 30 is handled different, as it has a container header
-            if commandByte == b'\x30':
-                header = getLengthManually(offset)
-            else:
-                header = 7 # Hard code this for now, works in most cases.
+            length = getLength(offset)
+            header = 6
             line = radioData[offset : offset + header]
-            output.write(commandToEnglish(commandByte))
-            scriptLength = struct.unpack('>H',line[header - 2: header])[0]
-            
-            output.write(f' -- offset = {offset}, Header is {header}, Script is {scriptLength} bytes, Content = {line.hex()}\n')
 
-            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
-                "offset": str(offset),
-                "headerLength": str(header),
-                "length": str(scriptLength),
-                "content": line.hex()
-            })
-            checkElement(scriptLength)
-            elementStack.append((randomElement, scriptLength))
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), 
+                {
+                    "offset": str(offset),
+                    "headerLength": str(header),
+                    "length": str(length),
+                    "content": line.hex()
+                }
+            )
+            checkElement(length)
+            elementStack.append((randomElement, length))
+
             return header 
+        
+        case b'\x31':
+            # 31 passes offset as one before to match the command byte:
+            offset = offset + 1
+            header = 6
+            line = radioData[offset : offset + header]
+            length = struct.unpack('>H', line[4 : 6])[0] + 4
+
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), 
+                {
+                    "offset": str(offset),
+                    "headerLength": str(header),
+                    "length": str(length),
+                    "content": line.hex()
+                }
+            )
+            checkElement(length)
+            elementStack.append((randomElement, length))
+            return header
         
         case b'\x40':
             output.write(commandToEnglish(commandByte))
@@ -529,7 +547,7 @@ def checkElement(length):
         newElementLength = current_length - length
         if newElementLength > 0:
             elementStack.append((current_element, newElementLength))
-
+            
 ## Translation Commands:
 def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move to separate file?
     global callDict
@@ -597,12 +615,18 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             nullCount = 0
 
         # MAIN LOGIC
-        if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
+        if len(elementStack) < 1 and not checkFreq(offset) and radioData[offset] != 255:
+            length = handleUnknown(offset)
+        elif radioData[offset].to_bytes() == b'\x31':
+            length = handleCommand(offset - 1) # offset shift for 0x31
+            # length += 1 # Add this back from the offset change
+        elif radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
+            if len(elementStack) == 1:
+                length = handleUnknown(offset) # This will go until we find a call frequency
+                offset += length
+                continue
             indentLines()
-            if radioData[offset + 1].to_bytes() == b'\x31': # For some reason switch statements don't have an FF
-                length = handleCommand(offset)
-            else:
-                length = 1
+            length = 1
         elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
             nullCount = 0
             if radioData[offset + 1].to_bytes() == b'\x01':
@@ -707,7 +731,7 @@ if __name__ == '__main__':
         if fancy:
             from xml.dom.minidom import parseString
             xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
-            xmlFile = open(f'{args.output}.xml', 'w')
+            xmlFile = open(f'{outputFilename}.xml', 'w')
             xmlFile.write(xmlstr)
             xmlFile.close()
         else:
