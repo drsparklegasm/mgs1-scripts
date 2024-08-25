@@ -219,7 +219,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         "UnknownVal1": unk0.hex(),
         "UnknownVal2": unk1.hex(),
         "UnknownVal3": unk2.hex(),
-        "content": line.hex()
+        "content": line.hex(),
         "graphicsBytes": graphicsData.hex()
         })
     
