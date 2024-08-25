@@ -229,6 +229,7 @@ for call in root:
     outputContent += bytes.fromhex(attrs.get("content"))
     for subelem in call:
         outputContent += handleElement(subelem)
+    
     # print(content)
 
 f = open(outputFilename, 'wb')

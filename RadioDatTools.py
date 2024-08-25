@@ -200,17 +200,6 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         if line[8].to_bytes() != b'\x80':
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return 1"""
-    
-    call_element = ET.SubElement(root, "Call", {
-        "Offset": f'{offset}',
-        "Freq": f'{humanFreq}',
-        "Length": f'{length}', 
-        "UnknownVal1": unk0.hex(),
-        "UnknownVal2": unk1.hex(),
-        "UnknownVal3": unk2.hex(),
-        "content": line.hex()
-        })
-    elementStack.append((call_element, length))
 
     # Get graphics data and write to a global dict:
     global callDict 
@@ -222,6 +211,19 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
     layerNum += 1
+
+    call_element = ET.SubElement(root, "Call", {
+        "Offset": f'{offset}',
+        "Freq": f'{humanFreq}',
+        "Length": f'{length}', 
+        "UnknownVal1": unk0.hex(),
+        "UnknownVal2": unk1.hex(),
+        "UnknownVal3": unk2.hex(),
+        "content": line.hex()
+        "graphicsBytes": graphicsData.hex()
+        })
+    
+    elementStack.append((call_element, length))
 
     return header
 
