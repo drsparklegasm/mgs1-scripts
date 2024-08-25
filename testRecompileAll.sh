@@ -16,7 +16,7 @@ for input in "$input_dir"/*.bin; do
     python3 $SPLITSCRIPT $input $output -xz
 done
 
-for input in "$input_dir"/*.xml; do
+for input in "$input_dir"/*.bin; do
     python3 $RECOMPILESCRIPT $input $input_dir/$base_filename-mod.bin
     diff $input $input_dir/$base_filename-mod.bin
 done

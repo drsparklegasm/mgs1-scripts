@@ -11,10 +11,12 @@ We will output to RADIO.DAT or optionally a filename of your choice.
 
 
 To do list:
+
 TODO: Methods for integrity check against original bin file
 TODO: Element checker
 TODO: Binary compilers for other methods. 
 TODO: Handle nulls somehow. 
+
 """
 
 # ==== Dependencies ==== #
@@ -94,34 +96,20 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     how to identify the type of element and return the correct hex. 
     """
     attrs = vox.attrib
-    header = bytes.fromhex(attrs.get('content'))
-
-    subsContent = b''
+    binary = bytes.fromhex(attrs.get('content'))
 
     binary = b''
     for child in vox:
-        print(child.tag)
-        binary = handleElement(child)
-        # print(binary)
-        subsContent = subsContent + binary
+        # print(child.tag)
+        binary += handleElement(child)
     
-    """
-    for sub in vox.findall('.//SUBTITLE'):
-        subsContent = subsContent + getSubtitleBytes(sub)
-    """
-
-    subsContent = subsContent + b'\x00' # there's always an extra null here.
+    binary += b'\x00' # there's always an extra null here.
     # print(subsContent.hex())
-
+    """
     length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
     headerLength = struct.unpack(">H", header[-2:len(header)])[0]
-    # print(length)
-    # print(headerLength)
-    
-    # Insert code that grabs all subtitle bytes
-
-    voxBytes = header + subsContent
-    return voxBytes
+    """
+    return binary
 
 def getAnimBytes(mus: ET.Element) -> bytes: 
     """
@@ -162,58 +150,59 @@ def getContentBytes(elem: ET.Element) -> bytes:
     This one is to get binary when we specifically mark a 'content' field. Full list of what this works for:
     FF04, FF05, FF06, FF07, FF08
     """
-    name = elem.tag
     attrs = elem.attrib
-    """
-    # We may not need this but if we need the name it's elem.tag
-    match name:
-        case "MUS_CUES":
-            elemBytes = bytes.fromhex('FF06')
-        case "ASK_USER":
-            elemBytes = bytes.fromhex('FF07')
-        case "SAVEGAME":
-            elemBytes = bytes.fromhex('FF08')
-    
-
-    length = int(attrs.get('length')) - 2
-    face = bytes.fromhex(attrs.get('face'))
-    anim = bytes.fromhex(attrs.get('anim'))
-    buff = bytes.fromhex(attrs.get('buff'))
-    
-    if length == 8:
-        animBytes =  animBytes + struct.pack('>H', length) + face + anim + buff
-
-    """
     elemBytes = bytes.fromhex(attrs.get('content'))
 
     return elemBytes
+
+def getContainerContentBytes(elem: ET.Element) -> bytes:
+    """
+    The equivelant of Handle element. 
+    """
+    binary = b''
+    for subelem in elem:
+        binary = binary + handleElement(subelem)
+    binary += bytes.fromhex('00')
+
+    return binary
+
+
 
 def handleElement(elem: ET.Element) -> bytes:
     """
     Takes an element and returns the bytes for that element and all subelements. 
     """
     binary = b''
+    attrs = elem.attrib
     match elem.tag:
         case 'SUBTITLE':
+            # ff01
             binary = getSubtitleBytes(elem)
         case 'VOX_CUES': 
+            # ff02
             binary = getVoxBytes(elem)
-        case 'ANI_FACE': 
-            binary = getAnimBytes(elem)
-        case 'ADD_FREQ':
-            binary = getFreqAddBytes(elem)
-        case 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER' | 'SAVEGAME' | 'EVAL_CMD': 
+        # case 'ADD_FREQ':
+            # binary = getFreqAddBytes(elem)
+        case 'ANI_FACE' | 'ADD_FREQ' | 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER' | 'SAVEGAME' | 'EVAL_CMD': 
+            # ff03-08, FF40
             binary = getContentBytes(elem)
         case 'IF_CHECK': 
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
+            binary = bytes.fromhex(attrs.get('content'))
+            binary += getContainerContentBytes(elem)
+        case 'THEN_DO': 
+            binary += getContainerContentBytes(elem)
         case 'ELSE': 
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
+            binary = bytes.fromhex(attrs.get('content'))
+            binary += getContainerContentBytes(elem)
         case 'ELSE_IFS':
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
+            binary = bytes.fromhex(attrs.get('content'))
+            binary += getContainerContentBytes(elem)
         case 'RND_SWCH':
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
+            binary = bytes.fromhex(attrs.get('content'))
+            binary += getContainerContentBytes(elem)
         case 'RND_OPTN':
-            print(f'{elem.tag} NOT YET IMPLEMENTED')
+            binary = bytes.fromhex(attrs.get('content'))
+            binary += getContainerContentBytes(elem)
     
     return binary
 
@@ -232,10 +221,14 @@ if args.output:
 else:
     outputFilename = args.input.split("/")[-1].split(".")[0] + '-mod.bin'
 
+root = radioSource.getroot()
+
 outputContent = b''
-for element in radioSource.iter():
-    content = handleElement(element)
-    outputContent = outputContent + content
+for call in root:
+    attrs = call.attrib
+    outputContent += bytes.fromhex(attrs.get("content"))
+    for subelem in call:
+        outputContent += handleElement(subelem)
     # print(content)
 
 f = open(outputFilename, 'wb')

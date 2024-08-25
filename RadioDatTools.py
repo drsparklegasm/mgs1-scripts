@@ -95,6 +95,7 @@ commandNamesEng = {
     b'\x30':'RND_SWCH',
     b'\x31':'RND_OPTN', 
     b'\x40':'EVAL_CMD' 
+    # 'THEN_DO'
 }
 
 freqList = [
@@ -207,6 +208,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         "UnknownVal1": unk0.hex(),
         "UnknownVal2": unk1.hex(),
         "UnknownVal3": unk2.hex(),
+        "content": line.hex()
         })
     elementStack.append((call_element, length))
 
@@ -326,7 +328,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "length": str(voxLength1),
                 "header": str(header),
                 "containerLength": str(containerLength),
-                "headerContent": f'{line.hex()}'
+                "content": f'{line.hex()}'
             })
             checkElement(length)
             elementStack.append((voxElement, length))
@@ -411,7 +413,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + header] # - 4 because from the offset we read the 3rd and 4th bytes. 
             lengthInner = struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
             
-            """lengthA = getLength(offset)
+            """ # Former troubleshooting exports
+            lengthA = getLength(offset)
             lengthB = getLength(offset + header - 4) + header
             lABytes = radioData[offset + 2: offset + 4]
             lBBytes = radioData[offset + header - 2: offset + header]
@@ -438,7 +441,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             doElement = ET.SubElement(elementStack[-1][0], "THEN_DO", {
                 "offset": str(offset + header),
                 "length": str(lengthInner),
-                "content": line.hex(),
             })
 
             checkElement(lengthInner)
@@ -453,7 +455,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             containerLength = struct.unpack(">H", line[-2:len(line)])[0] - 3
             containerLength = header + struct.unpack('>H', line[header - 2 : header])[0] - 3
             output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
-            layerNum += 1
 
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
@@ -461,8 +462,10 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "containerLength": str(containerLength),
                 "content": line.hex(),
             })
+
             checkElement(length)
             elementStack.append((conditionalElement, length))
+
             return header
         
         case b'\x30':
@@ -756,8 +759,6 @@ if __name__ == '__main__':
                 offset = subs.get('offset')
                 text = subs.get('text')
                 callText[int(offset)] = text
-                #if args.japanese:
-                #   callText = translate(callText)
             dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
@@ -767,7 +768,6 @@ if __name__ == '__main__':
         with open("graphicsExport/GraphicsFound.txt", 'w') as f:
             f.write(f'=================================\n')
             f.write(f"{filename} has these graphics that were unmatched:\n")
-            # f.write(str(radioDict.foundGraphics))
             num = 0
             unidentifiedGraphicsLocal = []
             for item in radioDict.unidentifiedGraphics:
