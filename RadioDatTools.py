@@ -782,5 +782,3 @@ if __name__ == '__main__':
                 radioDict.outputGraphic(newFile, bytes.fromhex(item))
                 f.write('\n')
             f.close()
-
-b'\xff\x02\x00V\x00\x01<\xfb\x80\x00O\xff\x01\x00J\x95\xf29\xc3\x00\x00Be careful, Snake. That air lock is set\x80#\x80Nwith infrared sensors.\x00\x00'
