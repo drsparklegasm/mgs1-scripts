@@ -13,7 +13,7 @@ This is the main script. See bottom for command arguments and how we parse the c
 
 Completed stuff:
 - Parses english and Japanese characters
-- Multiple outputs: Headers only, Iseeva style json (Dialogue only), XML heirarchical format
+- Multiple outputs: Text (indented), Headers only, Iseeva style json (Dialogue only), XML heirarchical format
 
 """
 
@@ -37,6 +37,7 @@ customGraphicsData = []
 
 ## Formatting Settings!
 
+indentToggle = True
 debugOutput = False
 splitCalls = False
 exportGraphics = False
@@ -66,7 +67,7 @@ def setRadioData(filename: str) -> bool:
 def setOutputFile(filename: str) -> bool:
     global output
     current_time = datetime.now().strftime("%H%M%S")
-    current_date = datetime.now().strftime("%Y-%m-%d") 
+    current_date = datetime.now().strftime("%Y-%m-%d")
     output = open(f'{filename}-{current_date}-{current_time}.log', 'w')
 
 def splitCall(offset: int, length: int) -> None:
@@ -101,14 +102,12 @@ freqList = [
     b'\x37\x05', # 140.85, Campbell
     b'\x37\x10', # 140.96, Mei Ling
     b'\x36\xbf', # 140.15, Meryl
-    b'\x37\x20', # 141.12, Otacon
+    b'\x36\xb7', # 141.12, Otacon
     b'\x37\x48', # 141.52, Nastasha
+    b'\x37\xac', # 142.52, Nastasha ACCIDENT
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
-    b'\x36\xbb', # 140.11, ????
-    b'\x36\xbc', # 140.12, ????
-    b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
 # Hashes for each radio file. I did not include Integral yet, as it won't suit the needs of this project. We'll need to write something to hash the files when ingested.
@@ -130,6 +129,11 @@ def commandToEnglish(hex: bytes) -> str:
         return commandNamesEng[hex]
     except:
         return f'BYTE {hex.hex()} WAS NOT DEFINED!!!!'
+    
+def indentLines() -> None: # Purely formatting help
+    if indentToggle == True:
+        for x in range(layerNum):
+            output.write('\t')
 
 # Analysis commands
 
@@ -150,21 +154,24 @@ def getFreq(offset: int) -> float: # If freq is at offset, return frequency as 1
     freq = struct.unpack('>H', radioData[ offset : offset + 2])[0]
     return freq / 100
 
-def getLength(offset: int) -> int: # Returns COMMAND length, offset must be at the 0xff bytes, length is bytes 1 and 2.
+def getLength(offset: int) -> int: 
+    """
+    Returns COMMAND length, offset must be at the 0xff bytes, length is returned as total for the container (includes FFXX bytes).
+    """
     global radioData
     
     lengthBytes = radioData[offset + 2: offset + 4]
     length = struct.unpack('>H', lengthBytes)[0]
     return length + 2
 
-def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 XX XX // FF starting the next block
+def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 XX XX 
     length = 0
     while True:
         length += 1
         if radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 3].to_bytes() == b'\x80' and not checkFreq(offset + length):
             return length
-        """elif radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 1].to_bytes() == b'\x00' and radioData[offset + length + 1].to_bytes() in commandNamesEng:
-            return length"""
+        elif radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 1].to_bytes() == b'\x00' and radioData[offset + length + 1].to_bytes() in commandNamesEng:
+            return length
 
 def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at the freq bytes
     global radioData
@@ -195,10 +202,6 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     if splitCalls:
         splitCall(offset, length)
     # Quick error check11ing
-    """if debugOutput:
-        if line[8].to_bytes() != b'\x80':
-            output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
-            return 1"""
     
     call_element = ET.SubElement(root, "Call", {
         "Offset": f'{offset}',
@@ -235,9 +238,11 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     while True:
         if offset + count == fileSize:
             break
-        elif checkFreq(offset + count): # Why the +1 ?
+        elif checkFreq(offset + count):
             break
         elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
+            break
+        elif radioData[offset + count].to_bytes() == b'\x31' and radioData[offset + count + 3].to_bytes() == b'\x80':
             break
         else: 
             count += 1
@@ -268,7 +273,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     else:
         commandByte = radioData[offset + 1].to_bytes()
     
-    output.write(f"{commandToEnglish(commandByte)} -- ")
+    indentLines() # Indent before printing the command to our depth level.
+    output.write(commandToEnglish(commandByte))
 
     # We now deal with the byte
     match commandByte:
@@ -406,44 +412,23 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             return length
 
         case b'\x10': # 
-            length = getLength(offset)
             header = getLengthManually(offset) # Maybe not ?
-            line = radioData[offset : offset + header] # - 4 because from the offset we read the 3rd and 4th bytes. 
-            lengthInner = struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
-            
-            """lengthA = getLength(offset)
-            lengthB = getLength(offset + header - 4) + header
-            lABytes = radioData[offset + 2: offset + 4]
-            lBBytes = radioData[offset + header - 2: offset + header]
-            if lengthA == lengthB - 3:
-                print(f'FF10 at offset {offset} length matched!')
-            else:
-                print(f'FF10 at offset {offset} length WAS NOT MATCHED!!! A: {lengthA}, {lABytes.hex()} B: {lengthB}, {lBBytes.hex()}')
-                """
+            line = radioData[offset : offset + header]
+            containerLength = struct.unpack(">H", line[-2:len(line)])[0] - 3
+            length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
 
-            """output.write(f'Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-            layerNum += 2"""
+            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+            layerNum += 2
 
-            ifElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+            conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "header": str(header),
-                "containerLength": str(length),
+                "containerLength": str(containerLength),
                 "content": line.hex(),
             })
-
             checkElement(length)
-            elementStack.append((ifElement, length))
-
-            doElement = ET.SubElement(elementStack[-1][0], "THEN_DO", {
-                "offset": str(offset + header),
-                "length": str(lengthInner),
-                "content": line.hex(),
-            })
-
-            checkElement(lengthInner)
-            elementStack.append((doElement, lengthInner))
-
+            elementStack.append((conditionalElement, length))
             return header
         
         case b'\x11' | b'\x12': # Elseif, Else respectively
@@ -581,6 +566,7 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
 
 def extractRadioCallHeaders(outputFilename: str) -> None:
     offset = 0
+    global indentToggle
     global debugOutput
     global fileSize
     
@@ -615,12 +601,15 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     global layerNum
     # Settings
     global debugOutput
+    global indentToggle
 
     global radioData
     global fileSize
     global output
+    nullCount = 0
     
     setOutputFile(outputFilename)
+    """ In case we need to revert
 
     while offset < fileSize - 1: # We might need to change this to Case When... as well.
         # Offset Tracking
@@ -631,20 +620,23 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         if len(elementStack) == 1 and not checkFreq(offset) and radioData[offset] != 255:
             length = handleUnknown(offset)
         elif radioData[offset].to_bytes() == b'\x31':
-            length = handleCommand(offset) # offset shift for 0x31
+            length = handleCommand(offset - 1) # offset shift for 0x31
             # length += 1 # Add this back from the offset change
         elif radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
             if len(elementStack) == 1:
                 length = handleUnknown(offset) # This will go until we find a call frequency
                 offset += length
                 continue
+            indentLines()
             length = 1
-        elif radioData[offset].to_bytes() in [b'\xFF', b'\x31']: # Commands start with FF
+        elif radioData[offset].to_bytes() == b'\xFF': # Commands start with FF
+            nullCount = 0
             if radioData[offset + 1].to_bytes() == b'\x01':
                 length = handleCommand(offset)
             else:
                 length = handleCommand(offset)
         elif checkFreq(offset): # If we're at the start of a call
+            nullCount = 0
             handleCallHeader(offset)
             length = 11 # In this context, we only want the header
             layerNum = 1
@@ -654,16 +646,27 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             length = handleUnknown(offset) # This will go until we find a call frequency
             offset += length
             continue
+        """
         
+    while offset < fileSize - 1: # We might need to change this to Case When... as well.
+        # Offset Tracking
+        if debugOutput:
+            print(f'Main loop: offset is {offset}')
+
+        # MAIN LOGIC
+        if checkFreq(offset):
+            length = handleCallHeader(offset)
+        elif radioData[offset].to_bytes() in [b'\x31', b'\xFF']:
+            length = handleCommand(offset)
+        else: # Something went wrong, we need to kinda reset
+            length = handleUnknown(offset) # This will go until we find a call frequency
+            
         checkStack = len(elementStack)
         checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
             output.write(f"Null! (Main loop) offset = {offset}\n")
-            if layerNum > 0:
-                layerNum -= 1
             nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
-        
-        # Add length to offset for next loop
+
         offset += length
 
     output.close()
@@ -690,6 +693,7 @@ if __name__ == '__main__':
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
     parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings") # Remove later when issue with english resolved
+    parser.add_argument('-i', '--indent', action='store_true', help="Indents container blocks, WORK IN PROGRESS!")
     parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
     parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
     parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
@@ -711,6 +715,9 @@ if __name__ == '__main__':
 
     if args.verbose:
         debugOutput = True
+    
+    if args.indent:
+        indentToggle = True
     
     if args.split:
         splitCalls = True
