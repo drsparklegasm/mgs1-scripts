@@ -98,12 +98,12 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     attrs = vox.attrib
     binary = bytes.fromhex(attrs.get('content'))
 
-    binary = b''
     for child in vox:
         # print(child.tag)
         binary += handleElement(child)
     
-    binary += b'\x00' # there's always an extra null here.
+    binary += b'\x00' 
+    # there's always an extra null here.
     # print(subsContent.hex())
     """
     length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
