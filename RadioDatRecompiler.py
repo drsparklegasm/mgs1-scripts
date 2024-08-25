@@ -26,13 +26,6 @@ import radioDict
 import argparse
 import xml.etree.ElementTree as ET
 
-inputXML = 'extractedCallBins/1119995-decrypted.xml'
-# inputXML = 'usaD1Analyze.xml'
-
-radioSource = ET.parse(inputXML)
-
-checkBinFile = 'extractedCallBins/1119995.bin'
-callToCheck = open(checkBinFile, 'rb').read()
 
 # ==== DEFS ==== #
 
@@ -102,7 +95,7 @@ def getVoxBytes(vox: ET.Element) -> bytes:
         # print(child.tag)
         binary += handleElement(child)
     
-    binary += b'\x00' 
+    binary += bytes.fromhex('00')
     # there's always an extra null here.
     # print(subsContent.hex())
     """
@@ -229,7 +222,8 @@ for call in root:
     outputContent += bytes.fromhex(attrs.get("content"))
     for subelem in call:
         outputContent += handleElement(subelem)
-    outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
+    if attrs.get('graphicsBytes') is not None:
+        outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
     # print(content)
 
 f = open(outputFilename, 'wb')

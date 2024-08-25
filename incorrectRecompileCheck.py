@@ -6,11 +6,16 @@ import os, struct
 import radioDict 
 import argparse
 
+# Start by parsing old and new files
 
 parser = argparse.ArgumentParser("Compare two binary files and figure out where they differ")
 
 parser.add_argument('input', type=str, help="Input Filename from script (.bin).")
 parser.add_argument('output', type=str, help="Output Filename from script (.bin).")
+
+args = parser.parse_args()
+
+##########################################
 
 originalFile = open(args.input, 'rb')
 originalData = originalFile.read()
@@ -20,7 +25,9 @@ compareData = compareFile.read()
 
 print(f'Original file: {len(originalData)} bytes. New file: {len(compareData)} bytes')
 
+# Main comparison loop
 offset = 0
+
 if len(originalData) > len(compareData):
     size = len(originalData)
     print("Original Data is larger!")
@@ -34,6 +41,13 @@ while offset < size:
     if originalData[offset] == compareData[offset]:
         offset += 1
     else:
-        print(f"Files break at offset c.")
-        print(f'Offset in hex: {struct.pack('>H', offset)}')
+        differ = True
+        print(f"Files break at offset {offset}.")
+        offsetHex = struct.pack('>H', offset)
+        print(f'Offset in hex: 0x{offsetHex.hex()}')
+        break
+
+if differ:
+    print(f'Original: \n{originalData[offset - 10 : offset + 10].hex()}')
+    print(f'New Data: \n{compareData[offset - 10 : offset + 10].hex()}')
     
