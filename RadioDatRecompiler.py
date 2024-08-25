@@ -229,7 +229,7 @@ for call in root:
     outputContent += bytes.fromhex(attrs.get("content"))
     for subelem in call:
         outputContent += handleElement(subelem)
-    
+    outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
     # print(content)
 
 f = open(outputFilename, 'wb')
