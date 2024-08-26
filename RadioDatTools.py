@@ -558,7 +558,7 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
     global exportGraphics
     global call_element
     while True:
-        if offset + count == fileSize:
+        if offset + count >= fileSize - 1:
             break
         elif checkFreq(offset + count): # Why the +1 ?
             break
