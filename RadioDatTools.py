@@ -376,7 +376,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 if struct.unpack('>H', line[2:4])[0] != length - 2:
                     print(f'ERROR! Offset {offset} has an ADD_FREQ op that does not match its length!')
 
-            SaveFreqElement = ET.SubElement(elementStack[-1][0], "Freq-add", {
+            SaveFreqElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "freq": str(freq),
