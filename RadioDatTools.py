@@ -288,6 +288,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             anim = line[6:8]
             unk3 = line[8:10]
             dialogue = line[10 : length]
+            dialogueHex = dialogue.hex()
             
             lineBreakRepace = False
             if b'\x80\x23\x80\x4e' in dialogue:  # this replaces the in-game hex for new line with a \\r\\n
@@ -307,7 +308,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 'face': face.hex(),
                 "anim": anim.hex(),
                 "unk3": unk3.hex(),
-                "text": dialogue
+                "text": dialogue,
+                "textHex":  dialogueHex
             })
 
             return length
@@ -701,6 +703,7 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
     parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
     parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
+    parser.add_argument('-S', '--silent', action='store_true', help="Silent / no output message when done.")
 
     args = parser.parse_args()
 

@@ -26,6 +26,7 @@ import radioDict
 import argparse
 import xml.etree.ElementTree as ET
 
+subUseOriginalHex = False
 
 # ==== DEFS ==== #
 
@@ -67,6 +68,8 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     Returns the hex for an entire subtitle command. Starts with FF01 and always ends with one null byte (\x00)
     It should be exclusively used within the getVoxBytes() def.
     """
+    global subUseOriginalHex
+
     attrs = subtitle.attrib
     subtitleBytes = bytes.fromhex('ff01')
     lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2) # TODO: Check this is equal to what we intend!
@@ -77,7 +80,10 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     text = attrs.get("text").encode('utf-8')
     text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
 
-    subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
+    if subUseOriginalHex:
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) + bytes.fromhex('00')
+    else:
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
     return subtitleBytes
 
 def getVoxBytes(vox: ET.Element) -> bytes:
@@ -206,30 +212,39 @@ def handleElement(elem: ET.Element) -> bytes:
 parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
 parser.add_argument('input', type=str, help="Input XML to be recompiled.")
 parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
+parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
 
-args = parser.parse_args()
+def main():
+    subUseOriginalHex = False
+    args = parser.parse_args()
 
-# Read new radio source
-radioSource = ET.parse(args.input)
+    # Read new radio source
+    radioSource = ET.parse(args.input)
 
-if args.output:
-    outputFilename = args.output
-else:
-    outputFilename = args.input.split("/")[-1].split(".")[0] + '-mod.bin'
+    if args.output:
+        outputFilename = args.output
+    else:
+        outputFilename = args.input.split("/")[-1].split(".")[0] + '-mod.bin'
 
-root = radioSource.getroot()
+    if args.hex:
+        subUseOriginalHex = True
 
-outputContent = b''
-for call in root:
-    attrs = call.attrib
-    outputContent += bytes.fromhex(attrs.get("content"))
-    for subelem in call:
-        outputContent += handleElement(subelem)
-    outputContent += b'\x00'
-    if attrs.get('graphicsBytes') is not None:
-        outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
-    # print(content)
+    root = radioSource.getroot()
 
-f = open(outputFilename, 'wb')
-f.write(outputContent)
-f.close()
+    outputContent = b''
+    for call in root:
+        attrs = call.attrib
+        outputContent += bytes.fromhex(attrs.get("content"))
+        for subelem in call:
+            outputContent += handleElement(subelem)
+        outputContent += b'\x00'
+        if attrs.get('graphicsBytes') is not None:
+            outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
+        # print(content)
+
+    f = open(outputFilename, 'wb')
+    f.write(outputContent)
+    f.close()
+
+if __name__ == '__main__':
+    main()
