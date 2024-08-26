@@ -43,7 +43,6 @@ exportGraphics = False
 
 # Script variables 
 offset = 0
-layerNum = 0
 radioData = b''
 callDict = {}
 fileSize = 0
@@ -71,7 +70,12 @@ def setOutputFile(filename: str) -> bool:
 
 def splitCall(offset: int, length: int) -> None:
     global radioData
-    splitCall = radioData[offset:offset+length]
+    global fileSize
+    end = offset + length
+    if end > fileSize:
+        splitCall = radioData[offset:fileSize]
+    else:
+        splitCall = radioData[offset:end]
     filename = 'extractedCallBins/' + str(offset) + '.bin'
     f = open(filename, 'wb')
     f.write(splitCall)
@@ -176,7 +180,6 @@ def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at 
 def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
     global radioData
     global output
-    global layerNum
     global root
     global elementStack
     global splitCalls
@@ -210,7 +213,6 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         print(f'Graphics parse error offset {offset}! \n')
     
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
-    layerNum += 1
 
     call_element = ET.SubElement(root, "Call", {
         "Offset": f'{offset}',
@@ -262,7 +264,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     line = Usually their header text/content
     """
     global output
-    global layerNum
     global root
     global elementStack
 
@@ -429,7 +430,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 """
 
             """output.write(f'Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-            layerNum += 2"""
+            """
 
             ifElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
@@ -619,17 +620,14 @@ def extractRadioCallHeaders(outputFilename: str) -> None:
 
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
-    global layerNum
-    # Settings
     global debugOutput
-
     global radioData
     global fileSize
     global output
     
     setOutputFile(outputFilename)
 
-    while offset < fileSize - 1: # We might need to change this to Case When... as well.
+    while offset < fileSize: # We might need to change this to Case When... as well.
         # Offset Tracking
         if debugOutput:
             print(f'Main loop: offset is {offset}')
@@ -654,7 +652,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         elif checkFreq(offset): # If we're at the start of a call
             handleCallHeader(offset)
             length = 11 # In this context, we only want the header
-            layerNum = 1
         
         # TEMPORARY SHIFT TO SEE IF WE FIXED THIS
         else: # Something went wrong, we need to kinda reset
@@ -667,8 +664,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
             output.write(f"Null! (Main loop) offset = {offset}\n")
-            if layerNum > 0:
-                layerNum -= 1
             nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
         
         # Add length to offset for next loop
