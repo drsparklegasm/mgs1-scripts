@@ -660,8 +660,9 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             continue
         
         checkStack = len(elementStack)
-        if radioData[offset + 1].to_bytes() != b'\x10':
-            checkElement(length)
+        if offset < fileSize - 2: # Temp fix for the logic at end of the file.
+            if radioData[offset + 1].to_bytes() != b'\x10':
+                checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
             output.write(f"Null! (Main loop) offset = {offset}\n")
             nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
