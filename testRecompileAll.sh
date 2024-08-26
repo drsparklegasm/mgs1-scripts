@@ -13,7 +13,7 @@ python3 $SPLITSCRIPT $RADIODAT Headers -sH
 
 for input in "$input_dir"/*.bin; do
     base_filename=$(basename "$input" .bin)
-    echo $base_filename
+    # echo $base_filename
     output="$output_dir/$base_filename"
     python3 $SPLITSCRIPT $input $output -xz
 done
