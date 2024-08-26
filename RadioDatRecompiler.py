@@ -182,6 +182,9 @@ def handleElement(elem: ET.Element) -> bytes:
         case 'IF_CHECK': 
             binary = bytes.fromhex(attrs.get('content'))
             binary += getContainerContentBytes(elem)
+            # Troubleshooting
+            """print(attrs.get('length'))
+            print(len(binary))"""
         case 'THEN_DO': 
             binary += getContainerContentBytes(elem)
         case 'ELSE': 
@@ -222,6 +225,7 @@ for call in root:
     outputContent += bytes.fromhex(attrs.get("content"))
     for subelem in call:
         outputContent += handleElement(subelem)
+    outputContent += b'\x00'
     if attrs.get('graphicsBytes') is not None:
         outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
     # print(content)

@@ -413,7 +413,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             length = getLength(offset)
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header] # - 4 because from the offset we read the 3rd and 4th bytes. 
-            lengthInner = struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
+            lengthInner = struct.unpack('>H', line[header - 2 : header])[0] - 2  # We were preivously calculating length wrong, this is correct for the container
             
             """ # Former troubleshooting exports
             lengthA = getLength(offset)
@@ -445,7 +445,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "length": str(lengthInner),
             })
 
-            checkElement(lengthInner)
+            checkElement(header + lengthInner)
             elementStack.append((doElement, lengthInner))
 
             return header
@@ -661,7 +661,8 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             continue
         
         checkStack = len(elementStack)
-        checkElement(length)
+        if radioData[offset + 1].to_bytes() != b'\x10':
+            checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
             output.write(f"Null! (Main loop) offset = {offset}\n")
             if layerNum > 0:
