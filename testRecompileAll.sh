@@ -21,7 +21,7 @@ for original in "$input_dir"/*.bin; do
     base_filename=$(basename "$original" .bin)
     input="$base_filename-mod.bin"
     echo $base_filename
-    python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.bin"
+    python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.bin" -x
     if diff "$original" "$output_dir/$base_filename-mod.bin" >/dev/null; then
         echo "Files are the same: $original"
     else
