@@ -77,10 +77,11 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
 
     text = attrs.get("text").encode('utf-8')
     text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
-    text = text.replace(bytes.fromhex("22") , bytes.fromhex("8022")) 
+    if not subUseOriginalHex:
+        text = text.replace(bytes.fromhex("22") , bytes.fromhex("8022")) 
 
     if subUseOriginalHex:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) + bytes.fromhex('00')
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
     else:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
     return subtitleBytes
@@ -214,7 +215,7 @@ parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin).
 parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
 
 def main():
-    subUseOriginalHex = False
+    global subUseOriginalHex 
     args = parser.parse_args()
 
     # Read new radio source
