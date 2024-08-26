@@ -28,3 +28,5 @@ for original in "$input_dir"/*.bin; do
         echo "Files are different: $original"
     fi
 done
+
+rm recompiledCallBins/*.log
