@@ -8,6 +8,9 @@ RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
 input_dir='extractedCallBins'
 output_dir='recompiledCallBins'
 
+same_count=0
+different_count=0
+
 python3 $SPLITSCRIPT $RADIODAT Headers -sH
 
 for input in "$input_dir"/*.bin; do
@@ -23,10 +26,15 @@ for original in "$input_dir"/*.bin; do
     echo $base_filename
     python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.bin" -x   
     if diff "$original" "$output_dir/$base_filename-mod.bin" >/dev/null; then
-        echo "Files are the same: $original"
+        # echo "Files are the same: $original"
+        ((same_count++))
     else
         echo "Files are different: $original"
+        ((different_count++))
     fi
 done
+
+echo "Total files that are the same: $same_count"
+echo "Total files that are different: $different_count"
 
 rm recompiledCallBins/*.log

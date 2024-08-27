@@ -22,6 +22,7 @@ from datetime import datetime
 import radioDict 
 import argparse
 import xml.etree.ElementTree as ET
+from xml.dom.minidom import parseString
 # import google.trans
 
 ### UNUSED ?
@@ -111,8 +112,8 @@ freqList = [
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
-    b'\x36\xbb', # 140.11, ????
-    b'\x36\xbc', # 140.12, ????
+    # b'\x36\xbb', # 140.11, ????
+    # b'\x36\xbc', # 140.12, ????
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
@@ -728,20 +729,16 @@ if __name__ == '__main__':
     
     setRadioData(filename)
     radioDict.openRadioFile(filename)
-    
-    if args.headers:
-        extractRadioCallHeaders(outputFilename)
-    else:
-        analyzeRadioFile(outputFilename)
-    
+        
     if args.graphics:
         exportGraphics = True
+    
+    analyzeRadioFile(outputFilename)
 
     fancy = True # For now this is the only way to properly output the file. 
     # Optional print the string: 
     if args.xmloutput:
         if fancy:
-            from xml.dom.minidom import parseString
             xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
             xmlFile = open(f'{outputFilename}.xml', 'w')
             xmlFile.write(xmlstr)
@@ -750,6 +747,16 @@ if __name__ == '__main__':
             # THE OLD METHOD! 
             xmlOut = ET.ElementTree(root)
             xmlOut.write(f"{outputFilename}.xml")
+    
+    if args.headers:
+        headerRoot = ET.Element
+        for call in root:
+            headerRoot.append(call)
+            
+        headerFile = open(f'{outputFilename}-headers.xml', 'w')
+        xmlstr = parseString(ET.tostring(headerRoot)).toprettyxml(indent="  ")
+        headerFile.write(xmlstr)
+        headerFile.close()
     
     if args.iseeeva:
         import json
