@@ -112,7 +112,7 @@ freqList = [
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
     b'\x36\xb7'  # 140.07, Staff, Integral exclusive
-    # b'\x36\xbb', # 140.11, ????
+    b'\x36\xbb', # 140.11, ????
     # b'\x36\xbc', # 140.12, ????
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
@@ -588,7 +588,7 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     global callDict
     return radioDict.translateJapaneseHex(bytestring, callDict)
 
-def extractRadioCallHeaders(outputFilename: str) -> None:
+"""def extractRadioCallHeaders(outputFilename: str) -> None:
     offset = 0
     global debugOutput
     global fileSize
@@ -617,7 +617,7 @@ def extractRadioCallHeaders(outputFilename: str) -> None:
             break
     
     print(f'File was parsed successfully! Written to {outputFilename}')
-    output.close()
+    output.close()"""
 
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
@@ -749,10 +749,15 @@ if __name__ == '__main__':
             xmlOut.write(f"{outputFilename}.xml")
     
     if args.headers:
-        headerRoot = ET.Element
-        for call in root:
-            headerRoot.append(call)
-            
+        headerRoot = ET.Element("RadioHeaders")
+        for call in root.findall(f'.//Call'):
+            call_element = ET.Element("Call")
+        
+            # Copy attributes from the original Call element
+            for attr, value in call.attrib.items():
+                call_element.set(attr, value)
+            headerRoot.append(call_element)
+   
         headerFile = open(f'{outputFilename}-headers.xml', 'w')
         xmlstr = parseString(ET.tostring(headerRoot)).toprettyxml(indent="  ")
         headerFile.write(xmlstr)
@@ -761,14 +766,14 @@ if __name__ == '__main__':
     if args.iseeeva:
         import json
         dialogueData = {}
-        for call in root.findall(f'.//Call'):
+        for call in root:
             callOffset = call.get('Offset')
             callText = {}
             for subs in call.findall(f'.//SUBTITLE'):
                 offset = subs.get('offset')
                 text = subs.get('text')
                 callText[int(offset)] = text
-            dialogueData[int(callOffset)] = callText
+                dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=4)
