@@ -11,16 +11,16 @@ import argparse
 parser = argparse.ArgumentParser("Compare two binary files and figure out where they differ")
 
 parser.add_argument('input', type=str, help="Input Filename from script (.bin).")
-parser.add_argument('output', type=str, help="Output Filename from script (.bin).")
+# parser.add_argument('output', type=str, help="Output Filename from script (.bin).")
 
 args = parser.parse_args()
 
 ##########################################
 
-originalFile = open(args.input, 'rb')
+originalFile = open(f'extractedCallBins/{args.input}.bin', 'rb')
 originalData = originalFile.read()
 
-compareFile = open(args.output, 'rb')
+compareFile = open(f'recompiledCallBins/{args.input}-mod.bin', 'rb')
 compareData = compareFile.read()
 
 print(f'Original file: {len(originalData)} bytes. New file: {len(compareData)} bytes')
