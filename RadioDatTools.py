@@ -226,6 +226,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         "graphicsBytes": graphicsData.hex()
         })
     
+    checkElement(length)
     elementStack.append((call_element, length))
 
     return header
@@ -244,8 +245,8 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
             break
         elif checkFreq(offset + count): # Why the +1 ?
             break
-        elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
-            break
+            """elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
+            break"""
         else: 
             count += 1
     content = radioData[offset: offset + count]
@@ -634,31 +635,26 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             print(f'Main loop: offset is {offset}')
 
         # MAIN LOGIC
-        if len(elementStack) == 1 and not checkFreq(offset) and radioData[offset] != 255:
-            length = handleUnknown(offset)
-        elif radioData[offset].to_bytes() == b'\x31':
-            length = handleCommand(offset) # offset shift for 0x31
-            # length += 1 # Add this back from the offset change
-        elif radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
-            if len(elementStack) == 1:
-                length = handleUnknown(offset) # This will go until we find a call frequency
-                offset += length
-                continue
-            length = 1
-        elif radioData[offset].to_bytes() in [b'\xFF', b'\x31']: # Commands start with FF
-            if radioData[offset + 1].to_bytes() == b'\x01':
-                length = handleCommand(offset)
-            else:
-                length = handleCommand(offset)
-        elif checkFreq(offset): # If we're at the start of a call
-            handleCallHeader(offset)
-            length = 11 # In this context, we only want the header
-        
+        if radioData[offset].to_bytes() in [b'\xFF', b'\x31']: # Commands start with FF
+            length = handleCommand(offset)
+        elif checkFreq(offset):
+                length = handleCallHeader(offset)
+        elif radioData[offset].to_bytes() == b'\x00':
+            if elementStack[-1][1] == 1:
+                length = 1
+            elif radioData[offset + 1].to_bytes() in [b'\xFF', b'\x31']:
+                length = 1
+            elif checkFreq(offset + 1):
+                length = 1
+            """elif elementStack[-1][1] == 1:
+                length = 1
+                output.write(f'WE HANDLED A NULL AND WE DONT KNOW WHY!\n')"""
+        elif len(elementStack) == 1 and not checkFreq(offset):
+                length = handleUnknown(offset)
         # TEMPORARY SHIFT TO SEE IF WE FIXED THIS
         else: # Something went wrong, we need to kinda reset
+            print(f'Something went wrong, we need to kinda reset. Offset = {offset}')
             length = handleUnknown(offset) # This will go until we find a call frequency
-            offset += length
-            continue
         
         checkStack = len(elementStack)
         if offset < fileSize - 2: # Temp fix for the logic at end of the file.
@@ -766,12 +762,12 @@ if __name__ == '__main__':
     if args.iseeeva:
         import json
         dialogueData = {}
-        for call in root:
-            callOffset = call.get('Offset')
+        for call in root.findall(f'.//Call'):
+            callOffset = call.attrib.get('Offset')
             callText = {}
             for subs in call.findall(f'.//SUBTITLE'):
-                offset = subs.get('offset')
-                text = subs.get('text')
+                offset = subs.attrib.get('offset')
+                text = subs.attrib.get('text')
                 callText[int(offset)] = text
                 dialogueData[int(callOffset)] = callText
         
