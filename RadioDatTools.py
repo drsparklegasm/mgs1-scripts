@@ -111,9 +111,11 @@ freqList = [
     b'\x37\x48', # 141.52, Nastasha
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
-    b'\x36\xb7'  # 140.07, Staff, Integral exclusive
-    b'\x36\xbb', # 140.11, ????
-    # b'\x36\xbc', # 140.12, ????
+    b'\x36\xb7',  # 140.07, Staff, Integral exclusive
+    b'\x36\xbb',
+    bytes.fromhex('36bb'), 
+    bytes.fromhex('36bc'), # 140.12, ????
+    b'\x36\xbc', 
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
