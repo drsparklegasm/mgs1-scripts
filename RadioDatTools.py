@@ -457,7 +457,25 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             return header
         
-        case b'\x11' | b'\x12': # Elseif, Else respectively
+        case b'\x11': # Else respectively
+            header = 5 # Maybe not ?
+            line = radioData[offset : offset + header]
+            length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
+            output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
+
+            conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "containerLength": str(length - header),
+                "content": line.hex(),
+            })
+
+            checkElement(length)
+            elementStack.append((conditionalElement, length))
+
+            return header
+        
+        case b'\x12': # Elseif
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
