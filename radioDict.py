@@ -152,6 +152,8 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 				messageString += characters.katakana.get(bytestring[i+1].to_bytes().hex())
 			elif bytestring[i] == 0xd0:
 				messageString += characters.punctuation.get(bytestring[i+1].to_bytes().hex())
+			elif bytestring[i] in [0x1f, 0x12]:
+				messageString += characters.spanishChars.get(bytestring[i+1].to_bytes().hex())
 			else:
 				try:
 					messageString += characters.kanji.get(bytestring[i:i+2].hex())
