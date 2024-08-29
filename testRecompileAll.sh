@@ -11,7 +11,7 @@ output_dir='recompiledCallBins'
 same_count=0
 different_count=0
 
-python3 $SPLITSCRIPT $RADIODAT Headers -sH
+python3 $SPLITSCRIPT $RADIODAT Headers -s
 
 for input in "$input_dir"/*.bin; do
     base_filename=$(basename "$input" .bin)
@@ -23,8 +23,7 @@ done
 for original in "$input_dir"/*.bin; do
     base_filename=$(basename "$original" .bin)
     input="$base_filename-mod.bin"
-    echo $base_filename
-    python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.bin" -x   
+    python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.bin"
     if diff "$original" "$output_dir/$base_filename-mod.bin" >/dev/null; then
         # echo "Files are the same: $original"
         ((same_count++))

@@ -662,6 +662,8 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         elif radioData[offset].to_bytes() == b'\x00':
             if elementStack[-1][1] == 1:
                 length = 1
+            elif offset == fileSize - 1:
+                length = 1
             elif radioData[offset + 1].to_bytes() in [b'\xFF', b'\x31']:
                 length = 1
             elif checkFreq(offset + 1):
@@ -736,8 +738,6 @@ if __name__ == '__main__':
     
     if args.split:
         splitCalls = True
-    
-    if splitCalls:
         os.makedirs('extractedCallBins', exist_ok=True)
     
     if args.graphics:
