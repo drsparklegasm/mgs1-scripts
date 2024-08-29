@@ -303,6 +303,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             # Translate
             translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             dialogue = str(translatedDialogue)
+            translatedDifference = len(dialogue) - len(translatedDialogue)
 
             # Output to text file
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
@@ -314,7 +315,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "anim": anim.hex(),
                 "unk3": unk3.hex(),
                 "text": dialogue,
-                "textHex":  dialogueHex
+                "textHex":  dialogueHex,
+                "lengthLost": translatedDifference
             })
 
             return length
