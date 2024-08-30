@@ -8,7 +8,9 @@ demoData = demoFile.read()
 
 offsets = []
 os.makedirs('extractedDemos', exist_ok=True)
-opening = b'\x10\x08\x00\x00\x05\x00\x00\x00'
+opening = b'\x10\x08\x00\x00'
+# opening = b'\x10\x08\x00\x00\x05\x00\x00\x00' the other four bytes may not be needed, TODO: Test this further
+
 
 def findDemoOffsets():
     offset = 0
