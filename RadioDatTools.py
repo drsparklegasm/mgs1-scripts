@@ -316,7 +316,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "unk3": unk3.hex(),
                 "text": dialogue,
                 "textHex":  dialogueHex,
-                "lengthLost": translatedDifference
+                "lengthLost": str(translatedDifference)
             })
 
             return length

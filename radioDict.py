@@ -138,7 +138,10 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 			i += 2
 		else:
 			# print(f'i = {i}, category: {bytestring[i].to_bytes()} byte = {bytestring[i+1].to_bytes().hex()}')
-			if bytestring[i] < 0x80:
+			if bytestring[i] in [0x1f, 0x12]:
+				charcheck = bytestring[i:i+2].hex()
+				messageString += characters.spanishChars.get(charcheck)
+			elif bytestring[i] < 0x80:
 				messageString += chr(bytestring[i])
 				i -= 1
 			elif bytestring[i:i+4] == b'\x5c\x72\x5c\x6e':
@@ -152,8 +155,6 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 				messageString += characters.katakana.get(bytestring[i+1].to_bytes().hex())
 			elif bytestring[i] == 0xd0:
 				messageString += characters.punctuation.get(bytestring[i+1].to_bytes().hex())
-			elif bytestring[i] in [0x1f, 0x12]:
-				messageString += characters.spanishChars.get(bytestring[i+1].to_bytes().hex())
 			else:
 				try:
 					messageString += characters.kanji.get(bytestring[i:i+2].hex())
