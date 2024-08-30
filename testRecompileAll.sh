@@ -4,9 +4,12 @@
 
 SPLITSCRIPT="./myScripts/RadioDatTools.py"
 RECOMPILESCRIPT="./myScripts/RadioDatRecompiler.py"
-RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
+RADIODAT="radioDatFiles/RADIO-goblin.DAT"
 input_dir='extractedCallBins'
 output_dir='recompiledCallBins'
+
+rm $input_dir/*
+rm $output_dir/*
 
 same_count=0
 different_count=0
@@ -18,6 +21,7 @@ for input in "$input_dir"/*.bin; do
     # echo $base_filename
     output="$output_dir/$base_filename"
     python3 $SPLITSCRIPT $input $output -xz
+    sleep 1
 done
 
 for original in "$input_dir"/*.bin; do
@@ -36,4 +40,4 @@ done
 echo "Total files that are the same: $same_count"
 echo "Total files that are different: $different_count"
 
-rm recompiledCallBins/*.log
+rm $output_dir/*.log
