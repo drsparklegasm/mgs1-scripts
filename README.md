@@ -46,7 +46,7 @@ Extracts a single call based on offsets (leaves in a bin format), to be merged i
 
 ## Usage
 
-`RadioDatTools.py -H` for help.
+`RadioDatTools.py -h` for help.
 
 ```
 usage: RadioDatTools.py [-h] [-v] [-i] [-s] [-H] [-g] [-x] [-z] filename [output]
