@@ -9,3 +9,6 @@ CURRENTLY A WORK IN PROGRESS!
 """
 
 
+xmlInputFile = ""
+jsonInputFile = ""
+
