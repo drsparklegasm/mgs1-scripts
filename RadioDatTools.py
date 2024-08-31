@@ -209,7 +209,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
 
     # Get graphics data and write to a global dict:
     global callDict 
-    graphicsData = radioDict.getGraphicsData(offset + length)
+    graphicsData = getGraphicsData(offset + length)
     if len(graphicsData) % 36 == 0:
         callDict = radioDict.makeCallDictionary(offset, graphicsData)
     else:
@@ -572,6 +572,27 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
+
+def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, but we return the string and hope its the graphics data 
+    """
+    copied from handleUnknown() but we return the bytestring of the graphics data
+    """
+    count = 0
+    global fileSize
+    global exportGraphics
+    global call_element
+    while True:
+        if offset + count >= fileSize - 1:
+            break
+        elif checkFreq(offset + count): # Why the +1 ?
+            break
+        elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
+            break
+        else: 
+            count += 36
+    content = radioData[offset: offset + count]
+
+    return content
 
 def checkElement(length):
     """
