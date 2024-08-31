@@ -209,7 +209,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
 
     # Get graphics data and write to a global dict:
     global callDict 
-    graphicsData = getGraphicsData(offset + length)
+    graphicsData = radioDict.getGraphicsData(offset + length)
     if len(graphicsData) % 36 == 0:
         callDict = radioDict.makeCallDictionary(offset, graphicsData)
     else:
@@ -572,7 +572,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             line = radioData[offset : offset + length]
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
-radioTools
+
 def checkElement(length):
     """
     Pops the top element off the stack (if its longer than 1)
