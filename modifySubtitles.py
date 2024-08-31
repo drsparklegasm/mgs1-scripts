@@ -8,7 +8,8 @@ CURRENTLY A WORK IN PROGRESS!
 
 """
 
-
+# For now we'll leave these as static for testing
 xmlInputFile = ""
 jsonInputFile = ""
+
 
