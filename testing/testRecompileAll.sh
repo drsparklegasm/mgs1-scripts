@@ -2,9 +2,9 @@
 
 # This script runs the python script recursively, first to export all calls, then translate individual calls
 
-SPLITSCRIPT="./myScripts/RadioDatTools.py"
-RECOMPILESCRIPT="./myScripts/RadioDatRecompiler.py"
-RADIODAT="radioDatFiles/RADIO-goblin.DAT"
+SPLITSCRIPT="myScripts/RadioDatTools.py"
+RECOMPILESCRIPT="myScripts/RadioDatRecompiler.py"
+RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
 input_dir='extractedCallBins'
 output_dir='recompiledCallBins'
 
@@ -21,7 +21,6 @@ for input in "$input_dir"/*.bin; do
     # echo $base_filename
     output="$output_dir/$base_filename"
     python3 $SPLITSCRIPT $input $output -xz
-    sleep 1
 done
 
 for original in "$input_dir"/*.bin; do
