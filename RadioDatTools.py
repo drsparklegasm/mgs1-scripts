@@ -794,7 +794,7 @@ if __name__ == '__main__':
                 dialogueData[int(callOffset)] = callText
         
         with open(f"{outputFilename}-Iseeva.json", 'w') as f:
-            json.dump(dialogueData, f, ensure_ascii=False, indent=4)
+            json.dump(dialogueData, f, ensure_ascii=False, indent=2)
     
     if args.graphics:
         with open("graphicsExport/GraphicsFound.txt", 'w') as f:
