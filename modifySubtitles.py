@@ -65,13 +65,13 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
 
     # STILL NEED TO UPDATE LENGTHS ABOVE! Need a separate one for that. We will - newlength from existing each time. 
 
-def insertSubs():
+def insertSubs(jsonInputFile: str, callOffset: int):
     """
     Replaces subs in the element with the new values. 
     Uses xmlInputFile as root (Element Tree) and jsonInputFile (json dict)
     """
     global root
-    global newSubsData
+    inputJson = json.load(open(usaSubs, 'r'))
 
     for callOffset in newSubsData:
         callElement = root.find(f".//Call[@Offset='{callOffset}']")
@@ -94,7 +94,50 @@ def replaceJsonText(callOffsetA: int, callOffsetB: int):
     newCallSubs = dict(zip(jsonB[callOffsetB].keys(), jsonA[callOffsetA].values()))
     jsonB[callOffsetB] = newCallSubs
 
+def printRadioXMLStats():
+    """
+    This is just to get analytical data for working with the files.
+    """
+    # This code just outputs the call offset and freq, mostly for me to ID them.
+    xmlList = [
+        "RADIO-usa-d1.xml",
+        "RADIO-usa-d2.xml",
+        "RADIO-jpn-d1.xml",
+        "RADIO-jpn-d2.xml"
+        ]
 
+    for filename in xmlList:
+        root = ET.parse(f'radioDatFiles/{filename}')
+        with open(f"CallInfoResearch/callInfo-{filename}.csv", 'w') as f:
+            f.write(f'Call,offsetHex,Freq,numSubtitles\n')
+            for call in root.findall(f".//Call"):
+                offset = call.attrib.get("Offset")
+                offsetHex = struct.pack('>L', int(offset)).hex()
+                freq = call.attrib.get("Freq")
+                subs = len(call.findall(f".//SUBTITLE"))
+                f.write(f'{offset},0x{offsetHex},{float(freq):.2f},{subs}\n')
+            f.close()
+
+
+# All of this is to test replacing the 140.85 call
+usaSubs = "radioDatFiles/RADIO-usa-d1-Iseeva.json"
+jpnSubs = "radioDatFiles/RADIO-jpn-d1-Iseeva.json"
+
+jsonA = json.load(open(usaSubs, 'r'))
+jsonB = json.load(open(jpnSubs, 'r'))
+
+replaceJsonText("293536", "283744")
+text = jsonB['283744']
+if debug:
+    print(text)
+
+
+
+"""
+with open("modifiedCall.json", 'w') as f:
+    f.write(text)
+    f.close()
+"""
 
 """
 insertSubs()
@@ -102,26 +145,5 @@ for subtitle in root.findall(f".//SUBTITLE"):
     updateLengths(subtitle, 0)
 
 text = root.write(xmlOutputFile, encoding='utf-8', xml_declaration=True)
-print(text)"""
-
-
-
-# This code just outputs the call offset and freq, mostly for me to ID them.
-xmlList = [
-    "RADIO-usa-d1.xml",
-    "RADIO-usa-d2.xml",
-    "RADIO-jpn-d1.xml",
-    "RADIO-jpn-d2.xml"
-    ]
-
-for filename in xmlList:
-    root = ET.parse(f'radioDatFiles/{filename}')
-    with open(f"CallInfoResearch/callInfo-{filename}.csv", 'w') as f:
-        f.write(f'Call,offsetHex,Freq,numSubtitles\n')
-        for call in root.findall(f".//Call"):
-            offset = call.attrib.get("Offset")
-            offsetHex = struct.pack('>L', int(offset)).hex()
-            freq = call.attrib.get("Freq")
-            subs = len(call.findall(f".//SUBTITLE"))
-            f.write(f'{offset},0x{offsetHex},{float(freq):.2f},{subs}\n')
-        f.close()
+print(text)
+"""
