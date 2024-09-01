@@ -222,7 +222,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
 
     call_element = ET.SubElement(root, "Call", {
         "offset": f'{offset}',
-        "freq": f'{humanFreq}',
+        "freq": f'{humanFreq:.2f}',
         "length": f'{length}', 
         "unknownVal1": unk0.hex(),
         "unknownVal2": unk1.hex(),
