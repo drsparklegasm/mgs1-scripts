@@ -94,6 +94,7 @@ def replaceJsonText(callOffsetA: int, callOffsetB: int):
 
 
 
+
 insertSubs()
 for subtitle in root.findall(f".//SUBTITLE"):
     updateLengths(subtitle, 0)

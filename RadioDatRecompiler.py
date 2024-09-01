@@ -9,9 +9,7 @@ Steps to use for translation:
 
 We will output to RADIO.DAT or optionally a filename of your choice. 
 
-
 To do list:
-
 TODO: Element checker
 TODO: Need logic to re-insert b'\x80' before each punctuation mark that needs it
 
