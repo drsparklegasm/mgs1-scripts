@@ -221,12 +221,12 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
 
     call_element = ET.SubElement(root, "Call", {
-        "Offset": f'{offset}',
-        "Freq": f'{humanFreq}',
-        "Length": f'{length}', 
-        "UnknownVal1": unk0.hex(),
-        "UnknownVal2": unk1.hex(),
-        "UnknownVal3": unk2.hex(),
+        "offset": f'{offset}',
+        "freq": f'{humanFreq}',
+        "length": f'{length}', 
+        "unknownVal1": unk0.hex(),
+        "unknownVal2": unk1.hex(),
+        "unknownVal3": unk2.hex(),
         "content": line.hex(),
         "graphicsBytes": graphicsData.hex()
         })
