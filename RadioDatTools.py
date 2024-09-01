@@ -795,7 +795,7 @@ if __name__ == '__main__':
         import json
         dialogueData = {}
         for call in root.findall(f'.//Call'):
-            callOffset = call.attrib.get('Offset')
+            callOffset = call.attrib.get('offset')
             callText = {}
             for subs in call.findall(f'.//SUBTITLE'):
                 offset = subs.attrib.get('offset')
