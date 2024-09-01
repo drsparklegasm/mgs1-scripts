@@ -4,18 +4,20 @@ replace dialogue in the XML file with new dialogue.
 
 Afterwards it recalculates the lengths in the XML file to verify it will produce a valid RADIO.DAT file.
 
+TODO: Figure out if we need to split jsonTools and xmlTools
+
 CURRENTLY A WORK IN PROGRESS!
 
 """
 
-import os, sys
+import os, sys, struct
 import argparse
 import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 
 # For now we'll leave these as static for testing
-xmlInputFile = "extractedCallBins/usa-d1/0-decrypted.xml"
+xmlInputFile = "radioDatFiles/RADIO-jpn-d2.xml"
 xmlOutputFile = "recompiledCallBins/0-mod.xml"
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
 jsonOutputFile = "extractedCallBins/textswapping-output.json"
@@ -94,10 +96,32 @@ def replaceJsonText(callOffsetA: int, callOffsetB: int):
 
 
 
-
+"""
 insertSubs()
 for subtitle in root.findall(f".//SUBTITLE"):
     updateLengths(subtitle, 0)
 
 text = root.write(xmlOutputFile, encoding='utf-8', xml_declaration=True)
-print(text)
+print(text)"""
+
+
+
+# This code just outputs the call offset and freq, mostly for me to ID them.
+xmlList = [
+    "RADIO-usa-d1.xml",
+    "RADIO-usa-d2.xml",
+    "RADIO-jpn-d1.xml",
+    "RADIO-jpn-d2.xml"
+    ]
+
+for filename in xmlList:
+    root = ET.parse(f'radioDatFiles/{filename}')
+    with open(f"CallInfoResearch/callInfo-{filename}.csv", 'w') as f:
+        f.write(f'Call,offsetHex,Freq,numSubtitles\n')
+        for call in root.findall(f".//Call"):
+            offset = call.attrib.get("Offset")
+            offsetHex = struct.pack('>L', int(offset)).hex()
+            freq = call.attrib.get("Freq")
+            subs = len(call.findall(f".//SUBTITLE"))
+            f.write(f'{offset},0x{offsetHex},{float(freq):.2f},{subs}\n')
+        f.close()
