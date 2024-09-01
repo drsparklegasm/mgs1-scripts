@@ -23,7 +23,7 @@ import radioTools.radioDict as radioDict
 import argparse
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
-# import google.trans
+from translate import Translator
 
 ### UNUSED ?
 # import re # Not used?
@@ -41,6 +41,9 @@ customGraphicsData = []
 debugOutput = False
 splitCalls = False
 exportGraphics = False
+
+translateToggle = False
+translator = Translator(from_lang="ja", to_lang="en")
 
 # Script variables 
 offset = 0
@@ -304,6 +307,10 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             dialogue = str(translatedDialogue)
             translatedDifference = len(dialogue) - len(translatedDialogue)
+
+            if translateToggle:
+                dialogue = translator.translate(dialogue)
+                print(f'Translated offset {offset}: {dialogue}')
 
             # Output to text file
             output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
@@ -744,6 +751,9 @@ if __name__ == '__main__':
     
     if args.graphics:
         exportGraphics = True
+
+    if args.japanese:
+        translateToggle = True
     
     setRadioData(filename)
     radioDict.openRadioFile(filename)
