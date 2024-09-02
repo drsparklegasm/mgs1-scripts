@@ -17,10 +17,13 @@ import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 
 # For now we'll leave these as static for testing
-xmlInputFile = "radioDatFiles/RADIO-jpn-d2.xml"
-xmlOutputFile = "recompiledCallBins/0-mod.xml"
+xmlInputFile = "14085-testing/283744-decrypted.xml"
+xmlOutputFile = "14085-testing/283744-new.xml"
+
+"""
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
 jsonOutputFile = "extractedCallBins/textswapping-output.json"
+"""
 
 usaSubs = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
 jpnSubs = "extractedCallBins/jpn-d1/0-decrypted-Iseeva.json"
@@ -30,10 +33,9 @@ debug = True
 
 # Open the XML tree and the json data
 root = ET.parse(xmlInputFile)
-newSubsData = json.load(open(jsonInputFile, 'r')) 
+newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
 
-jsonA = json.load(open(usaSubs, 'r'))
-jsonB = json.load(open(jpnSubs, 'r'))
+
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -49,9 +51,12 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
     # (FF01) (Length 2 bytes) (95f2) (39c3) (0000) (Text) (0x00), total added = 11 bytes
     """
     newDialogue = subtitleElement.attrib.get('text')
-    oldTextLength = int(len(subtitleElement.attrib.get('textHex')) / 2 - 1) # taking the hex and dividing by 2 and removing the trailing \x00
+    lengthElement = int(subtitleElement.attrib.get('length'))
+    oldTextLength = lengthElement - 11
+    # oldTextLength = int(len(subtitleElement.attrib.get('textHex')) / 2 - 1) # taking the hex and dividing by 2 and removing the trailing \x00
+
     if debug:
-        print(f'Lengths are {len(newDialogue)} [new] and {oldTextLength} [old]')
+        print(f'Lengths are {len(newDialogue)} [new] and {oldTextLength} [old], {lengthElement} [Element]')
     
     lengthChange = oldTextLength - len(newDialogue) 
     commandLength = int(subtitleElement.attrib.get('length'))
@@ -63,7 +68,31 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
     else:
         print(f'No change needed! {lengthChange}')
 
+    return lengthChange
+
     # STILL NEED TO UPDATE LENGTHS ABOVE! Need a separate one for that. We will - newlength from existing each time. 
+
+def updateParentLength():
+    """
+    Updates the length of the parent of the subtitle
+
+    """
+    print('Not yet implemented!')
+
+def getParentTree(target: ET.Element) -> None:
+    """
+    Credit goes to chatGPT, we need to iterate through and get each parent along the way.
+    """
+    path = []
+    for parent in root.iter():
+        for element in parent:
+            if element == target:
+                path.append(parent)
+                path.extend(getParentTree(parent))
+                break
+
+    return path
+
 
 def insertSubs(jsonInputFile: str, callOffset: int):
     """
@@ -120,30 +149,24 @@ def printRadioXMLStats():
 
 
 # All of this is to test replacing the 140.85 call
-usaSubs = "radioDatFiles/RADIO-usa-d1-Iseeva.json"
-jpnSubs = "radioDatFiles/RADIO-jpn-d1-Iseeva.json"
+usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
+jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
 
 jsonA = json.load(open(usaSubs, 'r'))
 jsonB = json.load(open(jpnSubs, 'r'))
 
-replaceJsonText("293536", "283744")
-text = jsonB['283744']
+replaceJsonText("0", "0")
+text = json.dumps(jsonB)
 if debug:
     print(text)
 
-
-
-"""
-with open("modifiedCall.json", 'w') as f:
+with open("14085-testing/modifiedCall.json", 'w') as f:
     f.write(text)
     f.close()
-"""
 
-"""
-insertSubs()
+insertSubs('14085-testing/modifiedCall.json', '0')
+
 for subtitle in root.findall(f".//SUBTITLE"):
-    updateLengths(subtitle, 0)
-
-text = root.write(xmlOutputFile, encoding='utf-8', xml_declaration=True)
-print(text)
-"""
+    lengthChange = updateLengths(subtitle, 0)
+    parents = getParentTree(subtitle)
+    print(parents)
