@@ -15,6 +15,7 @@ import argparse
 import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
+import jsonTools
 
 # For now we'll leave these as static for testing
 xmlInputFile = "14085-testing/283744-decrypted.xml"
@@ -93,14 +94,13 @@ def getParentTree(target: ET.Element) -> None:
 
     return path
 
-
 def insertSubs(jsonInputFile: str, callOffset: int):
     """
     Replaces subs in the element with the new values. 
     Uses xmlInputFile as root (Element Tree) and jsonInputFile (json dict)
     """
     global root
-    inputJson = json.load(open(usaSubs, 'r'))
+    inputJson = json.load(open(jsonInputFile, 'r'))
 
     for callOffset in newSubsData:
         callElement = root.find(f".//Call[@Offset='{callOffset}']")
@@ -115,14 +115,7 @@ def insertSubs(jsonInputFile: str, callOffset: int):
             if debug:
                 print(ET.tostring(subElement))
 
-def replaceJsonText(callOffsetA: int, callOffsetB: int):
-    """
-    Replaces the subtitles in jsonB with the subtitles from jsonA while keeping the offsets the same. 
-    Each Call Offset is the (original) call offset as seen in the key of the json format.
-    """
-    newCallSubs = dict(zip(jsonB[callOffsetB].keys(), jsonA[callOffsetA].values()))
-    jsonB[callOffsetB] = newCallSubs
-
+# Helpful shit for analysis and planning
 def printRadioXMLStats():
     """
     This is just to get analytical data for working with the files.
@@ -149,20 +142,24 @@ def printRadioXMLStats():
 
 
 # All of this is to test replacing the 140.85 call
+"""
 usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
 jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
 
 jsonA = json.load(open(usaSubs, 'r'))
 jsonB = json.load(open(jpnSubs, 'r'))
 
-replaceJsonText("0", "0")
+jsonTools.replaceJsonText("0", "0")
 text = json.dumps(jsonB)
+
 if debug:
     print(text)
 
 with open("14085-testing/modifiedCall.json", 'w') as f:
     f.write(text)
     f.close()
+    
+"""
 
 insertSubs('14085-testing/modifiedCall.json', '0')
 
@@ -170,3 +167,4 @@ for subtitle in root.findall(f".//SUBTITLE"):
     lengthChange = updateLengths(subtitle, 0)
     parents = getParentTree(subtitle)
     print(parents)
+
