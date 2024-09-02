@@ -90,18 +90,18 @@ def splitCall(offset: int, length: int) -> None:
 # A lot of this is work in progress or guessing from existing scripts
 commandNamesEng = { 
     b'\x01':'SUBTITLE',
-    b'\x02':'VOX_CUES', 
+    b'\x02':'VOX_CUES', # Container 
     b'\x03':'ANI_FACE', 
     b'\x04':'ADD_FREQ',
     b'\x05':'MEM_SAVE', 
     b'\x06':'MUS_CUES', 
     b'\x07':'ASK_USER', 
     b'\x08':'SAVEGAME',
-    b'\x10':'IF_CHECK', 
-    b'\x11':'ELSE', 
-    b'\x12':'ELSE_IFS', 
-    b'\x30':'RND_SWCH',
-    b'\x31':'RND_OPTN', 
+    b'\x10':'IF_CHECK', # Container
+    b'\x11':'ELSE',     # Container
+    b'\x12':'ELSE_IFS', # Container
+    b'\x30':'RND_SWCH', # Container
+    b'\x31':'RND_OPTN', # Container
     b'\x40':'EVAL_CMD' 
     # 'THEN_DO'
 }
@@ -332,25 +332,27 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = getLengthManually(offset)
             length = getLength(offset)
             line = radioData[offset : offset + header]
-            voxLength1 = struct.unpack('>H',line[2:4])[0]
-            voxLength2 = struct.unpack('>H',line[9:11])[0]
-            containerLength = voxLength2 - 3
+            lengthA = struct.unpack('>H',line[2:4])[0]
+            lengthB = struct.unpack('>H',line[9:11])[0]
+            containerLength = lengthB - 3
             
             # Check for even length numbers
             if debugOutput:
-                if voxLength1 - voxLength2 != 7:
+                if lengthA - lengthB != 7:
                     print(f'ERROR!! OFFSET {offset} HAS A 0x02 that does not evenly fit!')
 
             voxElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
-                "length": str(voxLength1),
+                "length": str(length),
+                "lengthA": str(lengthA),
+                "lengthA": str(lengthA),
                 "header": str(header),
                 "containerLength": str(containerLength),
                 "content": f'{line.hex()}'
             })
             checkElement(length)
             elementStack.append((voxElement, length))
-            output.write(f'Offset: {str(offset)}, LengthA = {voxLength1}, LengthB = {voxLength2}, Content: {str(line.hex())}\n')
+            output.write(f'Offset: {str(offset)}, LengthA = {lengthA}, LengthB = {lengthB}, Content: {str(line.hex())}\n')
             
             return header
         
