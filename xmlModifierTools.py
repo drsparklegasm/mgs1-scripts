@@ -73,14 +73,71 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
 
     # STILL NEED TO UPDATE LENGTHS ABOVE! Need a separate one for that. We will - newlength from existing each time. 
 
-def updateParentLength():
+def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
     """
-    Updates the length of the parent of the subtitle
+    Updates the length of the parent of the subtitle.
+
+    Each case is changing the content block and length as appropriate.
 
     """
-    print('Not yet implemented!')
+    parents = getParentTree(subElement)
+    for parent in parents:
+        match parent.tag:
+            case "Call":
+                # Remember length - header is 9
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 22 bytes
 
-def getParentTree(target: ET.Element) -> None:
+                newLength = origLength - lengthChange
+                newHexLength = struct.pack('>H', newLength - 9).hex()
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[18:22]}')
+                
+                newContent = origContent[0:18] + newHexLength
+                if debug:
+                    print(f'new content: {newContent}')
+
+                parent.set('length', str(newLength))
+                parent.set('content', newContent)
+
+            case "VOX_CUES":
+                # Remember length - header is 9
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 22 bytes
+
+                newLength = origLength - lengthChange
+                newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
+                newHexLengthB = struct.pack('>H', newLength - 9).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[18:22]}')
+                
+                newContent = origContent[0:2] + newHexLengthA + origContent[4:18] + newHexLengthB
+                if debug:
+                    print(f'new content: {newContent}')
+
+                parent.set('length', str(newLength))
+                parent.set('content', newContent)
+
+            case "IF_CHECK":
+                print('stuff')
+            case "ELSE":
+                print('stuff')
+            case "ELSE_IFS":
+                print('stuff')
+            case "RND_SWCH":
+                print('stuff')
+            case "RND_OPTN":
+                print('stuff')
+            case "RadioData":
+                return
+            case _:
+                print(f'We fucked up! Tried to update length of {parent.tag}!!!')
+            
+
+def getParentTree(target: ET.Element) -> list:
     """
     Credit goes to chatGPT, we need to iterate through and get each parent along the way.
     """
@@ -167,4 +224,5 @@ for subtitle in root.findall(f".//SUBTITLE"):
     lengthChange = updateLengths(subtitle, 0)
     parents = getParentTree(subtitle)
     print(parents)
+    updateParentLength(subtitle, lengthChange)
 

@@ -5,7 +5,7 @@
 SPLITSCRIPT="myScripts/RadioDatTools.py"
 RECOMPILESCRIPT="myScripts/RadioDatRecompiler.py"
 RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
-input_dir='extractedCallBins'
+input_dir='extractedCallBins/usa-d1'
 output_dir='recompiledCallBins'
 
 rm $input_dir/*
