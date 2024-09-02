@@ -83,7 +83,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
     parents = getParentTree(subElement)
     for parent in parents:
         match parent.tag:
-            case "Call":
+            case "Call": # DONE
                 # Remember length - header is 9
                 origLength = int(parent.attrib.get('length')) # length in bytes total
                 origContent = parent.attrib.get('content') # 22 bytes
@@ -101,7 +101,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('length', str(newLength))
                 parent.set('content', newContent)
 
-            case "VOX_CUES":
+            case "VOX_CUES": # DONE
                 # Remember length - header is 9
                 origLength = int(parent.attrib.get('length')) # length in bytes total
                 origContent = parent.attrib.get('content') # 22 bytes
@@ -122,7 +122,42 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('content', newContent)
 
             case "IF_CHECK":
-                print('stuff')
+                # Header is variable. We just need to get the he
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 22 bytes
+                headerTextLength = len(origContent)
+                origLengthB = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
+
+                
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Header before was 0x{origContent}')
+
+                newLength = origLength - lengthChange
+                newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
+                newHexLengthB = struct.pack('>H', origLengthB - lengthChange).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[18:22]}')
+                
+                newContent = origContent[0:2] + newHexLengthA + origContent[ 4 : headerTextLength - 4 ] + newHexLengthB
+                if debug:
+                    print(f'new content: {newContent}')
+
+                parent.set('length', str(newLength))
+                parent.set('content', newContent)
+
+            case "THEN_DO": # DONE
+                # No actual hex in here, we just need to modify the length for posterity
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                newLength = origLength - lengthChange
+
+                if debug:
+                    print(f'Old length: {origLength} | New length: {newLength}')
+                    
+                parent.set('length', str(newLength))
+                
             case "ELSE":
                 print('stuff')
             case "ELSE_IFS":
@@ -136,6 +171,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
             case _:
                 print(f'We fucked up! Tried to update length of {parent.tag}!!!')
             
+    return
 
 def getParentTree(target: ET.Element) -> list:
     """
