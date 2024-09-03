@@ -3,8 +3,8 @@
 # This script runs the python script recursively, first to export all calls, then translate individual calls
 
 SCRIPT="./myScripts/RadioDatTools.py"
-RADIODAT="radioDatFiles/RADIO-jpn-d1.DAT"
-input_dir='extractedCallBins'
+RADIODAT="radioDatFiles/RADIO-usa-d1.DAT"
+input_dir='extractedCallBins/usa-d1'
 
 python3 $SCRIPT $RADIODAT Headers -sH
 

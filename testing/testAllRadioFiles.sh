@@ -10,10 +10,10 @@ output_dir='recompiledCallBins'
 same_count=0
 different_count=0
 
-for input in "$input_dir"/*.bin; do
-    base_filename=$(basename "$input" .bin)
+for input in "$input_dir"/*.DAT; do
+    base_filename=$(basename "$input" .DAT)
     echo $base_filename
-    python3 $SPLITSCRIPT $input "$input_dir/$base_filename" -xz
+    python3 $SPLITSCRIPT $input "$output_dir/$base_filename" -xz
 done
 
 for original in "$output_dir"/*.xml; do
