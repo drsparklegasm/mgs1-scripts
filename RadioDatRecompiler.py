@@ -24,6 +24,8 @@ import xml.etree.ElementTree as ET
 
 subUseOriginalHex = False
 
+newOffsets = {}
+
 # ==== DEFS ==== #
 
 # Large steps here
@@ -232,6 +234,9 @@ def main():
 
     outputContent = b''
     for call in root:
+        newCallOffset = len(outputContent)
+        newOffsets.update({str(call.attrib.get("offset")): newCallOffset})
+
         attrs = call.attrib
         outputContent += bytes.fromhex(attrs.get("content"))
         for subelem in call:
@@ -239,11 +244,13 @@ def main():
         outputContent += b'\x00'
         if attrs.get('graphicsBytes') is not None:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
+        
         # print(content)
 
     f = open(outputFilename, 'wb')
     f.write(outputContent)
     f.close()
+    print(newOffsets)
 
 if __name__ == '__main__':
     main()
