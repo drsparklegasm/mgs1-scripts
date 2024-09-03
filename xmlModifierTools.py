@@ -114,7 +114,8 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                     print(f'New length: {newLength}')
                     print(f'Bytes before were 0x{origContent[18:22]}')
                 
-                newContent = origContent[0:2] + newHexLengthA + origContent[4:18] + newHexLengthB
+                newContent = origContent[0:4] + newHexLengthA 
+                newContent += origContent[8:18] + newHexLengthB
                 if debug:
                     print(f'new content: {newContent}')
 
@@ -196,7 +197,7 @@ def insertSubs(jsonInputFile: str, callOffset: int):
     inputJson = json.load(open(jsonInputFile, 'r'))
 
     for callOffset in newSubsData:
-        callElement = root.find(f".//Call[@Offset='{callOffset}']")
+        callElement = root.find(f".//Call[@offset='{callOffset}']")
         newSubs = newSubsData[callOffset]
         for key in newSubs:
             subElement = callElement.find(f".//SUBTITLE[@offset='{key}']")
@@ -254,7 +255,7 @@ with open("14085-testing/modifiedCall.json", 'w') as f:
     
 """
 
-insertSubs('14085-testing/modifiedCall.json', '0')
+insertSubs('14085-testing/modifiedCall.json', '283744')
 
 for subtitle in root.findall(f".//SUBTITLE"):
     lengthChange = updateLengths(subtitle, 0)
@@ -262,3 +263,8 @@ for subtitle in root.findall(f".//SUBTITLE"):
     print(parents)
     updateParentLength(subtitle, lengthChange)
 
+
+outputXml = open(xmlOutputFile, 'w')
+xmlstr = ET.tostring(root.getroot(), encoding="unicode")
+outputXml.write(f'{xmlstr}')
+outputXml.close()

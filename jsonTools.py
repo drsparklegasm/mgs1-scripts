@@ -20,12 +20,12 @@ debug = True
 jsonA = ""
 jsonB = ""
 
-def replaceJsonText(callOffsetA: int, callOffsetB: int):
+def replaceJsonText(callOffsetA: str, callOffsetB: str):
     """
     Replaces the subtitles in jsonB with the subtitles from jsonA while keeping the offsets the same. 
     Each Call Offset is the (original) call offset as seen in the key of the json format.
     """
-    newCallSubs = dict(zip(jsonB[callOffsetB].keys(), jsonA[callOffsetA].values()))
+    newCallSubs = dict(zip(jsonB[int(callOffsetB)].keys(), jsonA[int(callOffsetA)].values()))
     jsonB[callOffsetB] = newCallSubs
 
 if __name__ == '__main__':
