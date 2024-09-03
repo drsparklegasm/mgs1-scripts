@@ -186,25 +186,13 @@ def handleElement(elem: ET.Element) -> bytes:
         case 'ANI_FACE' | 'ADD_FREQ' | 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER' | 'SAVEGAME' | 'EVAL_CMD': 
             # ff03-08, FF40
             binary = getContentBytes(elem)
-        case 'IF_CHECK': 
+        case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN': 
             binary = bytes.fromhex(attrs.get('content'))
             binary += getContainerContentBytes(elem)
             # Troubleshooting
             """print(attrs.get('length'))
             print(len(binary))"""
         case 'THEN_DO': 
-            binary += getContainerContentBytes(elem)
-        case 'ELSE': 
-            binary = bytes.fromhex(attrs.get('content'))
-            binary += getContainerContentBytes(elem)
-        case 'ELSE_IFS':
-            binary = bytes.fromhex(attrs.get('content'))
-            binary += getContainerContentBytes(elem)
-        case 'RND_SWCH':
-            binary = bytes.fromhex(attrs.get('content'))
-            binary += getContainerContentBytes(elem)
-        case 'RND_OPTN':
-            binary = bytes.fromhex(attrs.get('content'))
             binary += getContainerContentBytes(elem)
     
     return binary
@@ -235,7 +223,7 @@ def main():
     outputContent = b''
     for call in root:
         newCallOffset = len(outputContent)
-        newOffsets.update({str(call.attrib.get("offset")): newCallOffset})
+        newOffsets.update({call.attrib.get("offset"): newCallOffset})
 
         attrs = call.attrib
         outputContent += bytes.fromhex(attrs.get("content"))

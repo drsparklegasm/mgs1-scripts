@@ -10,8 +10,8 @@ output_dir='recompiledCallBins'
 same_count=0
 different_count=0
 
-for input in "$input_dir"/*.DAT; do
-    base_filename=$(basename "$input" .DAT)
+for input in "$input_dir"/*.bin; do
+    base_filename=$(basename "$input" .bin)
     echo $base_filename
     python3 $SPLITSCRIPT $input "$input_dir/$base_filename" -xz
 done
