@@ -1138,7 +1138,7 @@ graphicsData = {
 	"0e03b80e6ba9bffffe6eaba80ebffc0ffbacbebffc6ebbac0ebffc6eb3ac3db278000000": "捕",
 	"246a4078bf80280380000380680bc0bc1fe02c2df02cb8b82ea024bbfffd20aaa8000000": "込",
 	"2c1aa92c2ffe2c938e6fe38ebe038e2c038e2c9b0e2eeb0e1fde0e002dae0018b8000000": "切",
-	"0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "", # "抜触", # Needs a check
+	"0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "?", # "抜触", # Needs a check
 	"2abaa83ffffc0abaa00abaa0bffffe6abba90bebb06afeb83fffe82b79e8293868000000": "?",
 	"2ad6b83fabe93aaba97aebb972ca382ffff82eaab82eaab82eaab81bffe47e82bd000000": "?",
 	"3ffffc2aaaa82ffff82eaab82ffff82eaea42ffffe2cbaa438fff8bad6b82183e0000000": "房",
