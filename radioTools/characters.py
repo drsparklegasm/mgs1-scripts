@@ -654,7 +654,11 @@ kanji = {
     '90a8': "妨",
     '90a9': "害",
     '9092': "空",
-    
+    '9005': "々",
+    '9021': "双",
+    '9023': "鏡",
+    '9093': "装",
+    '9057': "薬",
 }
 
 punctuation = { # 0xd0
@@ -687,7 +691,7 @@ punctuation = { # 0xd0
     #'901d': "",
     #'901f': "",
     #'9020': "",
-    #'9021': "",
+    #
     #'9023': "",
     #'9025': "",
     #'9027': "",
@@ -747,7 +751,7 @@ punctuation = { # 0xd0
     #
     #'9093': "",
     #'9096': "",
-    #'909a': "指",
+    
     #'909c': "",
     #'909e': "",
     #'90a1': "",
@@ -1638,7 +1642,7 @@ graphicsData = {
 	"0e1aa80e2ffc3feaec2baaec0baffc2eeae8bfaffe1eabf90e1ff80e2eed0e06c4000000": "裸",
 	"0e0e740e2ffebfbee86ebee80eaffc0feee9be1aa96e3ffc0e2eb96e6d0e3d382d000000": "携",
 	"6eaeb9bffffe0eaeb00ffff06aaaa9bffffebabaae0ffff00e3ab00e3ae0003800000000": "帯",
-	"6ebae9bffffe0ebae00eaaa90aaaa92ffff82eaab82eaab82eaab81bffe47e82bd000000": "?",
+	"6ebae9bffffe0ebae00eaaa90aaaa92ffff82eaab82eaab82eaab81bffe47e82bd000000": "貰",
 	"3ffffc3aaeac3ffffc3aaeac2aaaa82ffff82eaab82eaab82ffff82c02b82c02f4000000": "胃",
 	"2803801efffe25baa9783ae81db3ac01faac0efbb82db6b428b1f478bbbd70b618000000": "液",
 	"2c6ea92cbefebfb0ee6eb0ee2eb0ee2fb0eebcb5ee6dbeee2ce4e86c00e03800e0000000": "抑",
