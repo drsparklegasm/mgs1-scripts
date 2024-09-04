@@ -759,9 +759,6 @@ if __name__ == '__main__':
     
     setRadioData(filename)
     radioDict.openRadioFile(filename)
-        
-    if args.graphics:
-        exportGraphics = True
     
     analyzeRadioFile(outputFilename)
 
