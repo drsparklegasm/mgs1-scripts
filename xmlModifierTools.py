@@ -36,8 +36,6 @@ debug = True
 root = ET.parse(xmlInputFile)
 newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
 
-
-
 def loadNewSubs(callOffset: str) -> dict:
     """
     Gets the call subtitles for a given offset. Offset needs to come in as a string to match against the dict.

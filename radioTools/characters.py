@@ -644,6 +644,10 @@ kanji = {
 	'9a3e': "常",
 	'9a3f': "未",
 	'9a40': "済",
+    '908c': "射",
+    '9067': "不",
+    '9079': "凍",
+    '907a': "付",
 }
 
 punctuation = { # 0xd0
@@ -710,7 +714,7 @@ punctuation = { # 0xd0
     #'9064': "",
     #'9065': "",
     #'9066': "",
-    #'9067': "",
+    #
     #'9069': "",
     #'906b': "",
     #'906d': "",
@@ -1185,7 +1189,7 @@ graphicsData = {
 	"1d03800bbffe226ea9782c281dbffe006a880a3bb80e3bb82d7bb879f3ba2493ad000000": "流",
 	"2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "轟",
 	"2aaea93ffffe3aaa503abfe93bb5fd3bfffd3abad83bfffe76bae9b2f6ee2291fd000000": "廃",
-	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "?",
+	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "菓",
 	"002c00002c003ffffc3aaeac382c2c382c2c3ffffc3aaeac242c18002c00002c00000000": "中",
 	"002c003ffffc2aaea82ffff81aaea4bffffe6aeea91bdbb8bec2e02aecb90be828000000": "表",
 	"0b02c00b02c03fe2c02aeae802dffc1b82c0bfa2c02b12c00b02c00b1ae90b2ffe000000": "社",
@@ -2139,7 +2143,9 @@ graphicsData = {
 	"002c00bffffebaaaae6bffe906aa903ffffc2aaea8076dd06e2cb929ac2800f800000000": "宗",
 	"0e3ffc0e3aac3fbffc2e7aac2f7aac3fbffcbe7ac82e39fd0e38b40e7fad0eba58000000": "根",
 	"003ff02ffaa82ebaac2efaa82dbff42eebb82eebb83daaa43ebb4dbbbaba2a7fe5000000": "?",
-    "6ba3a96babfe3feaec3ba1f86febae2b52083ffffc2aaea80b2ff06baea9bffffe000000": "整" # Thanks google translate? Hope this is correct.
+    "6ba3a96babfe3feaec3ba1f86febae2b52083ffffc2aaea80b2ff06baea9bffffe000000": "整", # Thanks google translate? Hope this is correct.
+	"6aa42cbffbac0e53ac2cb3acbffbac6ba3ac2ba7ac3ffbac03802c6bfdacbfa8f8000000": "到",
+    "1eaba8aefffc2fbba46ebbb8bffffe2ebbb93ffff8befaa86ebeac1eeffc0e6eac000000": "撫"
 }
 
 # Chat GPT $#!+ below
