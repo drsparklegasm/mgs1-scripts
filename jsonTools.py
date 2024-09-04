@@ -28,5 +28,7 @@ def replaceJsonText(callOffsetA: str, callOffsetB: str):
     newCallSubs = dict(zip(jsonB[int(callOffsetB)].keys(), jsonA[int(callOffsetA)].values()))
     jsonB[callOffsetB] = newCallSubs
 
+# test 
+
 if __name__ == '__main__':
     print(f'initialized.')
