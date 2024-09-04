@@ -99,7 +99,7 @@ radioChar = { # 0x?0??
 	'7c': "｜",
 	'7d': "｝",
 	'7e': "²",
-    '7f': "□",
+    '7f': "・",
 }
 
 hiragana = {  # 0x?1??
@@ -648,6 +648,13 @@ kanji = {
     '9067': "不",
     '9079': "凍",
     '907a': "付",
+    '909a': "指",
+    '9039': "持",
+    '9050': "影",
+    '90a8': "妨",
+    '90a9': "害",
+    '9092': "空",
+    
 }
 
 punctuation = { # 0xd0
@@ -737,16 +744,16 @@ punctuation = { # 0xd0
     #'908b': "",
     #'908c': "",
     #'908d': "",
-    #'9092': "",
+    #
     #'9093': "",
     #'9096': "",
-    #'909a': "",
+    #'909a': "指",
     #'909c': "",
     #'909e': "",
     #'90a1': "",
     #'90a3': "",
     #'90a5': "",
-    #'90a8': "",
+    #
     #'90a9': "",
     #'90ae': "",
     #'90af': "",
@@ -1133,7 +1140,7 @@ graphicsData = {
 	"0e03b80e6ba9bffffe6eaba80ebffc0ffbacbebffc6ebbac0ebffc6eb3ac3db278000000": "捕",
 	"246a4078bf80280380000380680bc0bc1fe02c2df02cb8b82ea024bbfffd20aaa8000000": "込",
 	"2c1aa92c2ffe2c938e6fe38ebe038e2c038e2c9b0e2eeb0e1fde0e002dae0018b8000000": "切",
-	"0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "抜触",
+	"0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "", # "抜触", # Needs a check
 	"2abaa83ffffc0abaa00abaa0bffffe6abba90bebb06afeb83fffe82b79e8293868000000": "?",
 	"2ad6b83fabe93aaba97aebb972ca382ffff82eaab82eaab82eaab81bffe47e82bd000000": "?",
 	"3ffffc2aaaa82ffff82eaab82ffff82eaea42ffffe2cbaa438fff8bad6b82183e0000000": "房",
@@ -1146,7 +1153,7 @@ graphicsData = {
 	"002c00bffffe6aaaa92ffff82eaab82eaab82ffff80bdb68bec2f42aecb90be828000000": "哀",
 	"2ffff82eaeb82ffff82eaeb82ffff8002c003ffffc2abaac02e02c6f86bc2903f4000000": "男",
 	"6aeba9bffffe019a400aaea00ffff00e2cb0bffffe6abea902ff806f96f92e00b8000000": "英",
-	"0e0d240e1e78bfeffe6ebeb93baffc3b8eb8bb0eb82aaffc2eaeb02fbffe145ea9000000": "?",
+	"0e0d240e1e78bfeffe6ebeb93baffc3b8eb8bb0eb82aaffc2eaeb02fbffe145ea9000000": "雄",
 	"1aa3a82ff39d000380bffffe6aeba900e2c02cfed02ce8e42ce0b92efc7e3fa82d000000": "武",
 	"2febf82eebb82febf82abaa83ffffc6b96e93e00bc2febf82eebb82febf82e9bb8000000": "器",
 	"0002c0bfaffcbb9ae8b3aae9bbbffebf80b0b3bffeb3aeb9bf9eb0ba46b06002e0000000": "時",
@@ -1360,7 +1367,7 @@ graphicsData = {
 	"3feaa82a9ffcbff02c6aa02c3feaac2a9ffc2a9e003fee043aee0e3feeae3a9bfd000000": "記",
 	"1e2ffc2b9aac76cffc7faaad2e7ffebfd6c86eaeedaecaf43f6ef86feadd7a9b84000000": "録",
 	"1982c02fdae81f6ffc7f9ad8279ff807eae92ffffe7ac7e012cbb41bae3d0e5818000000": "狭",
-	"1dbefe7abaed2ebae9bffaee1baae82eaea46aeae96aaaa90eaab80eaab80ffff8000000": "?",
+	"1dbefe7abaed2ebae9bffaee1baae82eaea46aeae96aaaa90eaab80eaab80ffff8000000": "響",
 	"02c2c002c2c03ffffc2aeae802c2c002c2c0bffffe6aaaa90781e01f40b8090024000000": "共",
 	"28a0b01efeb012eefeb6eeed2afeec02b9ac2bfeb82ce93838eebcb6eeee718d88000000": "激",
 	"1d02c00bbffe22baee78b2c91dbffc00bbac0abb280eb7b42da2e078ebf9246e2c000000": "波",
@@ -1511,7 +1518,7 @@ graphicsData = {
 	"28fffc1eeaac14fffcb4eaac28baa801bffe0dfbae2dbe4e28bace787fae7001f8000000": "渇",
 	"3fcea93aeffe3afea83feeac3aeffc3aeeac3fdba87aeffcb2ebb472ebe922ae6c000000": "腹",
 	"002c00002c002aac183fee7d02eff403afd00b6ee01e2cf47d2c7d24ac1800b800000000": "水",
-	"246ba4786ba428fffc00bae868fffcbc6ba42c6ba42cfffc2e4b00bbfffd20aaa8000000": "?",
+	"246ba4786ba428fffc00bae868fffcbc6ba42c6ba42cfffc2e4b00bbfffd20aaa8000000": "達",
 	"3ffffc3aaeac382c2c3bffec3abeac38bf2c39e7ac3bd2ec3aaaac3ffffc38002c000000": "因",
 	"0b06a8bffbfc6ba000bffaa9bbbffebbb2c0bff3846ba7a8bffb2c6baffe0b0a88000000": "転",
 	"bfeba9bbaffeb3aea8bfebacbaebfcb0e6a8bfefbebb9ebab38ebabfefbeba9e7a000000": "臨",
@@ -1522,7 +1529,7 @@ graphicsData = {
 	"2853881eb39d253bb8786ba81dbffc00baac0abffc0ebaac2dbffc78b06c24b038000000": "消",
 	"0038000038002ffff01abaa0003800bffffe6abaa900e06002d0b46baffc3ffaa4000000": "去",
 	"0380000bfffc1faaac7d002c2bff2c0bab2c0b0b2c0bff2c0baa3c0606b80003e0000000": "句",
-	"0a2ea40e7ab42efffe3cebaebcfffe3cab982c6be82cbbf82caeee2cbae82c07d0000000": "?",
+	"0a2ea40e7ab42efffe3cebaebcfffe3cab982c6be82cbbf82caeee2cbae82c07d0000000": "像",
 	"0e02c00e2ae9bffffe6e82c00ebffc0feeb8be1e746e0bb00e03e06e6fb93d2928000000": "技",
 	"092e691d2e7e78ff8066aea91eaebe7cef2c7cef6c2deeac2eaeac2d6c6c2c2c38000000": "術",
 	"1aaaa42ffff8002c00002c003ffffc2abea800bf0001fb8007d2e06f40b9290028000000": "天",
@@ -1620,7 +1627,7 @@ graphicsData = {
 	"2ffffc2eaaac2ffffc2eaaa82d8b242eebb82efff82e4b183b8b2cbbfffc23aaac000000": "屈",
 	"2aaaa83ffffc02c00002fff003aab00740b00baae00fffc00902806aaba9bffffe000000": "互",
 	"bfeeb87bffba3bbab43ffffe3baab93fbfb83bbbba3bbf3c7fbbba7bbfee03aa9d000000": "職",
-	"07aa900bffe06eabe87eaeac2ffffc1abeb82faeb42aab801aafe92feb780a3e00000000": "?",
+	"07aa900bffe06eabe87eaeac2ffffc1abeb82faeb42aab801aafe92feb780a3e00000000": "象",
 	"3fcffc3acbb83fcbb03acbb03adbb93feffe3801e03a82f03ae7f97fafbab9097d000000": "既",
 	"002c00bffffebaaaae63a3fd03a2acbffbac6ba7b827a2f8b7b9f42b97fd0f4758000000": "寂",
 	"bfa3846abbacbf9bd46a5ee4bfb87d6a53846ab7a8bfabe8ba8bd0bfaeb9ba6828000000": "談",
