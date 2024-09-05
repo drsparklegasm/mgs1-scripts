@@ -63,19 +63,23 @@ def getCallOffsets():
 if __name__ == "__main__":
     # We should get args from user. Using argParse
     parser = argparse.ArgumentParser(description=f'Search a GCX file for RADIO.DAT codec calls')
-    args = parser.parse_args()
-
     # REQUIRED
     parser.add_argument('filename', type=str, help="The GCX file to Search. Can be RADIO.DAT or a portion of it.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
     
-    
-    filename = args.filename
+    args = parser.parse_args()
+
+    # Args parsed
+    filename: str = args.filename
+
+    stageName = filename.split('/')[-2]
+    stageFile = filename.split('/')[-1].split(".")[0]
+    print(f'{stageName}/{stageFile}')
     
     if args.output:
         outputFile = args.output
     else:
-        outputFile = "stageCalls.csv"
+        outputFile = f'stageAnalysis/{stageName}-{stageFile}.csv'
     
     stageDir = open(filename, 'rb')
     output = open(outputFile, 'w')
