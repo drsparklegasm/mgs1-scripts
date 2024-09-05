@@ -1,31 +1,25 @@
 import os, struct
+import argparse
 
-filename = "Radio dat files/STAGE-usa-d1.DIR"
-# filename = "STAGE-jpn.DIR" # Uncomment this line if using jpn version, only changes the output csv filename
 
-outputFile = "stageCalls-usa.csv"
-if 'jpn' in filename:
-    outputFile = "stageCalls-jpn.csv"
+filename = "radioDatFiles/STAGE-usa-d1.DIR"
 
-stageDir = open(filename, 'rb')
-output = open(outputFile, 'w')
 
-# Write csv header
-output.write('offset,call hex,frequency,call data offset\n')
-
-stageData = stageDir.read() # The byte stream is better to use than the file on disk if you can. 
-fileSize = stageData.__len__()
-offset = 0
 
 freqList = [
     b'\x37\x05', # 140.85, Campbell
     b'\x37\x10', # 140.96, Mei Ling
     b'\x36\xbf', # 140.15, Meryl
-    b'\x36\xb7', # 141.12, Otacon
-    b'\x37\x48', # 141.52, Natasha
+    b'\x37\x20', # 141.12, Otacon
+    b'\x37\x48', # 141.52, Nastasha
     b'\x37\x64', # 141.80, Miller
     b'\x36\xE0', # 140.48, Deepthroat
-    b'\x36\xb7'  # 140.07, Staff
+    b'\x36\xb7',  # 140.07, Staff, Integral exclusive
+    b'\x36\xbb',
+    b'\x36\xbc', 
+    bytes.fromhex('36bb'), 
+    bytes.fromhex('36bc'), # 140.12, ????
+    b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
 def checkFreq(offset):
@@ -41,8 +35,8 @@ def writeCall(offset):
     global freqList
     global output
 
-    writeString = str(offset) + ","                                                         # Offset, 
-    writeString = stageData[offset: offset + 4].hex() + ","                                 # Frequency bytes
+    writeString = f'{offset},'                                                              # Offset, 
+    writeString += stageData[offset: offset + 4].hex() + ","                                # Frequency bytes
     writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + ","     # Frequency 
     writeString += str(stageData[offset + 4: offset + 8].hex()) + ","                       # offset of radio.dat call data
     writeString += str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0]) # Int of the offset, need 4 bytes for that
@@ -66,9 +60,34 @@ def getCallOffsets():
         offset += 1 # No matter what we increase offset in all scenarios
 
 
+if __name__ == "__main__":
+    # We should get args from user. Using argParse
+    parser = argparse.ArgumentParser(description=f'Search a GCX file for RADIO.DAT codec calls')
+    args = parser.parse_args()
 
-# Main used to just be getting the call offsets
-getCallOffsets()
-print('Finished checking for calls in STAGE.DIR!')
-output.close()
+    # REQUIRED
+    parser.add_argument('filename', type=str, help="The GCX file to Search. Can be RADIO.DAT or a portion of it.")
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
+    
+    
+    filename = args.filename
+    
+    if args.output:
+        outputFile = args.output
+    else:
+        outputFile = "stageCalls.csv"
+    
+    stageDir = open(filename, 'rb')
+    output = open(outputFile, 'w')
+
+    stageData = stageDir.read() # The byte stream is better to use than the file on disk if you can. 
+    fileSize = len(stageData)
+
+    # Write csv header
+    output.write('offset,call hex,frequency,call data offset\n')
+
+    # Main used to just be getting the call offsets
+    getCallOffsets()
+    print('Finished checking for calls in STAGE.DIR!')
+    output.close()
 
