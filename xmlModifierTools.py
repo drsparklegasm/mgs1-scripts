@@ -18,7 +18,7 @@ from xml.dom.minidom import parseString
 import jsonTools
 
 # For now we'll leave these as static for testing
-xmlInputFile = "14085-testing/285449-decrypted.xml"
+xmlInputFile = "14085-testing/59333-decrypted.xml"
 xmlOutputFile = "14085-testing/285449-new.xml"
 
 """
@@ -203,12 +203,33 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('content', str(newContent))
                 
             case "RND_SWCH":
-                # 
+                # FF30{length}{ 2 byte Probability total}
                 origLength = int(parent.attrib.get('length')) # length in bytes total
-                origContent = parent.attrib.get('content') # 5 bytes
+                origContent = parent.attrib.get('content') # 6 bytes
 
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[ 4 : 8]))[0]
+                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[ headerTextLength - 4 : headerTextLength]}')
+                    print(f'New Bytes: {newHexLength}')
+                
+                newContent = origContent[0:4] + newHexLength + origContent[8:headerTextLength]
+                if debug:
+                    print(f'new content: {newContent}')
+                    
+                parent.set('length', str(newLength))
+                parent.set('content', str(newContent))
+            case "RND_OPTN":
+                # {31}{2 byte probability}80{2b Length}
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 6 bytes
+
+                newLength = origLength + lengthChange
+                headerTextLength: int = len(origContent) 
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
                 newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
 
@@ -223,8 +244,6 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                     
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
-            case "RND_OPTN":
-                print('stuff')
             case "RadioData":
                 return
             case _:

@@ -17,8 +17,8 @@ from xml.dom.minidom import parseString
 # flags
 debug = True
 
-jsonA = open("14085-testing/294379-decrypted-Iseeva.json", 'r')
-jsonB = open("14085-testing/285449-decrypted-Iseeva.json", 'r')
+jsonA = open("14085-testing/38411-decrypted-Iseeva.json", 'r')
+jsonB = open("14085-testing/59333-decrypted-Iseeva.json", 'r')
 
 jsonContentA = json.load(jsonA)
 jsonContentB = json.load(jsonB)
