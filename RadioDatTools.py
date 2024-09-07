@@ -241,6 +241,9 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
     Assuming at this point that this is graphics data. Graphics data is always evenly divisble by 36 bytes. 
     Each grouping of 36 bytes creates a TGA image file. These can be output to individual files using the 
     RadioDict module.
+
+    Integral has some null padding after that doesn't always get evenly divisible by 36 bytes. 
+    It doesnt break the parsing logic, but it does get false positives in the graphics data.
     """
     count = 0
     global fileSize
