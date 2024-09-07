@@ -509,6 +509,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         
         case b'\x30':
             # 30 is handled different, as it has a container header
+            # Worth mentioning, FF30{2 byte length}{2 byte total}
+            # Every 0x31 contained inside should have a value that adds up to the total
             length = getLength(offset)
             header = 6
             line = radioData[offset : offset + header]
@@ -528,6 +530,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         
         case b'\x31':
             # 31 passes offset as one before to match the command byte:
+            # 0x31{individual amount}80{length}
+            # All individual amounts add up to the total amount in the ff30
             header = 6
             line = radioData[offset : offset + header]
             length = struct.unpack('>H', line[4 : 6])[0] + 4
