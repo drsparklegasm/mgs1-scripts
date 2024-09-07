@@ -129,9 +129,14 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 	customCharacter = False
 	while i < len(bytestring) - 1:
 		# print(f'i is {i}\n') # For debugging
-		if bytestring[i].to_bytes() == b'\x96':
+		if bytestring[i].to_bytes() in ( b'\x96' , b'\x97' , b'\x98'):
+			customCharNum = int(bytestring[i + 1])
+			if bytestring[i].to_bytes() ==  b'\x97':
+				customCharNum += 254
+			elif bytestring[i].to_bytes() ==  b'\x98':
+				customCharNum += 508
 			try:
-				messageString += callDict.get(int(bytestring[i + 1]))
+				messageString += callDict.get(customCharNum)
 			except:
 				# print(f'Cound not translate {bytestring[i + 1]}')
 				messageString += f'[{bytestring[i:i+2].hex()}]'
