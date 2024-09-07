@@ -10,8 +10,9 @@ Steps to use for translation:
 We will output to RADIO.DAT or optionally a filename of your choice. 
 
 To do list:
-TODO: Element checker
-TODO: Need logic to re-insert b'\x80' before each punctuation mark that needs it
+TODO: ~~Element checker~~ I think this is done
+TODO: Need logic to re-insert b'\x80' before each punctuation mark that needs it (new lines and japanese supertext pairs {a, b})
+TODO: Calculate double byte length characters for length in subtitles
 
 """
 
