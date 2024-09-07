@@ -22,6 +22,7 @@ import os, struct
 # import radioTools.radioDict as radioDict
 import argparse
 import xml.etree.ElementTree as ET
+import StageDirTools.callsInStageDirFinder as stageTools
 
 subUseOriginalHex = False
 
@@ -167,8 +168,6 @@ def getContainerContentBytes(elem: ET.Element) -> bytes:
 
     return binary
 
-
-
 def handleElement(elem: ET.Element) -> bytes:
     """
     Takes an element and returns the bytes for that element and all subelements. 
@@ -198,15 +197,11 @@ def handleElement(elem: ET.Element) -> bytes:
     
     return binary
 
-# Test code: Recompile call headers
-parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
-parser.add_argument('input', type=str, help="Input XML to be recompiled.")
-parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
-parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
-
-def main():
+def main(args=None):
     global subUseOriginalHex 
-    args = parser.parse_args()
+    
+    if args == None:
+        args = parser.parse_args()
 
     # Read new radio source
     radioSource = ET.parse(args.input)
@@ -239,7 +234,15 @@ def main():
     f = open(outputFilename, 'wb')
     f.write(outputContent)
     f.close()
+
     print(newOffsets)
 
 if __name__ == '__main__':
+
+    # Parse arguments here, then run main so that this can be called from another parent script.
+    parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
+    parser.add_argument('input', type=str, help="Input XML to be recompiled.")
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
+    parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
+
     main()

@@ -710,33 +710,9 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     if offset >= fileSize - 1:
         print(f'File was parsed successfully! Written to {outputFilename}')
 
-# This doesn't work because i did not code with contextual variables in mind >:O
-if __name__ == '__main__':
-    """
-    This will parse arguments and run both headers extract and full analysis. 
-    Output is now "[input filename]-output" unless otherwise specified
-    """
-    # Backup variables
-    filename = 'RADIO.DAT'
-    outputFilename = 'Radio-decrypted.txt'
-    
-    # We should get args from user. Using argParse
-    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> [output.txt] -?')
-
-    # REQUIRED
-    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
-    # Optionals
-    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
-    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
-    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings") # Remove later when issue with english resolved
-    parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
-    parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
-    parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
-    parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
-    parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
-    parser.add_argument('-S', '--silent', action='store_true', help="Silent / no output message when done.")
-
-    args = parser.parse_args()
+def main(args=None):
+    if args is None:
+        args = parser.parse_args()
 
     # Set input filename
     filename = args.filename
@@ -826,3 +802,31 @@ if __name__ == '__main__':
                 radioDict.outputGraphic(newFile, bytes.fromhex(item))
                 f.write('\n')
             f.close()
+
+# This doesn't work because i did not code with contextual variables in mind >:O
+if __name__ == '__main__':
+    """
+    This will parse arguments and run both headers extract and full analysis. 
+    Output is now "[input filename]-output" unless otherwise specified
+    """
+    # Backup variables
+    filename = 'RADIO.DAT'
+    outputFilename = 'Radio-decrypted.txt'
+    
+    # We should get args from user. Using argParse
+    parser = argparse.ArgumentParser(description=f'Parse a binary file for Codec call GCL. Ex. script.py <filename> [output.txt] -?')
+
+    # REQUIRED
+    parser.add_argument('filename', type=str, help="The call file to parse. Can be RADIO.DAT or a portion of it.")
+    # Optionals
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Write any errors to stdout for help parsing the file")
+    parser.add_argument('-j', '--japanese', action='store_true', help="Toggles translation for Japanese text strings") # Remove later when issue with english resolved
+    parser.add_argument('-s', '--split', action='store_true', help="Split calls into individual bin files")
+    parser.add_argument('-H', '--headers', action='store_true', help="Extract call headers ONLY!")
+    parser.add_argument('-g', '--graphics', action='store_true', help="export graphics")
+    parser.add_argument('-x', '--xmloutput', action='store_true', help="Exports the call data into XML format")
+    parser.add_argument('-z', '--iseeeva', action='store_true', help="Exports the dialogue in a json like Iseeeva's script")
+    parser.add_argument('-S', '--silent', action='store_true', help="Silent / no output message when done.")
+
+    main()
