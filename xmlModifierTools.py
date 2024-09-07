@@ -57,9 +57,9 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
     if debug:
         print(f'Lengths are {len(newDialogue)} [new] and {oldTextLength} [old], {lengthElement} [Element]')
     
-    lengthChange = oldTextLength - len(newDialogue) 
+    lengthChange = len(newDialogue) - oldTextLength 
     commandLength = int(subtitleElement.attrib.get('length'))
-    newLength = commandLength - lengthChange
+    newLength = commandLength + lengthChange
     if debug:
         print(f'Previous command length: {commandLength}, new length will be {newLength}')
     if lengthChange != 0:
@@ -80,17 +80,19 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
     """
     parents = getParentTree(subElement)
     for parent in parents:
+        if debug:
+            print(f'Evaluating {parent.tag}...\n')
         match parent.tag:
             case "Call": # DONE
-                # Remember length - header is 9
+                # Remember length - header is 11
                 origLength = int(parent.attrib.get('length')) # length in bytes total
                 origContent = parent.attrib.get('content') # 22 bytes
 
-                newLength = origLength - lengthChange
+                newLength = origLength + lengthChange
                 newHexLength = struct.pack('>H', newLength - 9).hex()
                 if debug:
-                    print(f'New length: {newLength}')
-                    print(f'Bytes before were 0x{origContent[18:22]}')
+                    print(f'New length: {newLength}, change is {lengthChange}')
+                    print(f'Bytes before were 0x{origContent[18:22]}, content: {origContent}')
                 
                 newContent = origContent[0:18] + newHexLength
                 if debug:
@@ -104,7 +106,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 origLength = int(parent.attrib.get('length')) # length in bytes total
                 origContent = parent.attrib.get('content') # 22 bytes
 
-                newLength = origLength - lengthChange
+                newLength = origLength + lengthChange
                 newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
                 newHexLengthB = struct.pack('>H', newLength - 9).hex() # end of line
 
@@ -132,9 +134,9 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                     print(f'New length: {newLength}')
                     print(f'Header before was 0x{origContent}')
 
-                newLength = origLength - lengthChange
+                newLength = origLength + lengthChange
                 newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
-                newHexLengthB = struct.pack('>H', origLengthB - lengthChange).hex() # end of line
+                newHexLengthB = struct.pack('>H', origLengthB + lengthChange).hex() # end of line
 
                 if debug:
                     print(f'New length: {newLength}')
@@ -150,7 +152,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
             case "THEN_DO": # DONE
                 # No actual hex in here, we just need to modify the length for posterity
                 origLength = int(parent.attrib.get('length')) # length in bytes total
-                newLength: int = origLength - lengthChange
+                newLength = origLength + lengthChange
 
                 if debug:
                     print(f'Old length: {origLength} | New length: {newLength}')
@@ -162,10 +164,10 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 origLength = int(parent.attrib.get('length')) # length in bytes total
                 origContent = parent.attrib.get('content') # 5 bytes
 
-                newLength = origLength - lengthChange
+                newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
-                newHexLength: bytes = struct.pack('>H', origLengthHex - lengthChange).hex() # end of line
+                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
 
                 if debug:
                     print(f'New length: {newLength}')
@@ -179,9 +181,48 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
             case "ELSE_IFS":
-                print('stuff')
+                # FF1230{1 byte length of eval}{eval}80{2 byte length}
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 5 bytes
+
+                newLength = origLength + lengthChange
+                headerTextLength: int = len(origContent) 
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
+                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[ headerTextLength - 4 : headerTextLength]}')
+                    print(f'New Bytes: {newHexLength}')
+                
+                newContent = origContent[0:headerTextLength - 4] + newHexLength
+                if debug:
+                    print(f'new content: {newContent}')
+                    
+                parent.set('length', str(newLength))
+                parent.set('content', str(newContent))
+                
             case "RND_SWCH":
-                print('stuff')
+                # 
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 5 bytes
+
+                newLength = origLength + lengthChange
+                headerTextLength: int = len(origContent) # 10 characters
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
+                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[ headerTextLength - 4 : headerTextLength]}')
+                    print(f'New Bytes: {newHexLength}')
+                
+                newContent = origContent[0:headerTextLength - 4] + newHexLength
+                if debug:
+                    print(f'new content: {newContent}')
+                    
+                parent.set('length', str(newLength))
+                parent.set('content', str(newContent))
             case "RND_OPTN":
                 print('stuff')
             case "RadioData":
