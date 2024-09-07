@@ -172,6 +172,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 	
 	if customCharacter == True:
 		context.write(f'{messageString}\n')
+		
 	return messageString
 
 """
