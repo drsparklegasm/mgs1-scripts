@@ -74,7 +74,6 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
 def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
     """
     Updates the length of the parent of the subtitle.
-
     Each case is changing the content block and length as appropriate.
 
     """
