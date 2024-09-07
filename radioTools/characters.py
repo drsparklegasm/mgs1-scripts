@@ -1590,7 +1590,7 @@ graphicsData = {
 	"6aaaa9bffffe00b4003ffffc3aebac3affac3aebac3affac3aebac3ffffc3aaaac000000": "面",
 	"024aa9038ffe1b000e7e900e2de00e0bd00e07800e0b700e6eb80e3eacae0014bd000000": "幻",
 	"2802e91eaaed12fffeb6eac026aad802a9ee2aabfc2ea9b83bbdb6b7fbee71a59d000000": "滅",
-	"0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000": "滝",
+	#"0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000": "?", # 滝 Waterfall ? Probably not correct
 	"6baffebffae929dbfcbfffac7aebfc3febac3abbfc3febacba7bfcbaeaa9278a59000000": "頭",
 	"6ee6e97aebfd7ab6acabb6f91aa2982ffff82eae902eae902eaea82aaaac77bbb8000000": "?",
 	"0ffff00eaab00e00b00e00b00ffff00aeba002cb0002cb00078b096e0bae2807fd000000": "兄",
@@ -1607,7 +1607,7 @@ graphicsData = {
 	"0038002838281e38b40779d03ffff82aaab81aaab82ffff80000383ffff82aaab8000000": "当",
 	"0ffff00eaab00e00b00e00b00ffff00eaab00e00b00e00b00eaab00ffff00e00b0000000": "日",
 	"1d03800bbffe226ea9782c281dbffe006a880a3bb80e3bb82d7bb879f3ba2493ad000000": "流",
-	# "2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "轟", # Todoroki? Might be base
+	#"2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "轟", # Todoroki? Might be base
 	"2aaea93ffffe3aaa503abfe93bb5fd3bfffd3abad83bfffe76bae9b2f6ee2291fd000000": "廃",
 	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "菓",
 	"002c00002c003ffffc3aaeac382c2c382c2c3ffffc3aaeac242c18002c00002c00000000": "中",
