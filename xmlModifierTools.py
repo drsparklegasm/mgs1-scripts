@@ -18,8 +18,8 @@ from xml.dom.minidom import parseString
 import jsonTools
 
 # For now we'll leave these as static for testing
-xmlInputFile = "14085-testing/283744-decrypted.xml"
-xmlOutputFile = "14085-testing/283744-new.xml"
+xmlInputFile = "14085-testing/285449-decrypted.xml"
+xmlOutputFile = "14085-testing/285449-new.xml"
 
 """
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
@@ -150,7 +150,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
             case "THEN_DO": # DONE
                 # No actual hex in here, we just need to modify the length for posterity
                 origLength = int(parent.attrib.get('length')) # length in bytes total
-                newLength = origLength - lengthChange
+                newLength: int = origLength - lengthChange
 
                 if debug:
                     print(f'Old length: {origLength} | New length: {newLength}')
@@ -158,7 +158,26 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('length', str(newLength))
                 
             case "ELSE":
-                print('stuff')
+                # No actual hex in here, we just need to modify the length for posterity
+                origLength = int(parent.attrib.get('length')) # length in bytes total
+                origContent = parent.attrib.get('content') # 5 bytes
+
+                newLength = origLength - lengthChange
+                headerTextLength: int = len(origContent) # 10 characters
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
+                newHexLength: bytes = struct.pack('>H', origLengthHex - lengthChange).hex() # end of line
+
+                if debug:
+                    print(f'New length: {newLength}')
+                    print(f'Bytes before were 0x{origContent[ 6 : headerTextLength]}')
+                    print(f'New Bytes: {newHexLength}')
+                
+                newContent = origContent[0:6] + newHexLength
+                if debug:
+                    print(f'new content: {newContent}')
+                    
+                parent.set('length', str(newLength))
+                parent.set('content', str(newContent))
             case "ELSE_IFS":
                 print('stuff')
             case "RND_SWCH":
@@ -253,7 +272,7 @@ with open("14085-testing/modifiedCall.json", 'w') as f:
     
 """
 
-insertSubs('14085-testing/modifiedCall.json', '283744')
+insertSubs('14085-testing/modifiedCall.json', '0') # 285449
 
 for subtitle in root.findall(f".//SUBTITLE"):
     lengthChange = updateLengths(subtitle, 0)
