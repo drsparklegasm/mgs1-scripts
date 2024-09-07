@@ -783,7 +783,7 @@ kanji = {
     '9031': "暗",
     '9032': "視",
     '9033': "閣",
-    #'9034': "見", # 覓
+    '9034': "見",
     '9035': "赤",
     '9036': "外",
     '9037': "線",
@@ -798,7 +798,7 @@ kanji = {
     '9040': "身",
     '9041': "守",
     '9042': "半",
-    #'9043': "誠", # 滅
+    '9043': "減", 
     '9044': "調",
     '9045': "味",
     '9046': "料",
@@ -1698,7 +1698,7 @@ graphicsData = {
 	"3febfe3aebae3aebae3febfe3aa08e3aabee3bb4ce3bface3aa1ce3af7ee3a417d000000": "闘",
 	"00ea800bffc07e4b402ffff81abab8bffffe6abab92ffff81abab802b80002f400000000": "争",
 	"0d03802cb3a8bffbe86a17893ff3fe3ab1a83ff3943ab3f83ff3943ab3ae3ae2fd000000": "能",
-	"2abaa82baae86baae96aaaa90ffff00eaab00eaab00aaea02ade587aeaee25ffd9000000": "?",
+	"2abaa82baae86baae96aaaa90ffff00eaab00eaab00aaea02ade587aeaee25ffd9000000": "意",
 	"186afca8bfa9ba76a83e3ffc2a2ba87bbffebeaea92e6ffc6ffbb8aeabe96d6e6c000000": "緩",
 	"6ab0003fa7fe0383ae3ffb8e2fe78e1fe38e2bb78e7b938e2383fe0383ae038249000000": "和",
 	"6aaea9bffffe0aaaa00eaab00ffff06aaaa9bffffeb2aa8eb3aaceb3ffeeb0007d000000": "高",
