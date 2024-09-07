@@ -6,7 +6,7 @@ import radioTools.characters as characters
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
 missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w')
-missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w')
+missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w') # Accessed from RadioDatTools in main()
 radioData = b''
 foundGraphics = []
 unidentifiedGraphics = []
@@ -120,7 +120,6 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 		callDictionary.update({x + 1: result})
 		dictFile.write(f'{x + 1}: {result}\n')
 
-	missingGFX.write(f'Missing {offset} graphics!\n{unidentifiedGraphics}\n')
 	return callDictionary
 
 def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: # Needs fixins, maybe move to separate file?

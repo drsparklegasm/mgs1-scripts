@@ -808,8 +808,8 @@ if __name__ == '__main__':
     
     if args.graphics:
         with open("graphicsExport/GraphicsFound.txt", 'w') as f:
-            f.write(f'=================================\n')
             f.write(f"{filename} has these graphics that were unmatched:\n")
+            f.write(f'=================================\n')
             num = 0
             unidentifiedGraphicsLocal = []
             for item in radioDict.unidentifiedGraphics:
