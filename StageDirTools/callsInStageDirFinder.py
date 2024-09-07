@@ -1,10 +1,8 @@
 import os, struct
 import argparse
-
+import json
 
 filename = "radioDatFiles/STAGE-usa-d1.DIR"
-
-
 
 freqList = [
     b'\x37\x05', # 140.85, Campbell
@@ -22,6 +20,9 @@ freqList = [
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
+# This dict will have {stageOffset: [ callOffset int, hexstr ] } to be updated later.
+offsetDict: dict[int, tuple[int, str]] = {}
+
 def checkFreq(offset):
     global stageData
     
@@ -38,9 +39,13 @@ def writeCall(offset):
     writeString = f'{offset},'                                                              # Offset, 
     writeString += stageData[offset: offset + 4].hex() + ","                                # Frequency bytes
     writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + ","     # Frequency 
-    writeString += str(stageData[offset + 4: offset + 8].hex()) + ","                       # offset of radio.dat call data
-    writeString += str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0]) # Int of the offset, need 4 bytes for that
+    callHex = str(stageData[offset + 4: offset + 8].hex()) + ","                       # offset (hex) of call in Radio.dat
+    callInt = str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0]) # offset (int) of call in Radio.dat
+    writeString += f'{callHex},{callInt},'
     writeString += "\n" # line break
+
+    offsetDict.update({offset: (callInt, callHex)})
+
     output.write(writeString)
 
 def replaceCallOffset(offset, radioOffset):
@@ -95,3 +100,6 @@ if __name__ == "__main__":
     print('Finished checking for calls in STAGE.DIR!')
     output.close()
 
+    with open("callOffsetDict.json", 'w') as f:
+        f.write(json.dumps(offsetDict))
+        f.close
