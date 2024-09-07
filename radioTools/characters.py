@@ -102,6 +102,8 @@ radioChar = { # 0x?0??
     '7f': "・",
 }
 
+revRadio = dict(zip(radioChar.values(), radioChar.keys()))
+
 hiragana = {  # 0x?1??
     '01': 'ぁ', # Inserted my assumptions based on the patterns.
     '02': 'あ',
@@ -187,6 +189,8 @@ hiragana = {  # 0x?1??
     '52': 'を',
     '53': 'ん',
 }
+
+revHiragana = dict(zip(hiragana.values(), hiragana.keys()))
 
 katakana = { # 0x?2??
 	'01': "ァ", # Katakana start
@@ -276,6 +280,8 @@ katakana = { # 0x?2??
     '55': "ヵ",
     '56': "ヶ",
 }
+
+revKatakana = dict(zip(katakana.values(), katakana.keys()))
 
 spanishChars = {
     '129E': 'Ä',
@@ -406,6 +412,8 @@ spanishChars = {
 	'1f7e': '˝',
 	# '807c': '|',
 }
+
+revSpanish = dict(zip(spanishChars.values(), spanishChars.keys()))
 
 kanji_old = {
 	'824f': "0",
@@ -1075,6 +1083,8 @@ kanji = {
     '9a40': "済",
 }
 
+revKanji = dict(zip(kanji.values(), kanji.keys()))
+
 punctuation = { # 0xd0
 	'02': "、",
 	'03': "。",
@@ -1485,6 +1495,8 @@ punctuation = { # 0xd0
     #'b00b': "",
     #'d00c': "",
 }
+
+revPunct = dict(zip(punctuation.values(), punctuation.keys()))
 
 graphicsData = {
 	"03aaa40bfff81faaa07eaaa02fffe01aaee01e1de00be8e401f8b92f9ebe190428000000": "気",
@@ -2570,6 +2582,8 @@ graphicsData = {
 	"2abaa83ffffc0abaa00abaa0bffffe6abba90bebb06afeb83fffe82b79e8293868000000": "素",
 	"2ad6b83fabe93aaba97aebb972ca382ffff82eaab82eaab82eaab81bffe47e82bd000000": "質",
 }
+
+revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))
 
 # Chat GPT $#!+ below
 def print_hiragana_shiftjis_with_offset():
