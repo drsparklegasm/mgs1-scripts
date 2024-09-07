@@ -818,7 +818,7 @@ kanji = {
     '9054': "關",
     '9055': "風",
     '9056': "邪",
-    #'9057': "薬", # 篥
+    '9057': "薬", # 篥 Seems less likely to be this one
     '9058': "止",
     '9059': "精",
     '905a': "抻",
@@ -830,7 +830,7 @@ kanji = {
     '9060': "度",
     '9061': "形",
     '9062': "状",
-    #'9063': "変", # 靈
+    '9063': "変",
     '9064': "化",
     '9065': "必",
     '9066': "要",
@@ -898,12 +898,12 @@ kanji = {
     '90a3': "內",
     '90a4': "界",
     '90a5': "興",
-    #'90a6': "電", # 粟
+    '90a6': "電",
     '90a7': "子",
     '90a8': "妨", 
-    #'90a9': "害", # 事
+    '90a9': "害", # 事 Not likely 
     '90aa': "狙",
-    #'90ab': "撃", # 磐
+    '90ab': "撃",
     '90ac': "入",
     '90ad': "応",
     '90ae': "篙",
@@ -913,25 +913,25 @@ kanji = {
     '90b2': "咽",
     '90b3': "過",
     '90b4': "注",
-    #'90b5': "意", # 寧
+    '90b5': "意", # 寧 This one is so on the fence
     '90b6': "可",
     '90b7': "倍",
     '90b8': "率",
     '90b9': "籟",
     '90ba': "頭",
-    #'90bb': "棟", # 栜
+    '90bb': "棟",
     '90bc': "的",
     '90bd': "垲",
     '90be': "堛",
     '90bf': "映",
     '90c0': "像",
-    #'90c1': "器", # 嚣
+    '90c1': "器", # 嚣 not likely
     '90c2': "材",
     '90c3': "場",
     '90c4': "所",
     '90c5': "礗",
     '90c6': "事",
-    #'90c7': "周", # 鳳
+    '90c7': "周",
     '90c8': "国",
     '90c9': "源",
     '90ca': "生",
@@ -1607,7 +1607,7 @@ graphicsData = {
 	"0038002838281e38b40779d03ffff82aaab81aaab82ffff80000383ffff82aaab8000000": "当",
 	"0ffff00eaab00e00b00e00b00ffff00eaab00e00b00e00b00eaab00ffff00e00b0000000": "日",
 	"1d03800bbffe226ea9782c281dbffe006a880a3bb80e3bb82d7bb879f3ba2493ad000000": "流",
-	"2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "轟",
+	# "2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "轟", # Todoroki? Might be base
 	"2aaea93ffffe3aaa503abfe93bb5fd3bfffd3abad83bfffe76bae9b2f6ee2291fd000000": "廃",
 	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "菓",
 	"002c00002c003ffffc3aaeac382c2c382c2c3ffffc3aaeac242c18002c00002c00000000": "中",
