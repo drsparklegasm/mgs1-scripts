@@ -129,7 +129,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('length', str(newLength))
                 
             case "ELSE":
-                # No actual hex in here, we just need to modify the length for posterity
+                # Else is simple because it has no conditions to eval
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
@@ -141,7 +141,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('content', str(newContent))
 
             case "ELSE_IFS":
-                # FF1230{1 byte length of eval}{eval}80{2 byte length}
+                # FF1230 {1 byte length of eval} {eval} 80 {2 byte length}
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) 
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
@@ -153,7 +153,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('content', str(newContent))
                 
             case "RND_SWCH":
-                # FF30{length}{ 2 byte Probability total}
+                # FF30 {length} { 2 byte Probability total}
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[ 4 : 8]))[0]
@@ -165,7 +165,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                 parent.set('content', str(newContent))
 
             case "RND_OPTN":
-                # {31}{2 byte probability}80{2b Length}
+                # {31} {2 byte probability} 80 {2b Length}
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) 
                 origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
