@@ -6,7 +6,7 @@ import radioTools.characters as characters
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
 missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w')
-missingGFX = open('graphicsExport/KanjiStillMissing.txt', 'w')
+missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w')
 radioData = b''
 foundGraphics = []
 unidentifiedGraphics = []
@@ -120,6 +120,7 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 		callDictionary.update({x + 1: result})
 		dictFile.write(f'{x + 1}: {result}\n')
 
+	missingGFX.write(f'Missing {offset} graphics!\n{unidentifiedGraphics}\n')
 	return callDictionary
 
 def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: # Needs fixins, maybe move to separate file?
@@ -153,7 +154,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 				messageString += characters.hiragana.get(bytestring[i+1].to_bytes().hex())
 			elif bytestring[i] in (0x82, 0xC2):
 				messageString += characters.katakana.get(bytestring[i+1].to_bytes().hex())
-			elif bytestring[i] == 0xd0:
+			elif bytestring[i] in (0xd0, 0xb0):
 				messageString += characters.punctuation.get(bytestring[i+1].to_bytes().hex())
 			else:
 				try:
