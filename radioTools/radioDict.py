@@ -1,7 +1,7 @@
 #!/bin/python
 
 import os, struct
-import radioTools.characters as characters
+import characters
 
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)

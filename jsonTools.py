@@ -20,8 +20,9 @@ debug = True
 jsonA = open("14085-testing/38411-decrypted-Iseeva.json", 'r')
 jsonB = open("14085-testing/59333-decrypted-Iseeva.json", 'r')
 
-jsonContentA = json.load(jsonA)
-jsonContentB = json.load(jsonB)
+newjson: json = {}
+
+matchingCalls = {}
 
 def replaceJsonText(callOffsetA: str, callOffsetB: str):
     """
@@ -30,18 +31,53 @@ def replaceJsonText(callOffsetA: str, callOffsetB: str):
     """
     global jsonContentA
     global jsonContentB
+    global newjson
     
     newCallSubs = dict(zip(jsonContentB[callOffsetB].keys(), jsonContentA[callOffsetA].values()))
     jsonContentB[callOffsetB] = newCallSubs
-    newjson = {"0": newCallSubs}
+    newjson["0"] = newCallSubs 
 
-    newCall = open("14085-testing/modifiedCall.json", 'w')
+def writeJsonToFile(outputFilename: str):
+    """
+    Writes the new json file to output
+    """
+    global newjson
+
+    newCall = open(outputFilename, 'w')
     newCall.write(json.dumps(newjson))
     newCall.close
 
 # test 
 
 
-
 if __name__ == '__main__':
-    replaceJsonText("0", "0")
+    """
+    This one is for the whole json with all call information
+    """
+    parser = argparse.ArgumentParser(description=f'Zip subtitles json offsets from another. \nUsage: main.py subs.json:callOffsetA offsets.json:callOffsetB [outputFilename.json]')
+
+    # REQUIRED
+    parser.add_argument('subsJson', type=str, help="json including the subtitles we want to zip, ex: filename.json:12345")
+    parser.add_argument('offsetsJson', type=str, help="json including the offsets we want to zip, ex: filename.json:12345")
+    # Optionals
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.json)")
+
+    args = parser.parse_args()
+    
+    subsInFilename = args.subsJson.split(':')[0]
+    offsetsInFilename = args.offsetsJson.split(':')[0]
+
+    subsCall = args.subsJson.split(':')[1]
+    offsetsCall = args.offsetsJson.split(':')[1]
+
+    jsonContentA = json.load(open(subsInFilename, 'r'))
+    jsonContentB = json.load(open(offsetsInFilename, 'r'))
+
+    matchingCalls.update({subsCall: offsetsCall})
+    
+    for key in matchingCalls:
+        # If we need to do only one, you can do {"0": "0"}
+        replaceJsonText(key, matchingCalls.get(key))
+    
+    outputFilename = "14085-testing/modifiedCall.json"
+    writeJsonToFile(outputFilename)

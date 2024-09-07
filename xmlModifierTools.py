@@ -80,7 +80,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
     parents = getParentTree(subElement)
     for parent in parents:
         if debug:
-            print(f'Evaluating {parent.tag}...\n')
+            print(f'\nEvaluating {parent.tag}...')
         match parent.tag:
             case "Call": # DONE
                 # Remember length - header is 11
@@ -179,6 +179,7 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
                     
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
+
             case "ELSE_IFS":
                 # FF1230{1 byte length of eval}{eval}80{2 byte length}
                 origLength = int(parent.attrib.get('length')) # length in bytes total
