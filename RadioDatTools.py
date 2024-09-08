@@ -23,6 +23,10 @@ import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from translate import Translator
 
+# Progress bar to make it pretty :)
+import progressbar
+bar = progressbar.ProgressBar()
+
 ### UNUSED ?
 # import re # Not used?
 # import base64 # We will eventually hash the files and verify they will run properly. 
@@ -662,7 +666,10 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     global radioData
     global fileSize
     global output
-    
+    global bar
+
+    bar.maxval = fileSize
+    bar.start()
     setOutputFile(outputFilename)
 
     while offset < fileSize: # We might need to change this to Case When... as well.
@@ -704,7 +711,9 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         
         # Add length to offset for next loop
         offset += length
+        bar.update(offset)
 
+    bar.finish()
     output.close()
 
     if offset >= fileSize - 1:
