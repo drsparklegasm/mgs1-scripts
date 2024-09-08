@@ -749,6 +749,9 @@ def main(args=None):
     
     setRadioData(filename)
     radioDict.openRadioFile(filename)
+
+    # Let us know the original filesize
+    root.set('length', str(fileSize))
     
     analyzeRadioFile(outputFilename)
 
