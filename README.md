@@ -61,7 +61,9 @@ To use this to make changes, run it in more or less this way:
 
 # Scripts Overview
 
-## RadioDatTools.py
+## Main tools:
+
+### RadioDatTools.py
 
 This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. This should be mostly complete now. Remaining work will be adjusting XML container data as needed for recompilation.
 
@@ -73,49 +75,49 @@ Usage:
 $ RadioDatTools.py path/to/Radio.dat [outputfilename] [-h, -i, -d, ...]
 ```
 
-## RadioDatRecompiler.py 
+### RadioDatRecompiler.py 
 Recompiles a given XML document (exported from RadioDatTools) into a binary file. 
 
 Eventually, it will inject the json data and recompute the lengths for all containers.
 
-## xmlModifierTools.py
+### xmlModifierTools.py
 
 Scripts to modify the XML, including recalculating lengths once dialogues have been changed. 
 
 NOTE! It will not correctly account for any two-byte characters that were decoded!
 
-## jsonTools.py
+### jsonTools.py
 
 Use this to zip together offsets from one json and subtitles from another json (useful for injecting an English subtitle in with japanese offsets)
 
-## StageDirTools
+### StageDirTools
 
-## callsInStageDirFinder.py
+### callsInStageDirFinder.py
 
 Scripts for finding all call offsets in Stage.dir. Currently this is working. Can be run on its own for analysis tools. 
 
 Logic is shamelessly reverse engineered from iseeeva's radio extractor:
 https://github.com/iseeeva/metal/tree/main
 
-# radioTools
+## radioTools
 
-## callExtractor.py
+### callExtractor.py
 
 Extracts a single call based on offsets (leaves in a bin format), to be merged into a better library
 
-## callInsertor.py
+### callInsertor.py
 
 Inserts a call into an existing RADIO.DAT file. Useful if you want to modify only one call's worth of binary and inject it at the original offset. Good for testing recompiler logic.
 
-## splitRadioFile.py -- DEPRECATED
+### splitRadioFile.py -- DEPRECATED
 
 Previously split RADIO.DAT into individual calls. Use RadioDatTools with the -s option. 
 
-## characters.py
+### characters.py
 
 Contains dicts in use by the radioDict library. SOME CHARACTERS HAVE YET TO BE IDENTIFIED!
 
-## radioDict.py
+### radioDict.py
 
 The heart of the translation of japanese/special character hex. This has libraries for decoding the odd hex codes into japanese characters, but can also assist in outputting graphics found in the data. 
 
