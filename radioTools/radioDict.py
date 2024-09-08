@@ -254,21 +254,21 @@ import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 import time
 
-radioXMLFile = 'recompiledCallBins/RADIO-usa-d1.xml'
+radioXMLFile = 'recompiledCallBins/RADIO-goblin.xml'
 root = ET.parse(radioXMLFile)	
 
 for call in root.getroot():
-	print(call)
+	print(call.get('offset'))
 	graphicData = call.get("graphicsBytes")
 	for subs in call.findall('.//SUBTITLE'):
-		print(subs)
 		newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
-		if str(newBytes) != subs.get("text"):
+		if newBytes.decode('utf8', errors='backslashreplace') != subs.get("text"):
 			print(str(newBytes))
 			print(f'Original: {subs.get("text")}')
 			print(newBytes.hex())
-			time.sleep(1)
+			time.sleep(3)
+			Exception
 		if newDict == graphicData:
-			print(f'Call dicts match!')
+			time.sleep(0)
 		else:
 			print(f'Call Dicts don\'t match!')
