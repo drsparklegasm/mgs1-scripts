@@ -16,6 +16,9 @@ TODO: Calculate double byte length characters for length in subtitles
 
 """
 
+stageBytes: bytearray = b''
+debug = False
+
 # ==== Dependencies ==== #
 
 import os, struct
@@ -28,7 +31,7 @@ import StageDirTools.callsInStageDirFinder as stageTools
 subUseOriginalHex = False
 
 newOffsets = {}
-stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
+stageDirFilename = 'radioDatFiles/STAGE-usa-d1.DIR'
 
 # ==== DEFS ==== #
 
@@ -204,24 +207,30 @@ def fixStageDirOffsets():
     Takes the finalized offset dict and uses the new values to overwrite values in stage.dir. 
     Make sure you've backed up the original stage.dir file!
     """
-    print(f'Do stuff!')
-    global stageDirFilename 
-    stageDir = open(stageDirFilename, 'rb')
-    stageBytes = bytearray(stageDir.read())
+    global stageBytes 
+    global newOffsets
 
-    for origCall in newOffsets.keys():
+    for key in stageTools.offsetDict.keys():
         # We can move forward if there's a match. Might skip the initial few.
-        if newOffsets.get(origCall) == origCall:
+        stageOffset = int(stageTools.offsetDict.get(key)[0])
+        newOffset = newOffsets.get(stageOffset)
+        if newOffset == stageOffset:
+            print(f'{newOffset} = {stageOffset}')
             continue
-        
+        elif newOffset == None:
+            print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
+            continue
 
-
-
-
+        newOffsetHex = struct.pack('>L', newOffset)
+        stageBytes[key + 4: key + 8] = newOffsetHex
+        if debug:
+            print(newOffsetHex.hex())
+            print(stageBytes[key: key + 8].hex())
 
 
 def main(args=None):
     global subUseOriginalHex 
+    global stageBytes
     
     if args == None:
         args = parser.parse_args()
@@ -240,6 +249,7 @@ def main(args=None):
     root = radioSource.getroot()
 
     outputContent = b''
+
     for call in root:
         newCallOffset = len(outputContent)
         newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
@@ -254,9 +264,17 @@ def main(args=None):
         
         # print(content)
 
+    stageTools.init(stageDirFilename)
+    stageBytes = bytearray(stageTools.stageData)
+    fixStageDirOffsets()
+
     f = open(outputFilename, 'wb')
     f.write(outputContent)
     f.close()
+
+    stageOut = open("new-STAGE-usa-d1.DIR", 'wb')
+    stageOut.write(stageBytes)
+    stageOut.close()
 
     print(newOffsets)
 
@@ -267,5 +285,6 @@ if __name__ == '__main__':
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
+    parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     
     main()

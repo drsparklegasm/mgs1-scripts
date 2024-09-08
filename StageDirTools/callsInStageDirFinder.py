@@ -2,7 +2,10 @@ import os, struct
 import argparse
 import json
 
-filename = "radioDatFiles/STAGE-usa-d1.DIR"
+import progressbar
+bar = progressbar.ProgressBar()
+
+# filename = "radioDatFiles/STAGE-usa-d1.DIR"
 
 freqList = [
     b'\x37\x05', # 140.85, Campbell
@@ -22,6 +25,8 @@ freqList = [
 
 # This dict will have {stageOffset: [ callOffset int, hexstr ] } to be updated later.
 offsetDict: dict[int, tuple[int, str]] = {}
+filesize = 0
+stageData = b''
 
 def checkFreq(offset):
     global stageData
@@ -36,11 +41,11 @@ def writeCall(offset):
     global freqList
     global output
 
-    writeString = f'{offset},'                                                              # Offset, 
+    writeString = f'{offset},'                                                              # Offset
     writeString += stageData[offset: offset + 4].hex() + ","                                # Frequency bytes
     writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + ","     # Frequency 
-    callHex = str(stageData[offset + 4: offset + 8].hex()) + ","                       # offset (hex) of call in Radio.dat
-    callInt = str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0]) # offset (int) of call in Radio.dat
+    callHex = str(stageData[offset + 4: offset + 8].hex()) + ","                            # offset (hex) of call in Radio.dat
+    callInt = str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0])      # offset (int) of call in Radio.dat
     writeString += f'{callHex},{callInt},'
     writeString += "\n" # line break
 
@@ -54,25 +59,31 @@ def replaceCallOffset(offset, radioOffset):
 
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
 def getCallOffsets():
+    global filesize
+    global bar
+    
     offset = 0
-    while offset < fileSize:
+    bar.maxval = filesize
+    bar.start()
+
+    while offset < filesize:
         # Check for \x01 first, then check for a call
         if stageData[offset].to_bytes() == b'\x01' and stageData[offset + 3].to_bytes() == b'\x0a': # After running without this, seems all call offsets DO have 0x0a in the 4th byte
             if checkFreq(offset): # We only write the call to the csv if the call matches a frequency, this check might not be needed....?
                 # Optional print, this is still useful for progress I guess
-                print(f'Offset {offset} has a possible call!\n====================================\n')
+                # print(f'Offset {offset} has a possible call!\n====================================\n')
                 writeCall(offset)
         offset += 1 # No matter what we increase offset in all scenarios
+        bar.update(offset)
+    bar.finish()
 
 
-if __name__ == "__main__":
-    # We should get args from user. Using argParse
-    parser = argparse.ArgumentParser(description=f'Search a GCX file for RADIO.DAT codec calls')
-    # REQUIRED
-    parser.add_argument('filename', type=str, help="The GCX file to Search. Can be RADIO.DAT or a portion of it.")
-    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
-    
-    args = parser.parse_args()
+def main(args=None):
+    global stageData
+    global filesize 
+
+    if args is None:
+        args = parser.parse_args()
 
     # Args parsed
     filename: str = args.filename
@@ -84,13 +95,13 @@ if __name__ == "__main__":
     if args.output:
         outputFile = args.output
     else:
-        outputFile = f'stageAnalysis/{stageName}-{stageFile}.csv'
+        outputFile = f'stageAnalysis-jpn/{stageName}-{stageFile}.csv'
     
     stageDir = open(filename, 'rb')
     output = open(outputFile, 'w')
 
     stageData = stageDir.read() # The byte stream is better to use than the file on disk if you can. 
-    fileSize = len(stageData)
+    filesize = len(stageData)
 
     # Write csv header
     output.write('offset,call hex,frequency,call data offset\n')
@@ -103,3 +114,29 @@ if __name__ == "__main__":
     with open("callOffsetDict.json", 'w') as f:
         f.write(json.dumps(offsetDict))
         f.close
+
+if __name__ == "__main__":
+
+    # We should get args from user. Using argParse
+    parser = argparse.ArgumentParser(description=f'Search a GCX file for RADIO.DAT codec calls')
+    # REQUIRED
+    parser.add_argument('filename', type=str, help="The GCX file to Search. Can be RADIO.DAT or a portion of it.")
+    parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
+    
+    main()
+
+def init(filename: str):
+    global filesize
+    global stageData
+    global output
+    
+    stageDir = open(filename, 'rb')
+    stageData = stageDir.read()
+    filesize = len(stageData)
+    output = open('outputFile.txt', 'w')
+
+    print(f'Getting STAGE.DIR call offsets... please be patient!')
+    getCallOffsets()
+
+    print('Finished checking for calls in STAGE.DIR! Ready to proceed.')
+    print(f'StageDirCallFinder is Ready!')
