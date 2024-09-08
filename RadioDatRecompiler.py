@@ -223,7 +223,7 @@ def fixStageDirOffsets():
             continue
 
         newOffsetHex = struct.pack('>L', newOffset)
-        stageBytes[key + 4: key + 8] = newOffsetHex
+        stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
         if debug:
             print(newOffsetHex.hex())
             print(stageBytes[key: key + 8].hex())
@@ -247,6 +247,8 @@ def main(args=None):
     if args.hex:
         subUseOriginalHex = True
 
+    
+
     root = radioSource.getroot()
 
     outputContent = b''
@@ -264,28 +266,29 @@ def main(args=None):
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
         
         # print(content)
+    
+    radioOut = open(outputFilename, 'wb')
+    radioOut.write(outputContent)
+    radioOut.close()
 
-    stageTools.init(stageDirFilename)
-    stageBytes = bytearray(stageTools.stageData)
-    fixStageDirOffsets()
-
-    f = open(outputFilename, 'wb')
-    f.write(outputContent)
-    f.close()
-
-    stageOut = open("new-STAGE-usa-d1.DIR", 'wb')
-    stageOut.write(stageBytes)
-    stageOut.close()
+    if args.stage:
+        stageDirFilename = args.stage
+        stageTools.init(stageDirFilename)
+        stageBytes = bytearray(stageTools.stageData)
+        fixStageDirOffsets()
+        stageOut = open("new-STAGE-usa-d1.DIR", 'wb')
+        stageOut.write(stageBytes)
+        stageOut.close()
 
     if debug:
         print(newOffsets)
 
 if __name__ == '__main__':
-
     # Parse arguments here, then run main so that this can be called from another parent script.
     parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
+    parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     

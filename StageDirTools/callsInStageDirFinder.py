@@ -56,8 +56,6 @@ def writeCall(offset):
         writeString += f'{callHex},{callInt},\n'                                            # offset (hex, int) of call in Radio.dat
         output.write(writeString)
 
-
-
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
 def getCallOffsets():
     global filesize
@@ -143,4 +141,3 @@ def init(filename: str):
     getCallOffsets()
 
     print('Finished checking for calls in STAGE.DIR! Ready to proceed.')
-    print(f'StageDirCallFinder is Ready!')
