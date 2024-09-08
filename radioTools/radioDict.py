@@ -1,7 +1,8 @@
 #!/bin/python
 
 import os, struct
-import radioTools.characters as characters
+import characters as characters
+# import radioTools.characters as characters
 
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
@@ -175,6 +176,59 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 		
 	return messageString
 
+def encodeJapaneseHex(dialogue: str, callDict: str ) -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
+	"""
+	WORK IN PROGRESS! Re-encodes japanese characters. 
+	"""
+	newBytestring = b''
+	# customCharacter = False
+	for character in dialogue:
+		if ord(character) < 128:
+			newBytestring += character.encode('ascii')
+		elif character in characters.revSpanish:
+			newBytestring += bytes.fromhex(characters.revSpanish.get(character))
+		elif character in characters.revRadio:
+			newBytestring += b'\x80' + bytes.fromhex(characters.revRadio.get(character))
+		elif character in characters.revHiragana:
+			newBytestring += b'\x81' + bytes.fromhex(characters.revHiragana.get(character))
+		elif character in characters.revKatakana:
+			newBytestring += b'\x82' + bytes.fromhex(characters.revKatakana.get(character))
+		elif character in characters.revPunct:
+			newBytestring += b'\xd0' + bytes.fromhex(characters.revPunct.get(character))
+		elif character in characters.revKanji:
+			newBytestring += bytes.fromhex(characters.revKanji.get(character))
+		elif character in characters.revCustomChar:
+			# This means we add it to the custom dict. 
+			customHex = characters.revCustomChar.get(character)
+			if customHex in callDict:
+				index = int(callDict.find(customHex) / 72)
+				if index > 508:
+					index -= 508
+					newBytestring += b'\x98'
+				elif index > 254:
+					index -= 254
+					newBytestring += b'\x97'
+				else:
+					newBytestring += b'\x96'
+				newBytestring += bytes(index)
+			else:
+				print(f'Character {character} was not found in custom call dict. Adding...')
+				index = int(len(callDict) / 72)
+				if index > 508:
+					index -= 508
+					newBytestring += b'\x98'
+				elif index > 254:
+					index -= 254
+					newBytestring += b'\x97'
+				else:
+					newBytestring += b'\x96'
+				callDict += customHex
+			newBytestring += bytes(index)
+	
+	return newBytestring, callDict
+
+
+
 """
 This only used for working with the graphics data found in jpn-d1, it was combined with the bash script to ocr the characters
 """
@@ -194,23 +248,27 @@ def debugExportUniqueGFX():
 """
 TESTING AREA! Anything below this is meant for testing functionality or debug. 
 
+This is testing for recompiling byte data. 
 """
+import xml.etree.ElementTree as ET
+from xml.dom.minidom import parseString
+import time
 
+radioXMLFile = 'recompiledCallBins/RADIO-usa-d1.xml'
+root = ET.parse(radioXMLFile)	
 
-"""if __name__ == '__main__':
-	# Use this to test all characters in a radio call
-	test = open('26213.bin', 'rb')
-	testbytes = test.read()
-	testingDict = makeCallDictionary(testbytes)
-	outputManyGraphics("test", testbytes)
-
-	for x in range(len(testingDict) + 1):
-		print(f'{x} = {testingDict.get(x)}', end=" ")"""
-"""
-data = open('unknownGraphics.txt', 'r')
-i = 1
-for line in data.readlines():
-	line = line.strip()
-	outputGraphic(f'unkownChar-{i}', bytes.fromhex(line))
-	i += 1
-"""
+for call in root.getroot():
+	print(call)
+	graphicData = call.get("graphicsBytes")
+	for subs in call.findall('.//SUBTITLE'):
+		print(subs)
+		newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
+		if str(newBytes) != subs.get("text"):
+			print(str(newBytes))
+			print(f'Original: {subs.get("text")}')
+			print(newBytes.hex())
+			time.sleep(1)
+		if newDict == graphicData:
+			print(f'Call dicts match!')
+		else:
+			print(f'Call Dicts don\'t match!')
