@@ -24,9 +24,11 @@ import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
 
+# Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
 
 newOffsets = {}
+stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
 
 # ==== DEFS ==== #
 
@@ -34,11 +36,11 @@ newOffsets = {}
 def realignOffsets():
     print(f'Offset integrity reviewed and done')
 
-def createBinary():
-    print(f'Binary data created')
-
-def outputFile():
-    print(f'File has been saved!')
+def createBinary(filename: str, binaryData: bytes):
+    with open(filename, 'wb') as f:
+        f.write(binaryData)
+        f.close
+    print(f'Binary data created: {filename}, size: {len(binaryData)}!')
 
 # ==== Byte Encoding Defs ==== #
 
@@ -197,6 +199,27 @@ def handleElement(elem: ET.Element) -> bytes:
     
     return binary
 
+def fixStageDirOffsets():
+    """
+    Takes the finalized offset dict and uses the new values to overwrite values in stage.dir. 
+    Make sure you've backed up the original stage.dir file!
+    """
+    print(f'Do stuff!')
+    global stageDirFilename 
+    stageDir = open(stageDirFilename, 'rb')
+    stageBytes = bytearray(stageDir.read())
+
+    for origCall in newOffsets.keys():
+        # We can move forward if there's a match. Might skip the initial few.
+        if newOffsets.get(origCall) == origCall:
+            continue
+        
+
+
+
+
+
+
 def main(args=None):
     global subUseOriginalHex 
     
@@ -219,7 +242,7 @@ def main(args=None):
     outputContent = b''
     for call in root:
         newCallOffset = len(outputContent)
-        newOffsets.update({call.attrib.get("offset"): newCallOffset})
+        newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
 
         attrs = call.attrib
         outputContent += bytes.fromhex(attrs.get("content"))
@@ -244,5 +267,5 @@ if __name__ == '__main__':
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
-
+    
     main()
