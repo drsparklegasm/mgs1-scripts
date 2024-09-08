@@ -31,7 +31,7 @@ import StageDirTools.callsInStageDirFinder as stageTools
 subUseOriginalHex = False
 
 newOffsets = {}
-stageDirFilename = 'radioDatFiles/STAGE-usa-d1.DIR'
+stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
 
 # ==== DEFS ==== #
 
@@ -215,7 +215,8 @@ def fixStageDirOffsets():
         stageOffset = int(stageTools.offsetDict.get(key)[0])
         newOffset = newOffsets.get(stageOffset)
         if newOffset == stageOffset:
-            print(f'{newOffset} = {stageOffset}')
+            if debug:
+                print(f'{newOffset} = {stageOffset}')
             continue
         elif newOffset == None:
             print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
@@ -276,7 +277,8 @@ def main(args=None):
     stageOut.write(stageBytes)
     stageOut.close()
 
-    print(newOffsets)
+    if debug:
+        print(newOffsets)
 
 if __name__ == '__main__':
 

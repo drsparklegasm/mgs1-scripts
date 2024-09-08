@@ -27,6 +27,8 @@ freqList = [
 offsetDict: dict[int, tuple[int, str]] = {}
 filesize = 0
 stageData = b''
+debug = False
+outputFileToggle = False
 
 def checkFreq(offset):
     global stageData
@@ -39,23 +41,22 @@ def checkFreq(offset):
 def writeCall(offset):
     global stageData
     global freqList
-    global output
-
-    writeString = f'{offset},'                                                              # Offset
-    writeString += stageData[offset: offset + 4].hex() + ","                                # Frequency bytes
-    writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + ","     # Frequency 
-    callHex = str(stageData[offset + 4: offset + 8].hex()) + ","                            # offset (hex) of call in Radio.dat
-    callInt = str(struct.unpack('>I', b'\x00' + stageData[offset + 5: offset + 8])[0])      # offset (int) of call in Radio.dat
-    writeString += f'{callHex},{callInt},'
-    writeString += "\n" # line break
-
+    global outputFileToggle
+    
+    callHex = stageData[offset + 4: offset + 8].hex()
+    callInt = str(struct.unpack('>L', b'\x00' + stageData[offset + 5: offset + 8])[0])
     offsetDict.update({offset: (callInt, callHex)})
 
-    output.write(writeString)
+    # Write to output file:    
+    if outputFileToggle:
+        
+        writeString = f'{offset},'                                                          # Offset in stage.dir
+        writeString += stageData[offset: offset + 4].hex() + ","                            # Offset of the frequency as it appears in hex
+        writeString += str(struct.unpack('>h', stageData[offset + 1: offset + 3])[0]) + "," # Call Frequency     
+        writeString += f'{callHex},{callInt},\n'                                            # offset (hex, int) of call in Radio.dat
+        output.write(writeString)
 
-def replaceCallOffset(offset, radioOffset):
-    print('This function not yet implemented!')
-    # Yeah, what he said!
+
 
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
 def getCallOffsets():
@@ -81,24 +82,7 @@ def getCallOffsets():
 def main(args=None):
     global stageData
     global filesize 
-
-    if args is None:
-        args = parser.parse_args()
-
-    # Args parsed
-    filename: str = args.filename
-
-    stageName = filename.split('/')[-2]
-    stageFile = filename.split('/')[-1].split(".")[0]
-    print(f'{stageName}/{stageFile}')
-    
-    if args.output:
-        outputFile = args.output
-    else:
-        outputFile = f'stageAnalysis-jpn/{stageName}-{stageFile}.csv'
-    
-    stageDir = open(filename, 'rb')
-    output = open(outputFile, 'w')
+    global outputFileToggle
 
     stageData = stageDir.read() # The byte stream is better to use than the file on disk if you can. 
     filesize = len(stageData)
@@ -122,18 +106,38 @@ if __name__ == "__main__":
     # REQUIRED
     parser.add_argument('filename', type=str, help="The GCX file to Search. Can be RADIO.DAT or a portion of it.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.txt)")
+
+    args = parser.parse_args()
+
+    # Args parsed
+    filename: str = args.filename
+
+    stageName = filename.split('/')[-2]
+    stageFile = filename.split('/')[-1].split(".")[0]
+
+    print(f'{stageName}/{stageFile}')
+
+    if args.output:
+        outputFile = args.output
+        outputFileToggle = True
+    else:
+        outputFile = f'stageAnalysis-jpn/{stageName}-{stageFile}.csv'
+    
+    stageDir = open(filename, 'rb')
+    output = open(outputFile, 'w')
     
     main()
 
 def init(filename: str):
     global filesize
     global stageData
-    global output
     
     stageDir = open(filename, 'rb')
     stageData = stageDir.read()
     filesize = len(stageData)
-    output = open('outputFile.txt', 'w')
+
+    if debug:
+        print(offsetDict)
 
     print(f'Getting STAGE.DIR call offsets... please be patient!')
     getCallOffsets()
