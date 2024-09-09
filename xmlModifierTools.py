@@ -56,7 +56,7 @@ def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE elemen
     # Subtitles need 11 added. Header is something like this:
     # (FF01) (Length 2 bytes) (95f2) (39c3) (0000) (Text) (0x00), total added = 11 bytes
     """
-    newDialogue = subtitleElement.attrib.get('text')
+    newDialogue = subtitleElement.get('text')
     lengthElement = int(subtitleElement.attrib.get('length'))
     oldTextLength = lengthElement - 11
     # oldTextLength = int(len(subtitleElement.attrib.get('textHex')) / 2 - 1) # taking the hex and dividing by 2 and removing the trailing \x00
@@ -65,12 +65,12 @@ def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE elemen
         print(f'Lengths are {len(newDialogue)} [new] and {oldTextLength} [old], {lengthElement} [Element]')
     
     lengthChange = len(newDialogue) - oldTextLength 
-    commandLength = int(subtitleElement.attrib.get('length'))
+    commandLength = int(subtitleElement.get('length'))
     newLength = commandLength + lengthChange
     if debug:
         print(f'Previous command length: {commandLength}, new length will be {newLength}')
     if lengthChange != 0:
-        subtitleElement.attrib.update({"length": str(newLength)})
+        subtitleElement.set("length", str(newLength))
     #else:
     #    print(f'No change needed! {lengthChange}')
 
@@ -78,13 +78,12 @@ def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE elemen
 
     # STILL NEED TO UPDATE LENGTHS ABOVE! Need a separate one for that. We will - newlength from existing each time. 
 
-def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
+def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
     """
     Updates the length of the parent of the subtitle.
     Each case is changing the content block and length as appropriate.
 
     """
-    parents = getParentTree(subElement)
     for parent in parents:
         
         if parent.tag != 'RadioData':
@@ -257,29 +256,14 @@ def printRadioXMLStats():
             f.close()
 
 def processSubtitle(call: ET.Element):
-    global root
-    def getParentTreeThreaded(target: ET.Element, root: ET.Element) -> list:
-        """
-        Credit goes to chatGPT, we need to iterate through and get each parent along the way.
-        """
-        
-        path = []
-        for parent in root.iter():
-            for element in parent:
-                if element == target:
-                    path.append(parent)
-                    path.extend(getParentTreeThreaded(parent, root))
-                    break
-
-        return path
-
+    # Inefficient. We need to speed this up. 
     for subtitle in call.findall(f".//SUBTITLE"):
         # Get all parent elements:
         # parents = getParentTreeThreaded(subtitle, root)
         parents = getParentTree(subtitle)
         print(f'Offset: {subtitle.get('offset')}')
         # Re-encode two-byte characters
-        callDict: str = parents[-2].get('graphicsBytes')
+        callDict: str = parents[-1].get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
 
         subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
@@ -293,7 +277,50 @@ def processSubtitle(call: ET.Element):
         lengthChange = updateLengths(subtitle)
         
         # print(parents)
-        updateParentLength(subtitle, lengthChange)
+        updateParentLength(parents, lengthChange)
+    # Comment out the return if needed for the first option. 
+    return call
+
+def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
+    """
+    Returns the call after processing for re-integration. 
+    """
+    def getParentTreeThreaded(target: ET.Element, root: ET.Element) -> list:
+        """
+        Credit goes to chatGPT, we need to iterate through and get each parent along the way.
+        """
+        
+        path = []
+        for parent in root.iter():
+            for element in parent:
+                if element == target:
+                    path.append(parent)
+                    path.extend(getParentTreeThreaded(parent, call))
+                    break
+
+        return path
+
+    for subtitle in call.findall(f".//SUBTITLE"):
+        # Get all parent elements:
+        # parents = getParentTreeThreaded(subtitle, root)
+        parents = getParentTreeThreaded(subtitle, call)
+        print(f'\rOffset: {subtitle.get('offset')}', end="")
+        # Re-encode two-byte characters
+        callDict: str = parents[-1].get('graphicsBytes')
+        newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
+
+        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        if newDict != "":
+            # print(f'Dict is not Null! {newDict}')
+            if newDict != callDict:
+                subtitle.set('graphicsBytes', newDict)
+                print(f'Added Dict to call')
+
+        # Update the lengths for this subtitle
+        lengthChange = updateLengths(subtitle)
+        
+        # print(parents)
+        updateParentLength(parents, lengthChange)
     # Comment out the return if needed for the first option. 
     return call
 
@@ -329,17 +356,17 @@ if __name__ == "__main__":
         futures = [executor.submit(processSubtitle, elem) for elem in root]
         """
     
-    """
+    
     # Pooling mya not work because each element would have to be replaced with the element we process :|
-    with Pool(processes=4) as pool:
+    """with Pool(processes=4) as pool:
         # Use map to process elements in parallel
         listOfCalls = [(call, root) for call in root]
         
-        modifiedCalls = pool.starmap(processSubtitle, listOfCalls)
+        modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
 
         for i, call in enumerate(modifiedCalls):
-            root[i] = call
-    """
+            root[i] = call"""
+
 
 
 
