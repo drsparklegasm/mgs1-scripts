@@ -181,6 +181,19 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 	WORK IN PROGRESS! Re-encodes japanese characters. 
 	"""
 	newBytestring = b''
+	def addCharToDict(customHex: str):
+		print(f'Character {character} was not found in custom call dict. Adding...')
+		index = int(len(callDict) / 72)
+		if index > 508:
+			index -= 508
+			newBytestring += b'\x98'
+		elif index > 254:
+			index -= 254
+			newBytestring += b'\x97'
+		else:
+			newBytestring += b'\x96'
+		callDict += customHex
+	
 	# customCharacter = False
 	for character in dialogue:
 		if ord(character) < 128:
@@ -200,7 +213,15 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 		elif character in characters.revCustomChar:
 			# This means we add it to the custom dict. 
 			customHex = characters.revCustomChar.get(character)
-			if customHex in callDict:
+			if customHex == None:
+				print(f'ERROR! Unable to encode character {character}! We found no match in logic.')
+				continue
+			if callDict == None:
+				# addCharToDict(customHex)
+				print(f'Character {character} was not found in custom call dict. Adding...')
+				newBytestring += bytes.fromhex('9601')
+				callDict = customHex
+			elif customHex in callDict:
 				index = int(callDict.find(customHex) / 72)
 				if index > 508:
 					index -= 508
@@ -212,6 +233,7 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 					newBytestring += b'\x96'
 				newBytestring += bytes(index)
 			else:
+				# addCharToDict(customHex)
 				print(f'Character {character} was not found in custom call dict. Adding...')
 				index = int(len(callDict) / 72)
 				if index > 508:
@@ -223,7 +245,7 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 				else:
 					newBytestring += b'\x96'
 				callDict += customHex
-			newBytestring += bytes(index)
+				newBytestring += index.to_bytes()
 	
 	return newBytestring, callDict
 
