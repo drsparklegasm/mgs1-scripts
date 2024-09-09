@@ -247,8 +247,6 @@ def main(args=None):
     if args.hex:
         subUseOriginalHex = True
 
-    
-
     root = radioSource.getroot()
 
     outputContent = b''
