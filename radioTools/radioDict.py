@@ -268,7 +268,6 @@ if __name__ == "__main__":
 				print(f'Original: {subs.get("text")}')
 				print(newBytes.hex())
 				time.sleep(3)
-				Exception
 			if newDict == graphicData:
 				time.sleep(0)
 			else:

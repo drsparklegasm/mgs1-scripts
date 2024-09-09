@@ -17,6 +17,12 @@ import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from radioTools import radioDict as RD
 import jsonTools
+
+# Threading Tests
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
+
+
 """import progressbar
 
 bar = progressbar.ProgressBar()"""
@@ -250,6 +256,47 @@ def printRadioXMLStats():
                 f.write(f'{offset},0x{offsetHex},{float(freq):.2f},{subs}\n')
             f.close()
 
+def processSubtitle(call: ET.Element):
+    global root
+    def getParentTreeThreaded(target: ET.Element, root: ET.Element) -> list:
+        """
+        Credit goes to chatGPT, we need to iterate through and get each parent along the way.
+        """
+        
+        path = []
+        for parent in root.iter():
+            for element in parent:
+                if element == target:
+                    path.append(parent)
+                    path.extend(getParentTreeThreaded(parent, root))
+                    break
+
+        return path
+
+    for subtitle in call.findall(f".//SUBTITLE"):
+        # Get all parent elements:
+        # parents = getParentTreeThreaded(subtitle, root)
+        parents = getParentTree(subtitle)
+        print(f'Offset: {subtitle.get('offset')}')
+        # Re-encode two-byte characters
+        callDict: str = parents[-2].get('graphicsBytes')
+        newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
+
+        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        if newDict != "":
+            # print(f'Dict is not Null! {newDict}')
+            if newDict != callDict:
+                subtitle.set('graphicsBytes', newDict)
+                print(f'Added Dict to call')
+
+        # Update the lengths for this subtitle
+        lengthChange = updateLengths(subtitle)
+        
+        # print(parents)
+        updateParentLength(subtitle, lengthChange)
+    # Comment out the return if needed for the first option. 
+    return call
+
 if __name__ == "__main__":
     # All of this is to test replacing the 140.85 call
     """
@@ -274,32 +321,36 @@ if __name__ == "__main__":
     # For now we'll leave these as static for testing
     xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
     xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"
-    root = ET.parse(xmlInputFile)
+    root = ET.parse(xmlInputFile).getroot()
 
-
-    # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
-
-    for subtitle in root.findall(f".//SUBTITLE"):
-        # Get all parent elements:
-        parents = getParentTree(subtitle)
-        print(f'Offset: {subtitle.get('offset')}')
-        # Re-encode two-byte characters
-        callDict: str = parents[-2].get('graphicsBytes')
-        newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
-
-        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
-        if newDict != "":
-            # print(f'Dict is not Null! {newDict}')
-            if newDict != callDict:
-                subtitle.set('graphicsBytes', newDict)
-                print(f'Added Dict to call')
-
-        # Update the lengths for this subtitle
-        lengthChange = updateLengths(subtitle)
+    """ # Multithreading Test A
+    with ThreadPoolExecutor(max_workers=4) as executor:
+    # Submit tasks to the thread pool
+        futures = [executor.submit(processSubtitle, elem) for elem in root]
+        """
+    
+    """
+    # Pooling mya not work because each element would have to be replaced with the element we process :|
+    with Pool(processes=4) as pool:
+        # Use map to process elements in parallel
+        listOfCalls = [(call, root) for call in root]
         
-        # print(parents)
-        updateParentLength(subtitle, lengthChange)
+        modifiedCalls = pool.starmap(processSubtitle, listOfCalls)
 
+        for i, call in enumerate(modifiedCalls):
+            root[i] = call
+    """
+
+
+
+
+    """
+    # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
+    """
+    
+    for call in root:
+        processSubtitle(call)
+    
 
     outputXml = open(xmlOutputFile, 'w')
     xmlstr = ET.tostring(root.getroot(), encoding="unicode")
