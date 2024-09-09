@@ -86,9 +86,8 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
     """
     for parent in parents:
         
-        if parent.tag != 'RadioData':
-            origLength = int(parent.attrib.get('length')) # length in bytes total
-            origContent = parent.attrib.get('content') # 22 bytes
+        origLength = int(parent.get('length')) # length in bytes total
+        origContent = parent.get('content') # 22 bytes
 
         if debug:
             print(f'\nEvaluating {parent.tag}...')
@@ -117,14 +116,14 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 parent.set('content', newContent)
 
             case "IF_CHECK":
-                # Header is variable. We just need to get the he
+                # Header is variable. We just need to get the hex
                 headerTextLength = len(origContent)
                 origLengthB = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
 
                 newLength = origLength + lengthChange
                 newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
                 newHexLengthB = struct.pack('>H', origLengthB + lengthChange).hex() # end of line
-                newContent = origContent[0:2] + newHexLengthA + origContent[ 4 : headerTextLength - 4 ] + newHexLengthB
+                newContent = origContent[0:4] + newHexLengthA + origContent[ 8 : headerTextLength - 4 ] + newHexLengthB
 
                 parent.set('length', str(newLength))
                 parent.set('content', newContent)
@@ -257,11 +256,16 @@ def printRadioXMLStats():
 
 def processSubtitle(call: ET.Element):
     # Inefficient. We need to speed this up. 
+    count = 0
+    numSubtitles = len(call.findall('.//SUBTITLE'))
+    print(f'Call offset: {call.get('offset')}, Compiling {len(call.findall('.//SUBTITLE'))} subtitles...')
+
     for subtitle in call.findall(f".//SUBTITLE"):
+        count += 1
         # Get all parent elements:
         # parents = getParentTreeThreaded(subtitle, root)
         parents = getParentTree(subtitle)
-        print(f'Offset: {subtitle.get('offset')}')
+        print(f'\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ', end="")
         # Re-encode two-byte characters
         callDict: str = parents[-1].get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
@@ -299,12 +303,16 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
                     break
 
         return path
+    count = 0
+    numSubtitles = len(call.findall('.//SUBTITLE'))
+    print(f'\nCompiling {len(call.findall('.//SUBTITLE'))} subtitles...')
 
     for subtitle in call.findall(f".//SUBTITLE"):
+        count += 1
         # Get all parent elements:
         # parents = getParentTreeThreaded(subtitle, root)
         parents = getParentTreeThreaded(subtitle, call)
-        print(f'\rOffset: {subtitle.get('offset')}', end="")
+        print(f'\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ', end="")
         # Re-encode two-byte characters
         callDict: str = parents[-1].get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
@@ -349,34 +357,35 @@ if __name__ == "__main__":
     xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
     xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"
     root = ET.parse(xmlInputFile).getroot()
+    multithreading = False
 
-    """ # Multithreading Test A
-    with ThreadPoolExecutor(max_workers=4) as executor:
-    # Submit tasks to the thread pool
-        futures = [executor.submit(processSubtitle, elem) for elem in root]
-        """
-    
-    
-    # Pooling mya not work because each element would have to be replaced with the element we process :|
-    """with Pool(processes=4) as pool:
-        # Use map to process elements in parallel
-        listOfCalls = [(call, root) for call in root]
+    if multithreading:
+        """# Multithreading Test A
+        with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit tasks to the thread pool
+            futures = [executor.submit(processSubtitle, elem) for elem in root]
+            """
         
-        modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
+        # Multithreading test B
+        # Pooling mya not work because each element would have to be replaced with the element we process :|
+        with Pool(processes=4) as pool:
+            # Use map to process elements in parallel
+            listOfCalls = [(call, root) for call in root]
+            
+            modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
 
-        for i, call in enumerate(modifiedCalls):
-            root[i] = call"""
-
-
-
-
-
-    """
-    # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
-    """
-    
-    for call in root:
-        processSubtitle(call)
+            for i, call in enumerate(modifiedCalls):
+                root[i] = call
+    else:
+        """
+        # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
+        """
+        count = 0
+        numCalls = len(root.findall('Call'))
+        for call in root:
+            count += 1
+            print(f'\nProcessing call {count} of {numCalls}')
+            processSubtitle(call)
     
 
     outputXml = open(xmlOutputFile, 'w')
