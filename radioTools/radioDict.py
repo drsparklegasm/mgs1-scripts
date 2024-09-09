@@ -1,8 +1,8 @@
 #!/bin/python
 
 import os, struct
-import characters as characters
-# import radioTools.characters as characters
+# import characters as characters
+import radioTools.characters as characters
 
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
@@ -176,7 +176,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 		
 	return messageString
 
-def encodeJapaneseHex(dialogue: str, callDict: str ) -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
+def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
 	"""
 	WORK IN PROGRESS! Re-encodes japanese characters. 
 	"""
@@ -250,25 +250,26 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 
 This is testing for recompiling byte data. 
 """
-import xml.etree.ElementTree as ET
-from xml.dom.minidom import parseString
-import time
+if __name__ == "__main__":
+	import xml.etree.ElementTree as ET
+	from xml.dom.minidom import parseString
+	import time
 
-radioXMLFile = 'recompiledCallBins/RADIO-goblin.xml'
-root = ET.parse(radioXMLFile)	
+	radioXMLFile = 'recompiledCallBins/RADIO-goblin.xml'
+	root = ET.parse(radioXMLFile)
 
-for call in root.getroot():
-	print(call.get('offset'))
-	graphicData = call.get("graphicsBytes")
-	for subs in call.findall('.//SUBTITLE'):
-		newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
-		if newBytes.decode('utf8', errors='backslashreplace') != subs.get("text"):
-			print(str(newBytes))
-			print(f'Original: {subs.get("text")}')
-			print(newBytes.hex())
-			time.sleep(3)
-			Exception
-		if newDict == graphicData:
-			time.sleep(0)
-		else:
-			print(f'Call Dicts don\'t match!')
+	for call in root.getroot():
+		print(call.get('offset'))
+		graphicData = call.get("graphicsBytes")
+		for subs in call.findall('.//SUBTITLE'):
+			newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
+			if newBytes.decode('utf8', errors='backslashreplace') != subs.get("text"):
+				print(str(newBytes))
+				print(f'Original: {subs.get("text")}')
+				print(newBytes.hex())
+				time.sleep(3)
+				Exception
+			if newDict == graphicData:
+				time.sleep(0)
+			else:
+				print(f'Call Dicts don\'t match!')

@@ -15,11 +15,13 @@ import argparse
 import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
+from radioTools import radioDict as RD
 import jsonTools
+"""import progressbar
 
-# For now we'll leave these as static for testing
-xmlInputFile = "14085-testing/59333-decrypted.xml"
-xmlOutputFile = "14085-testing/285449-new.xml"
+bar = progressbar.ProgressBar()"""
+
+
 
 """
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
@@ -30,10 +32,9 @@ usaSubs = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
 jpnSubs = "extractedCallBins/jpn-d1/0-decrypted-Iseeva.json"
 
 # flags
-debug = True
+debug = False
 
 # Open the XML tree and the json data
-root = ET.parse(xmlInputFile)
 newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
 
 def loadNewSubs(callOffset: str) -> dict:
@@ -43,7 +44,7 @@ def loadNewSubs(callOffset: str) -> dict:
     global newSubsData
     return newSubsData[callOffset]
 
-def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENTED!
+def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE element!
     """
     Fixes the length of the subtitle element after length was adjusted.
     # Subtitles need 11 added. Header is something like this:
@@ -64,8 +65,8 @@ def updateLengths(subtitleElement: ET.Element, length: int): # NOT YET IMPLEMENT
         print(f'Previous command length: {commandLength}, new length will be {newLength}')
     if lengthChange != 0:
         subtitleElement.attrib.update({"length": str(newLength)})
-    else:
-        print(f'No change needed! {lengthChange}')
+    #else:
+    #    print(f'No change needed! {lengthChange}')
 
     return lengthChange
 
@@ -184,8 +185,8 @@ def updateParentLength(subElement: ET.Element, lengthChange: int) -> None:
         
         if debug:
             print(f'Old length: {origLength}, New length: {newLength}, change is {lengthChange}')
-            print(f"Old Content: {origContent}")
-            print(f"New Content: {newContent}")
+            # print(f"Old Content: {origContent}")
+            # print(f"New Content: {newContent}")
 
     return
 
@@ -249,37 +250,58 @@ def printRadioXMLStats():
                 f.write(f'{offset},0x{offsetHex},{float(freq):.2f},{subs}\n')
             f.close()
 
+if __name__ == "__main__":
+    # All of this is to test replacing the 140.85 call
+    """
+    usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
+    jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
 
-# All of this is to test replacing the 140.85 call
-"""
-usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
-jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
+    jsonA = json.load(open(usaSubs, 'r'))
+    jsonB = json.load(open(jpnSubs, 'r'))
 
-jsonA = json.load(open(usaSubs, 'r'))
-jsonB = json.load(open(jpnSubs, 'r'))
+    jsonTools.replaceJsonText("0", "0")
+    text = json.dumps(jsonB)
 
-jsonTools.replaceJsonText("0", "0")
-text = json.dumps(jsonB)
+    if debug:
+        print(text)
 
-if debug:
-    print(text)
+    with open("14085-testing/modifiedCall.json", 'w') as f:
+        f.write(text)
+        f.close()
+        
+    """
 
-with open("14085-testing/modifiedCall.json", 'w') as f:
-    f.write(text)
-    f.close()
-    
-"""
-
-insertSubs('14085-testing/modifiedCall.json', '0') # 285449
-
-for subtitle in root.findall(f".//SUBTITLE"):
-    lengthChange = updateLengths(subtitle, 0)
-    parents = getParentTree(subtitle)
-    print(parents)
-    updateParentLength(subtitle, lengthChange)
+    # For now we'll leave these as static for testing
+    xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
+    xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"
+    root = ET.parse(xmlInputFile)
 
 
-outputXml = open(xmlOutputFile, 'w')
-xmlstr = ET.tostring(root.getroot(), encoding="unicode")
-outputXml.write(f'{xmlstr}')
-outputXml.close()
+    # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
+
+    for subtitle in root.findall(f".//SUBTITLE"):
+        # Get all parent elements:
+        parents = getParentTree(subtitle)
+        print(f'Offset: {subtitle.get('offset')}')
+        # Re-encode two-byte characters
+        callDict: str = parents[-2].get('graphicsBytes')
+        newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
+
+        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        if newDict != "":
+            # print(f'Dict is not Null! {newDict}')
+            if newDict != callDict:
+                subtitle.set('graphicsBytes', newDict)
+                print(f'Added Dict to call')
+
+        # Update the lengths for this subtitle
+        lengthChange = updateLengths(subtitle)
+        
+        # print(parents)
+        updateParentLength(subtitle, lengthChange)
+
+
+    outputXml = open(xmlOutputFile, 'w')
+    xmlstr = ET.tostring(root.getroot(), encoding="unicode")
+    outputXml.write(f'{xmlstr}')
+    outputXml.close()
