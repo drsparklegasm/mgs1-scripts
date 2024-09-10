@@ -370,7 +370,7 @@ if __name__ == "__main__":
         
         # Multithreading test B
         # Pooling mya not work because each element would have to be replaced with the element we process :|
-        with Pool(processes=4) as pool:
+        with Pool(processes=8) as pool:
             # Use map to process elements in parallel
             listOfCalls = [(call, root) for call in root]
             
