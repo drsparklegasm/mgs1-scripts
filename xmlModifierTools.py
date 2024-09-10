@@ -23,6 +23,11 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 
 
+debug = False
+multithreading = True
+
+
+
 """import progressbar
 
 bar = progressbar.ProgressBar()"""
@@ -334,64 +339,106 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
     # Comment out the return if needed for the first option. 
     return call
 
-if __name__ == "__main__":
-    # All of this is to test replacing the 140.85 call
-    """
-    usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
-    jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
+def main(args=None):
+    global multithreading
+    global debug
 
-    jsonA = json.load(open(usaSubs, 'r'))
-    jsonB = json.load(open(jpnSubs, 'r'))
+    if args == None:
+        args = parser.parse_args()
 
-    jsonTools.replaceJsonText("0", "0")
-    text = json.dumps(jsonB)
-
-    if debug:
-        print(text)
-
-    with open("14085-testing/modifiedCall.json", 'w') as f:
-        f.write(text)
-        f.close()
+    # Flags:
+    if args.debug:
+        debug = True
+        multithreading = False
+    
+    if not args.input:
+        args.operation = 'help'
+    
+    
+    match args.operation:
+    
+        case "help" | "Help" | "HELP" | "hELP" | "H":
+            print(f"Usage: xmlOps.py <operation> [input] [output] : \n\tinject = import json [input] with subtitles and inject them into an XML [output]\n\tprepare = Encode custom characters, recalculate lengths, prepare the file for. [XML Radio file is input, output is a new file]")
+            exit(0)
         
-    """
-
-    # For now we'll leave these as static for testing
-    xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
-    xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"
-    root = ET.parse(xmlInputFile).getroot()
-    multithreading = True
-
-    if multithreading:
-        """# Multithreading Test A
-        with ThreadPoolExecutor(max_workers=4) as executor:
-        # Submit tasks to the thread pool
-            futures = [executor.submit(processSubtitle, elem) for elem in root]
+        case "inject":
+            print(f'Unfinished!')
+        
+        
+            # All of this is to test replacing the 140.85 call
             """
-        
-        # Multithreading test B
-        # Pooling mya not work because each element would have to be replaced with the element we process :|
-        with Pool(processes=8) as pool:
-            # Use map to process elements in parallel
-            listOfCalls = [(call, root) for call in root]
-            
-            modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
+            usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
+            jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
 
-            for i, call in enumerate(modifiedCalls):
-                root[i] = call
-    else:
-        """
-        # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
-        """
-        # processSubtitle(root[7])
-        count = 0
-        numCalls = len(root.findall('Call'))
-        for call in root:
-            count += 1
-            print(f'\nProcessing call {count} of {numCalls}')
-            processSubtitle(call)
+            jsonA = json.load(open(usaSubs, 'r'))
+            jsonB = json.load(open(jpnSubs, 'r'))
+
+            jsonTools.replaceJsonText("0", "0")
+            text = json.dumps(jsonB)
+
+            if debug:
+                print(text)
+
+            with open("14085-testing/modifiedCall.json", 'w') as f:
+                f.write(text)
+                f.close()
+                
+            """
+
+        case 'prepare':
+
+            xmlInputFile = args.input
+            xmlOutputFile = args.output
+
+            """# For now we'll leave these as static for testing
+            xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
+            xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"""
+
+            root = ET.parse(xmlInputFile).getroot()
+            
+
+            if multithreading:
+                """# Multithreading Test A
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                # Submit tasks to the thread pool
+                    futures = [executor.submit(processSubtitle, elem) for elem in root]
+                    """
+                
+                # Multithreading test B
+                # Pooling mya not work because each element would have to be replaced with the element we process :|
+                with Pool(processes=8) as pool:
+                    # Use map to process elements in parallel
+                    listOfCalls = [(call, root) for call in root]
+                    modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
+                    for i, call in enumerate(modifiedCalls):
+                        root[i] = call # This replaces the work done into the original root object. 
+            else:
+                # processSubtitle(root[7])
+                count = 0
+                numCalls = len(root.findall('Call'))
+                for call in root:
+                    count += 1
+                    print(f'\nProcessing call {count} of {numCalls}')
+                    processSubtitle(call)
+            
+
+            outputXml = open(xmlOutputFile, 'w')
+            xmlstr = ET.tostring(root, encoding="unicode")
+            outputXml.write(f'{xmlstr}')
+            outputXml.close()
     
 
-    outputXml = open(xmlOutputFile, 'w')
-    xmlstr = ET.tostring(root, encoding="unicode")
-    outputXml.write(f'{xmlstr}')
-    outputXml.close()
+if __name__ == "__main__":
+    # Parse arguments here, then run main so that this can be called from another parent script.
+    parser = argparse.ArgumentParser(description=f'Bulk subtitle modifier for an extracted XML RADIO file. inject subtitles or calculate it for recompilation')
+    parser.add_argument('operation', type=str, help="Input XML to be recompiled. Ex: inject, prepare.")
+    parser.add_argument('input', nargs="?", type=str, help="inject: Input json | prepare: input XML file")
+    # This isn't elegant, we may want to just include the recompiler here. 
+    parser.add_argument('output', nargs="?", type=str, help="inject: Target XML file we are modifying | prepare: Output XML file to be re-compiled.")
+    # THIS IS HANDLED BY RECOMPILER ?
+    # parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
+    parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation. NOTE: Also disables multithreading! WILL BE SLOW!")
+
+    # Parse arguments
+
+    main()
