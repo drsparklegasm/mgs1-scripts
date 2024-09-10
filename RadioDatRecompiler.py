@@ -26,6 +26,7 @@ import os, struct
 import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
+import codecs
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
@@ -83,6 +84,7 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
     text = attrs.get("text").encode('utf-8')
+    textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
     text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
 
     if not subUseOriginalHex:

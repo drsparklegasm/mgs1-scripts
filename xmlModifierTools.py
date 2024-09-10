@@ -16,7 +16,7 @@ import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from radioTools import radioDict as RD
-import jsonTools
+# import jsonTools
 
 # Threading Tests
 from concurrent.futures import ThreadPoolExecutor
@@ -41,7 +41,7 @@ jpnSubs = "extractedCallBins/jpn-d1/0-decrypted-Iseeva.json"
 debug = False
 
 # Open the XML tree and the json data
-newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
+# newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -118,7 +118,7 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "IF_CHECK":
                 # Header is variable. We just need to get the hex
                 headerTextLength = len(origContent)
-                origLengthB = int(parent[0].get('length')) + 2 # Get this from THEN_DO element.
+                origLengthB = int(parent[0].get('length')) + 2 # Get this from THEN_DO
 
                 newLength = origLength + lengthChange
                 newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
@@ -127,8 +127,6 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
 
                 parent.set('length', str(newLength))
                 parent.set('content', newContent)
-                if lengthChange != 0:
-                    print(f'\nSanity check: original LengthB: {origContent[headerTextLength - 4: headerTextLength]}\nLength change is {lengthChange}\nNew LengthB {struct.pack('>H', origLengthB + lengthChange).hex()}\n')
 
             case "THEN_DO": # DONE
                 # No actual hex in here, we just need to modify the length for posterity
@@ -260,14 +258,14 @@ def processSubtitle(call: ET.Element):
     # Inefficient. We need to speed this up. 
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
-    print(f'Call offset: {call.get('offset')}, Compiling {len(call.findall('.//SUBTITLE'))} subtitles...')
+    print(f'Call offset: {call.get("offset")}, Compiling {len(call.findall(".//SUBTITLE"))} subtitles...')
 
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
         # Get all parent elements:
         # parents = getParentTreeThreaded(subtitle, root)
         parents = getParentTree(subtitle)
-        print(f'\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ', end="")
+        print(f"\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ", end="")
         # Re-encode two-byte characters
         callDict: str = parents[-1].get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
@@ -294,6 +292,7 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
     def getParentTreeThreaded(target: ET.Element, root: ET.Element) -> list:
         """
         Credit goes to chatGPT, we need to iterate through and get each parent along the way.
+        Modified to accept the call element as the root. Its not like we need the RadioData element.
         """
         
         path = []
@@ -305,25 +304,26 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
                     break
 
         return path
+    
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
-    print(f'\nCompiling {len(call.findall('.//SUBTITLE'))} subtitles...')
-
+    print(f"Call {call.get('offset')} - Compiling {numSubtitles} subtitles...")
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
         # Get all parent elements:
-        # parents = getParentTreeThreaded(subtitle, root)
         parents = getParentTreeThreaded(subtitle, call)
-        print(f'\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ', end="")
         # Re-encode two-byte characters
-        callDict: str = parents[-1].get('graphicsBytes')
+        callDict: str = call.get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
 
-        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        textString = repr(newText)
+        # subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        subtitle.set('text', textString)
+        subtitle.set('textEscaped', "True")
         if newDict != "":
             # print(f'Dict is not Null! {newDict}')
             if newDict != callDict:
-                subtitle.set('graphicsBytes', newDict)
+                call.set('graphicsBytes', newDict)
                 print(f'Added Dict to call')
 
         # Update the lengths for this subtitle
@@ -382,7 +382,7 @@ if __name__ == "__main__":
         """
         # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
         """
-        processSubtitle(root[7])
+        # processSubtitle(root[7])
         count = 0
         numCalls = len(root.findall('Call'))
         for call in root:

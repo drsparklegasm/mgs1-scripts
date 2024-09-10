@@ -1654,7 +1654,7 @@ graphicsData = {
 	"002c00bffffebaaaae692c091ffff87eaea4242c00bffffe6aaea9002c00002c00000000": "牢",
 	"6629b97f69b67ebfb9be6afe1e3eb00f29b42f29b87bbeec1bbacc2fbfca2dba89000000": "獄",
 	"0e9bfe2fe6eebae2ce3ff7ae3bb2683ff3b93bbbfe3ff63838bbfeb6b6b922e038000000": "解",
-	"bf8bd0bbaeb4b7b42dba7ff8ba2ba4b76ba8b3bffcb76394bbb7adb59b8db00b40000000": "隙",
+	# "bf8bd0bbaeb4b7b42dba7ff8ba2ba4b76ba8b3bffcb76394bbb7adb59b8db00b40000000": "隙", # 隙
 	"2c64e03ebbfca776edbeb3fe2dfaecbf3ae86e3bfcae7ae97eb6e96f7ee9baabfc000000": "鍵",
 	"3feffe2aeae91e8bfc0b8bacbffbfc6bbbac0bebfc0b8bac0b0bfc2b0aa92e0a59000000": "預",
 	"0ba7a97ffffe25ed741abaa42ffff86abaa9bffffe2aaae83ffffc079ac0014f80000000": "等",
@@ -1779,7 +1779,7 @@ graphicsData = {
 	"0e3ffe0e6aa93b9aa93b6ffeae2c0e0e2ffe0e2eae2f6c002eb80079b800202000000000": "炉",
 	"076eb46e2fe8ae2ea90e1ffd1aaaa42eaab82eaab82eaab82ffff86f82f93e41bc000000": "貸",
 	"2ffff82eaab82ffff82eaab82ffff81ab4900fe8e06aeae9bffffe1bc0e00e40e0000000": "昇",
-	"bf9ea4bbbeb8b757a0ba6ff9ba3aacb76ae8b3aee8b7aee9bbbffeb502c0b002c0000000": "隙",
+	# "bf9ea4bbbeb8b757a0ba6ff9ba3aacb76ae8b3aee8b7aee9bbbffeb502c0b002c0000000": "隙", # 隙
 	"00be006bebe92eaab80fffe00eaae00eaae00fffe02eaaa03baab0b3fff013aab0000000": "倉",
 	"2aaaa83ffffc00002c2fffac1aaa6c0aaa2c0fff2c0eab2c0fff2c0902ac0002f8000000": "司",
 	"00280000be0006d7906faaf92bffe81aaaa02ffff00038b00039b00038e0003800000000": "令",
