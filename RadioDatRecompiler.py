@@ -292,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
     parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
-    parser.add_argument('-S', '--spanish', nargs="?", type=str, help="Encode text with Spanish characters")
+    # parser.add_argument('-S', '--spanish', nargs="?", type=str, help="Encode text with Spanish characters")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     
