@@ -118,15 +118,17 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "IF_CHECK":
                 # Header is variable. We just need to get the hex
                 headerTextLength = len(origContent)
-                origLengthB = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
+                origLengthB = int(parent[0].get('length')) + 2 # Get this from THEN_DO element.
 
                 newLength = origLength + lengthChange
                 newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
-                newHexLengthB = struct.pack('>H', origLengthB + lengthChange).hex() # end of line
+                newHexLengthB = struct.pack('>H', origLengthB).hex() # end of line. We're assuming the THEN_DO element is already correct and stealing that length value. 
                 newContent = origContent[0:4] + newHexLengthA + origContent[ 8 : headerTextLength - 4 ] + newHexLengthB
 
                 parent.set('length', str(newLength))
                 parent.set('content', newContent)
+                if lengthChange != 0:
+                    print(f'\nSanity check: original LengthB: {origContent[headerTextLength - 4: headerTextLength]}\nLength change is {lengthChange}\nNew LengthB {struct.pack('>H', origLengthB + lengthChange).hex()}\n')
 
             case "THEN_DO": # DONE
                 # No actual hex in here, we just need to modify the length for posterity
@@ -357,7 +359,7 @@ if __name__ == "__main__":
     xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
     xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"
     root = ET.parse(xmlInputFile).getroot()
-    multithreading = False
+    multithreading = True
 
     if multithreading:
         """# Multithreading Test A
@@ -380,6 +382,7 @@ if __name__ == "__main__":
         """
         # insertSubs('14085-testing/modifiedCall.json', '0') # 285449
         """
+        processSubtitle(root[7])
         count = 0
         numCalls = len(root.findall('Call'))
         for call in root:
@@ -389,6 +392,6 @@ if __name__ == "__main__":
     
 
     outputXml = open(xmlOutputFile, 'w')
-    xmlstr = ET.tostring(root.getroot(), encoding="unicode")
+    xmlstr = ET.tostring(root, encoding="unicode")
     outputXml.write(f'{xmlstr}')
     outputXml.close()
