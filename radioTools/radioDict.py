@@ -6,8 +6,8 @@ import radioTools.characters as characters
 
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
-missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w')
-missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w') # Accessed from RadioDatTools in main()
+missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w', encoding='utf8')
+missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w', encoding='utf8') # Accessed from RadioDatTools in main()
 radioData = b''
 foundGraphics = []
 unidentifiedGraphics = []
@@ -99,7 +99,7 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
 	# Output a dictionary file for each dictionary we create
-	dictFile = open(f'graphicsExport/Dict-{offset}.txt', 'w')
+	dictFile = open(f'graphicsExport/Dict-{offset}.txt', 'w', encoding='utf8')
 
 	# print(len(graphicsBytes))
 	count = int(len(graphicsBytes) / 36)
@@ -248,8 +248,6 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 				newBytestring += index.to_bytes()
 	
 	return newBytestring, callDict
-
-
 
 """
 This only used for working with the graphics data found in jpn-d1, it was combined with the bash script to ocr the characters
