@@ -72,7 +72,7 @@ def setOutputFile(filename: str) -> bool:
     global output
     current_time = datetime.now().strftime("%H%M%S")
     current_date = datetime.now().strftime("%Y-%m-%d") 
-    output = open(f'{filename}-{current_date}-{current_time}.log', 'w')
+    output = open(f'{filename}-{current_date}-{current_time}.log', 'w', encoding='utf8')
 
 def splitCall(offset: int, length: int) -> None:
     global radioData
@@ -760,7 +760,7 @@ def main(args=None):
     if args.xmloutput:
         if fancy:
             xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
-            xmlFile = open(f'{outputFilename}.xml', 'w')
+            xmlFile = open(f'{outputFilename}.xml', 'w', encoding='utf8')
             xmlFile.write(xmlstr)
             xmlFile.close()
         else:
@@ -795,7 +795,7 @@ def main(args=None):
                 callText[int(offset)] = text
                 dialogueData[int(callOffset)] = callText
         
-        with open(f"{outputFilename}-Iseeva.json", 'w') as f:
+        with open(f"{outputFilename}-Iseeva.json", 'w', encoding='utf8') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=2)
     
     if args.graphics:
