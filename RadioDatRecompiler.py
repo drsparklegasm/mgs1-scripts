@@ -27,6 +27,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
 import codecs
+import xmlModifierTools as xmlFix
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
@@ -239,7 +240,10 @@ def main(args=None):
         args = parser.parse_args()
 
     # Read new radio source
-    radioSource = ET.parse(args.input)
+    if args.prepare:
+        radioSource = xmlFix.init(args.input)
+    else:
+        radioSource = ET.parse(args.input)
 
     if args.output:
         outputFilename = args.output
@@ -292,12 +296,9 @@ if __name__ == '__main__':
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
     parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
-    # parser.add_argument('-S', '--spanish', nargs="?", type=str, help="Encode text with Spanish characters")
+    parser.add_argument('-p', '--prepare', action='store_true', help="Run the text encoder and recompute lengths")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     
     main()
-
-def init(args: list[str]) -> None:
-    print('not done yet')
     

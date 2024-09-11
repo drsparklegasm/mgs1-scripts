@@ -15,13 +15,10 @@ import argparse
 import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
-from radioTools import radioDict as RD
-# import jsonTools
-
-# Threading Tests
-from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 
+from radioTools import radioDict as RD
+# import jsonTools
 
 debug = False
 multithreading = True
@@ -339,7 +336,7 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
     # Comment out the return if needed for the first option. 
     return call
 
-def main(args=None):
+def main(args=None, radioXML=None):
     global multithreading
     global debug
 
@@ -362,7 +359,6 @@ def main(args=None):
         
         case "inject":
             print(f'Unfinished!')
-        
             # All of this is to test replacing the 140.85 call
             """
             usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
@@ -403,7 +399,6 @@ def main(args=None):
                     for i, call in enumerate(modifiedCalls):
                         root[i] = call # This replaces the work done into the original root object. 
             else:
-                # processSubtitle(root[7])
                 count = 0
                 numCalls = len(root.findall('Call'))
                 for call in root:
@@ -411,18 +406,36 @@ def main(args=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
-            if args.recompile:
-                import RadioDatRecompiler as recompiler
-                recompiler.init()
-            else:
-                outputXml = open(xmlOutputFile, 'w')
-                xmlstr = ET.tostring(root, encoding="unicode")
-                outputXml.write(f'{xmlstr}')
-                outputXml.close()
+        
+            outputXml = open(xmlOutputFile, 'w')
+            xmlstr = ET.tostring(root, encoding="unicode")
+            outputXml.write(f'{xmlstr}')
+            outputXml.close()
 
         case _:
             print(f"Usage: xmlOps.py <operation> [input] [output] : \n\tinject = import json [input] with subtitles and inject them into an XML [output]\n\tprepare = Encode custom characters, recalculate lengths, prepare the file for. [XML Radio file is input, output is a new file]")
             exit(0)
+
+def init(xmlInputFile: str) -> ET.Element:
+    """
+    This is to finalize encoding. Assumes all strings are in the file. 
+    Recalculates all lengths and updates dictionaries. 
+    Returns the finished ET "root" element.
+    """
+    global multithreading 
+
+    root = ET.parse(xmlInputFile).getroot()
+
+    if multithreading:
+        # Pooling mya not work because each element would have to be replaced with the element we process :|
+        with Pool(processes=8) as pool:
+            # Use map to process elements in parallel
+            listOfCalls = [(call, root) for call in root]
+            modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
+            for i, call in enumerate(modifiedCalls):
+                root[i] = call # This replaces the work done into the original root object.
+    
+    return root
 
 if __name__ == "__main__":
     # Parse arguments here, then run main so that this can be called from another parent script.
