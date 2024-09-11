@@ -212,6 +212,7 @@ def fixStageDirOffsets():
     """
     global stageBytes 
     global newOffsets
+    global debug
 
     for key in stageTools.offsetDict.keys():
         # We can move forward if there's a match. Might skip the initial few.
@@ -231,29 +232,31 @@ def fixStageDirOffsets():
             print(newOffsetHex.hex())
             print(stageBytes[key: key + 8].hex())
 
-
 def main(args=None):
     global subUseOriginalHex 
     global stageBytes
+    global debug
     
     if args == None:
         args = parser.parse_args()
 
     # Read new radio source
     if args.prepare:
-        radioSource = xmlFix.init(args.input)
+        root = xmlFix.init(args.input)
     else:
         radioSource = ET.parse(args.input)
+        root = radioSource.getroot()
 
     if args.output:
         outputFilename = args.output
     else:
-        outputFilename = 'new' + args.input.split("/")[-1].split(".")[0] + '.bin'
+        outputFilename = 'new-' + args.input.split("/")[-1].split(".")[0] + '.bin'
 
     if args.hex:
         subUseOriginalHex = True
-
-    root = radioSource.getroot()
+    
+    if args.debug:
+        debug = True
 
     outputContent = b''
 
@@ -271,7 +274,6 @@ def main(args=None):
         outputContent += b'\x00'
         if attrs.get('graphicsBytes') is not None:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
-        
         # print(content)
     
     radioOut = open(outputFilename, 'wb')

@@ -16,6 +16,7 @@ import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from multiprocessing import Pool
+import base64
 
 from radioTools import radioDict as RD
 # import jsonTools
@@ -190,22 +191,23 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 print(f'We fucked up! Tried to update length of {parent.tag}!!!')
         
         if debug:
-            print(f'Old length: {origLength}, New length: {newLength}, change is {lengthChange}')
+            print(f'{parent.get("offset")}: Old length: {origLength}, New length: {newLength}, change is {lengthChange}')
             # print(f"Old Content: {origContent}")
             # print(f"New Content: {newContent}")
 
     return
 
-def getParentTree(target: ET.Element) -> list:
+def getParentTree(target: ET.Element, root: ET.Element) -> list:
     """
     Credit goes to chatGPT, we need to iterate through and get each parent along the way.
+    Modified to accept the call element as the root. Its not like we need the RadioData element.
     """
     path = []
     for parent in root.iter():
         for element in parent:
             if element == target:
                 path.append(parent)
-                path.extend(getParentTree(parent))
+                path.extend(getParentTree(parent, root))
                 break
 
     return path
@@ -260,19 +262,24 @@ def processSubtitle(call: ET.Element):
     # Inefficient. We need to speed this up. 
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
-    print(f'Call offset: {call.get("offset")}, Compiling {len(call.findall(".//SUBTITLE"))} subtitles...')
+    print(f'Call offset: {call.get("offset")}, Compiling {numSubtitles} subtitles...')
 
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
         # Get all parent elements:
         # parents = getParentTreeThreaded(subtitle, root)
-        parents = getParentTree(subtitle)
-        print(f"\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {root[-1].get('offset')}: ", end="")
+        parents = getParentTree(subtitle, call)
+        print(f"\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {call.get('offset')}: ", end="")
         # Re-encode two-byte characters
         callDict: str = parents[-1].get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
 
-        subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
+        # textString = repr(newText)
+        textString = newText.decode('utf8', errors='backslashreplace')
+        # print(f'{subtitle.get("offset")}\n{textString}:{len(textString)}\n{textString2}:{len(textString2)}\n')
+
+        subtitle.set('text', textString)
+        subtitle.set('textEscaped', "True")
         if newDict != "":
             # print(f'Dict is not Null! {newDict}')
             if newDict != callDict:
@@ -288,37 +295,22 @@ def processSubtitle(call: ET.Element):
     return call
 
 def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
-    """
-    Returns the call after processing for re-integration. 
-    """
-    def getParentTreeThreaded(target: ET.Element, root: ET.Element) -> list:
-        """
-        Credit goes to chatGPT, we need to iterate through and get each parent along the way.
-        Modified to accept the call element as the root. Its not like we need the RadioData element.
-        """
-        
-        path = []
-        for parent in root.iter():
-            for element in parent:
-                if element == target:
-                    path.append(parent)
-                    path.extend(getParentTreeThreaded(parent, call))
-                    break
-
-        return path
-    
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
     print(f"Call {call.get('offset')} - Compiling {numSubtitles} subtitles...")
+    
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
         # Get all parent elements:
-        parents = getParentTreeThreaded(subtitle, call)
+        parents = getParentTree(subtitle, call)
         # Re-encode two-byte characters
         callDict: str = call.get('graphicsBytes')
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
 
-        textString = repr(newText)
+        #textString = repr(newText)
+        textString = newText.decode('utf8', errors='backslashreplace')
+        #print(f'{subtitle.get("offset")}\n{textString}\n{textString2}\n')
+
         # subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
         subtitle.set('text', textString)
         subtitle.set('textEscaped', "True")
