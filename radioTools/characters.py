@@ -1800,7 +1800,7 @@ graphicsData = {
 	"0e2ba8bfeba86eaff8bfebb9aefffeaeeeb9bfefed6eaae8bfebe86eafb90e1d28000000": "?",
 	"0b0ab80b0fe93fee002b9ea90f8ffe2fee387b4e381b1d380b2c380b38380b1838000000": "折",
 	"1aaea92ffffe2c08002c0e002c2c002c28402c79e038b0b438e6b8b7ffed22a408000000": "広",
-	"6ade503f9eb4038e20bffffe6baba903a7b81be7f47f82e41787e92b9fbe2f6d78000000": "我",
+	"6ade503f9eb4038e20bffffe6baba903a7b81be7f47f82e41787e92b9fbe2f6d78000000": "核",
 	"0e3ffc1e3aac3b3aac3baaa86abffe6ebaee0e6aa90ebffe0e1e780e6bf90e2968000000": "慢",
 	"3ffffc3aaaac3bffec3abaac3abaac3bffec383a6c3bffec3aaaac3ffffc3aaaac000000": "国",
 	"3ffffc3abae838b2c038b2c038a2c838e2ce3ac2fe3b40a83800003ffffe3aaaa9000000": "匹",
