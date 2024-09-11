@@ -16,8 +16,6 @@ import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from multiprocessing import Pool
-import base64
-
 from radioTools import radioDict as RD
 # import jsonTools
 
@@ -328,6 +326,64 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
     # Comment out the return if needed for the first option. 
     return call
 
+def fixSavePrompt(promptElement: ET.Element) -> int:
+    """
+    Fixes the prompt text (if needed) and updates all lengths.
+    Returns the difference in length
+    """
+    origLength = int(promptElement.get('length'))
+    
+    innerLength = 0
+    for option in promptElement:
+        innerLength += int(option.get('length'))
+    lengthBytes = struct.pack('>H', innerLength + 3).hex()
+    newHeader = "ff07" + lengthBytes
+
+    newLength = innerLength + 2
+    promptElement.set("length", str(int(newLength)))
+    promptElement.set("content", newHeader )
+    
+    return newLength - origLength
+
+def fixCodecMem(memElement: ET.Element) -> int:
+    """
+    Fixes the Frequency save to codec memory.
+    Returns the difference in length
+    """
+    origLength = int(memElement.get('length'))
+    origContent = memElement.get('content')
+    origCallName = memElement.get('name')
+    
+    lengthBytes = struct.pack('>H', len(origCallName) + 7).hex()
+    newContent = "ff04" + lengthBytes + origContent[8:12] + RD.encodeJapaneseHex(origCallName)[0].hex() + "00"
+
+    newLength = len(newContent) / 2
+    memElement.set("length", str(int(newLength)))
+    memElement.set("content", newContent )
+    
+    return newLength - origLength
+
+def fixSaveBlock(saveBlockElem: ET.Element) -> int:
+    """
+    Fixes the text that is written when saving the game.
+    Returns the difference in length 
+    """
+    origLength = int(saveBlockElem.get('length'))
+    origContent = saveBlockElem.get('content')
+    
+    innerLength = 0
+    for option in saveBlockElem:
+        contLength = len(option.get('contentA')) * 2 # x2 for two bytes per character TODO: Check this on recompiler
+        innerLength += (contLength + 3) * 2 # Each has 07{len}{content}{0x00}
+    lengthBytes = struct.pack('>H', innerLength + 7).hex()  
+    newHeader = "ff05" + lengthBytes + origContent[8:16]
+
+    newLength = innerLength + 2
+    saveBlockElem.set("length", str(int(innerLength + 2)))
+    saveBlockElem.set("content", newHeader)
+    
+    return newLength - origLength
+
 def main(args=None, radioXML=None):
     global multithreading
     global debug
@@ -382,8 +438,9 @@ def main(args=None, radioXML=None):
 
             root = ET.parse(xmlInputFile).getroot()
 
+            # Subtitle updates:
             if multithreading:
-                # Pooling mya not work because each element would have to be replaced with the element we process :|
+                # Pooling may not work because each element would have to be replaced with the element we process :|
                 with Pool(processes=8) as pool:
                     # Use map to process elements in parallel
                     listOfCalls = [(call, root) for call in root]
@@ -398,10 +455,47 @@ def main(args=None, radioXML=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
-        
-            outputXml = open(xmlOutputFile, 'w')
-            xmlstr = ET.tostring(root, encoding="unicode")
-            outputXml.write(f'{xmlstr}')
+            # Update Save Frequency lengths (FF04) 
+            print(f'Fixing call frequency saves [NOT IMPLEMENTED]')
+            count = 0
+            for call in root:
+                i += 1
+                print(f'Processing call {i}: offset: {call.get("offset")}')
+                for prompt in call.findall(".//ADD_FREQ"):
+                    lengthChange = fixCodecMem(prompt)
+                    if lengthChange != 0:
+                        parents = getParentTree(prompt, call)
+                        updateParentLength(parents, lengthChange)
+            
+            # Update Prompt lengths (FF07)
+            print(f'Updating Prompt Lengths...')
+            count = 0
+            for call in root:
+                i += 1
+                print(f'Processing call {i}: offset: {call.get("offset")}')
+                for prompt in call.findall(".//ASK_USER"):
+                    lengthChange = fixSavePrompt(prompt)
+                    if lengthChange != 0:
+                        parents = getParentTree(prompt, call)
+                        updateParentLength(parents, lengthChange)
+            
+            # Update Mem Save Block lengths (FF05)
+            print(f'Updating Prompt Lengths...')
+            count = 0
+            for call in root:
+                i += 1
+                print(f'Processing call {i}: offset: {call.get("offset")}')
+                for saveblock in call.findall(".//MEM_SAVE"):
+                    lengthChange = fixSaveBlock(saveblock)
+                    if lengthChange != 0:
+                        parents = getParentTree(saveblock, call)
+                        updateParentLength(parents, lengthChange)
+            
+            # Update Save Info (FF05)
+
+            outputXml = open(xmlOutputFile, 'wb')
+            xmlbytes = ET.tostring(root, encoding=None)
+            outputXml.write(xmlbytes)
             outputXml.close()
 
         case _:

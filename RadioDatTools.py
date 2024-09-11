@@ -315,7 +315,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             translatedDifference = len(dialogue) - len(translatedDialogue)
 
             if translateToggle:
-                dialogue = translator.translate(dialogue)
+                # dialogue = translator.translate(dialogue)
                 print(f'Translated offset {offset}: {dialogue}')
 
             # Output to text file
@@ -424,7 +424,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
 
             parser = 8
             while parser < len(line):
-                print(parser)
                 # This section has lines with two sections each with 0x07 {one byte length} {length}
                 if line[parser] == 7:
                     lengthA = line[parser + 1]
@@ -436,9 +435,9 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     parser += 2 + lengthB
 
                     saveOption = ET.SubElement(SaveCommand, "SAVE_OPT", {
-                        'lengthA' : str(lengthA),
+                        'length' : str(lengthA),
                         'contentA' : str(translateJapaneseHex(contentA)),
-                        'lengthB' : str(lengthB),
+                        'lengthB' : str(lengthB), 
                         'contentB' : bytes.decode(contentB[0:-1], encoding='shift-jis', errors='replace') # We could omit this, but the error checkign is good.
                     })
                 elif line[parser] == 0:
@@ -448,7 +447,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     print(f'Offset: {parser}, content: {line[parser:parser + 4]}')
             return length
 
-        case b'\x06' | b'\x07' | b'\x08': 
+        case b'\x06' | b'\x08': 
             length = getLength(offset)
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
@@ -458,6 +457,38 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "length": str(length),
                 "content": line.hex(),
             })
+            return length
+        
+        case b'\x07': 
+            length = getLength(offset)
+            line = radioData[offset : offset + length]
+            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
+
+            promptElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
+                "offset": str(offset),
+                "length": str(length),
+                "content": line.hex(),
+            })
+
+            parser = 4
+            while parser < len(line):
+                # This section has lines with two sections each with 0x07 {one byte length} {length}
+                if line[parser] == 7:
+                    lengthA = line[parser + 1]
+                    contentA = line[parser + 2 : parser + 2 + lengthA]
+                    parser += 2 + lengthA
+
+                    saveOption = ET.SubElement(promptElement, "USR_OPTN", {
+                        'length' : str(lengthA),
+                        'text' : str(translateJapaneseHex(contentA)),
+                    })
+                elif line[parser] == 0:
+                    parser += 1
+                else:
+                    print(f'ERROR! Problem with the option parser!')
+                    print(f'Offset: {offset + parser}, content: {line[parser:parser + 4]}')
+                
+
             return length
 
         case b'\x10': # 
@@ -812,10 +843,19 @@ def main(args=None):
         headerFile.close()
     
     if args.iseeeva:
+        """
+        outputs a json with the text editables. It's easier to use than
+        working in the XML file. Credit/blame goes to Green Goblin :P
+        """
         import json
+        # main dict
         dialogueData = {}
+        # sub-dicts
         callDialogue = {}
+        prompts = {}
         saveText = {}
+        saveFreqs = {}
+
         for call in root.findall(f'.//Call'):
             callOffset = call.attrib.get('offset')
             callText = {}
@@ -832,8 +872,23 @@ def main(args=None):
                     saveOpts[i] = option.get('contentB')
                     i += 1
                 saveText[int(offset)] = saveOpts
+            userOpts = {}
+            for prompt in call.findall(".//ASK_USER"):
+                offset = prompt.get('offset')
+                i = 0
+                for option in prompt:
+                    text = option.get("text")
+                    userOpts[i] = text
+                    i += 1
+                prompts[offset] = userOpts
+            for saveFreq in call.findall(".//ADD_FREQ"):
+                offset = saveFreq.get('offset')
+                name = saveFreq.get('name')
+                saveFreqs[offset] = name
         dialogueData["calls"] = callDialogue
         dialogueData["saves"] = saveText
+        dialogueData["freqAdd"] = saveFreqs
+        dialogueData["prompts"] = prompts
         
         with open(f"{outputFilename}-Iseeva.json", 'w', encoding='utf8') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=2)
