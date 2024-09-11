@@ -2,8 +2,8 @@ import os, struct
 import argparse
 import json
 
-"""import progressbar
-bar = progressbar.ProgressBar()"""
+import progressbar
+bar = progressbar.ProgressBar()
 
 # filename = "radioDatFiles/STAGE-usa-d1.DIR"
 
