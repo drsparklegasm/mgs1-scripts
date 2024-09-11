@@ -19,16 +19,8 @@ from multiprocessing import Pool
 from radioTools import radioDict as RD
 # import jsonTools
 
-debug = False
-multithreading = True
-
-
-
 """import progressbar
-
 bar = progressbar.ProgressBar()"""
-
-
 
 """
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
@@ -40,6 +32,7 @@ jpnSubs = "extractedCallBins/jpn-d1/0-decrypted-Iseeva.json"
 
 # flags
 debug = False
+multithreading = True
 
 # Open the XML tree and the json data
 # newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
