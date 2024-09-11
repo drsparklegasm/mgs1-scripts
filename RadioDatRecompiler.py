@@ -244,7 +244,7 @@ def main(args=None):
     if args.output:
         outputFilename = args.output
     else:
-        outputFilename = args.input.split("/")[-1].split(".")[0] + '-mod.bin'
+        outputFilename = 'new' + args.input.split("/")[-1].split(".")[0] + '.bin'
 
     if args.hex:
         subUseOriginalHex = True
@@ -279,7 +279,7 @@ def main(args=None):
         stageTools.init(stageDirFilename)
         stageBytes = bytearray(stageTools.stageData)
         fixStageDirOffsets()
-        stageOut = open("new-STAGE-usa-d1.DIR", 'wb')
+        stageOut = open("new-STAGE.DIR", 'wb')
         stageOut.write(stageBytes)
         stageOut.close()
 
@@ -297,3 +297,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     
     main()
+
+def init(args: list[str]) -> None:
+    print('not done yet')
+    

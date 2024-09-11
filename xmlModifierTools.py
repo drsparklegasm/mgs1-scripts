@@ -354,7 +354,6 @@ def main(args=None):
     if not args.input:
         args.operation = 'help'
     
-    
     match args.operation:
     
         case "help" | "Help" | "HELP" | "hELP" | "H":
@@ -363,7 +362,6 @@ def main(args=None):
         
         case "inject":
             print(f'Unfinished!')
-        
         
             # All of this is to test replacing the 140.85 call
             """
@@ -395,16 +393,8 @@ def main(args=None):
             xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"""
 
             root = ET.parse(xmlInputFile).getroot()
-            
 
             if multithreading:
-                """# Multithreading Test A
-                with ThreadPoolExecutor(max_workers=4) as executor:
-                # Submit tasks to the thread pool
-                    futures = [executor.submit(processSubtitle, elem) for elem in root]
-                    """
-                
-                # Multithreading test B
                 # Pooling mya not work because each element would have to be replaced with the element we process :|
                 with Pool(processes=8) as pool:
                     # Use map to process elements in parallel
@@ -421,12 +411,18 @@ def main(args=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
+            if args.recompile:
+                import RadioDatRecompiler as recompiler
+                recompiler.init()
+            else:
+                outputXml = open(xmlOutputFile, 'w')
+                xmlstr = ET.tostring(root, encoding="unicode")
+                outputXml.write(f'{xmlstr}')
+                outputXml.close()
 
-            outputXml = open(xmlOutputFile, 'w')
-            xmlstr = ET.tostring(root, encoding="unicode")
-            outputXml.write(f'{xmlstr}')
-            outputXml.close()
-    
+        case _:
+            print(f"Usage: xmlOps.py <operation> [input] [output] : \n\tinject = import json [input] with subtitles and inject them into an XML [output]\n\tprepare = Encode custom characters, recalculate lengths, prepare the file for. [XML Radio file is input, output is a new file]")
+            exit(0)
 
 if __name__ == "__main__":
     # Parse arguments here, then run main so that this can be called from another parent script.
@@ -436,7 +432,7 @@ if __name__ == "__main__":
     # This isn't elegant, we may want to just include the recompiler here. 
     parser.add_argument('output', nargs="?", type=str, help="inject: Target XML file we are modifying | prepare: Output XML file to be re-compiled.")
     # THIS IS HANDLED BY RECOMPILER ?
-    # parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
+    parser.add_argument('-r', '--recompile', nargs="?", type=str, help="recompiles the XML into binary once finished. Only valid if running prepare")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation. NOTE: Also disables multithreading! WILL BE SLOW!")
 
     # Parse arguments
