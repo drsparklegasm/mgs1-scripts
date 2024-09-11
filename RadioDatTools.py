@@ -814,6 +814,8 @@ def main(args=None):
     if args.iseeeva:
         import json
         dialogueData = {}
+        callDialogue = {}
+        saveText = {}
         for call in root.findall(f'.//Call'):
             callOffset = call.attrib.get('offset')
             callText = {}
@@ -821,7 +823,17 @@ def main(args=None):
                 offset = subs.attrib.get('offset')
                 text = subs.attrib.get('text')
                 callText[int(offset)] = text
-                dialogueData[int(callOffset)] = callText
+                callDialogue[int(callOffset)] = callText
+            saveOpts = {}
+            for save in call.findall(f'.//MEM_SAVE'):
+                offset = save.attrib.get('offset')
+                i = 0
+                for option in save:
+                    saveOpts[i] = option.get('contentB')
+                    i += 1
+                saveText[int(offset)] = saveOpts
+        dialogueData["calls"] = callDialogue
+        dialogueData["saves"] = saveText
         
         with open(f"{outputFilename}-Iseeva.json", 'w', encoding='utf8') as f:
             json.dump(dialogueData, f, ensure_ascii=False, indent=2)
