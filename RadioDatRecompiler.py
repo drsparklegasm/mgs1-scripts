@@ -197,7 +197,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        binary = bytes.fromhex("07") + int(elem.get('length')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'))[0] + bytes.fromhex("00")
+        binary = bytes.fromhex("07") + int(elem.get('length')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] + bytes.fromhex("00")
         binary += bytes.fromhex("07") + int(elem.get('lengthB')).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
     else:
         print(f'WE GOT THE WRONG ELEMENT! Should be goblin, got {elem.text}')
