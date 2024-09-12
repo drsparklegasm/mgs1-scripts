@@ -102,9 +102,6 @@ def getVoxBytes(vox: ET.Element) -> bytes:
     """
     Returns the hex for a VOX container (FF02). 
     Because it is a container that contains Subtitle elements, we will compile that hex here.
-
-    TODO: MUS_CUES and ANI_FACE could both be included here. We'll need to figure out 
-    how to identify the type of element and return the correct hex. 
     """
     attrs = vox.attrib
     binary = bytes.fromhex(attrs.get('content'))

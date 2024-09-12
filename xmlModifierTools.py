@@ -19,8 +19,8 @@ from multiprocessing import Pool
 from radioTools import radioDict as RD
 # import jsonTools
 
-"""import progressbar
-bar = progressbar.ProgressBar()"""
+import progressbar
+bar = progressbar.ProgressBar()
 
 """
 jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
