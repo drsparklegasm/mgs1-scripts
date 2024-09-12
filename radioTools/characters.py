@@ -1106,7 +1106,7 @@ punctuation = { # 0xd0
 	'13': "］",
 	'14': "《",
 	'15': "》",
-	'16': "／",
+	# '16': "／", # Due to logic, if we recompile with this character it will write d016 instead of 9016, which is less accurate to the orig.
 	'17': "…", 
 	#'8023': '\\n',# I think this means new line, but we're not sure yet as it has different meanings between US/jpn
     #'9005': "",
