@@ -463,13 +463,15 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         
         case b'\x07': 
             length = getLength(offset)
+            header = 4
             line = radioData[offset : offset + length]
+            content = line[0:header]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
 
             promptElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
-                "content": line.hex(),
+                "content": content.hex(),
             })
 
             parser = 4
