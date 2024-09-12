@@ -176,7 +176,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 		
 	return messageString
 
-def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
+def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
 	"""
 	WORK IN PROGRESS! Re-encodes japanese characters. 
 	"""
@@ -197,6 +197,8 @@ def encodeJapaneseHex(dialogue: str, callDict="") -> tuple[bytes, str]: # Needs 
 	# customCharacter = False
 	for character in dialogue:
 		if ord(character) < 128:
+			if useDoubleLength:
+				newBytestring += b'\x80'
 			newBytestring += character.encode('ascii')
 		elif character in characters.revSpanish:
 			newBytestring += bytes.fromhex(characters.revSpanish.get(character))
