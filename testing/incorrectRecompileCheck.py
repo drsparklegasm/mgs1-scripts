@@ -43,18 +43,22 @@ elif len(compareData) > len(originalData):
     print("New Data is larger!")
 else:
     print("The files are equal size!")
+    size = len(compareData)
 
 while offset < size:
     if originalData[offset] == compareData[offset]:
         offset += 1
+    elif originalData[offset : offset + 2] == bytes.fromhex("9016") and compareData[offset : offset + 2] == bytes.fromhex("d016"):
+        print(f'Character mismatch! {originalData[offset : offset + 2]} {compareData[offset : offset + 2]} ')
+        offset += 2
     else:
         differ = True
         print(f"Files break at offset {offset}.")
-        offsetHex = struct.pack('>H', offset)
+        offsetHex = struct.pack('>L', offset)
         print(f'Offset in hex: 0x{offsetHex.hex()}')
-        break
+        print(f'Original: \n{originalData[offset - 10 : offset + 10].hex()}')
+        print(f'New Data: \n{compareData[offset - 10 : offset + 10].hex()}')
+        offset += 1
+        
 
-if differ:
-    print(f'Original: \n{originalData[offset - 10 : offset + 10].hex()}')
-    print(f'New Data: \n{compareData[offset - 10 : offset + 10].hex()}')
-    
+
