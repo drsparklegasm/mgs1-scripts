@@ -26,6 +26,7 @@ import os, struct
 import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
+import radioTools.radioDict as RD
 import codecs
 import xmlModifierTools as xmlFix
 
@@ -158,7 +159,7 @@ def getFreqAddBytes(elem: ET.Element) -> bytes:
 def getContentBytes(elem: ET.Element) -> bytes: 
     """
     This one is to get binary when we specifically mark a 'content' field. Full list of what this works for:
-    FF04, FF05, FF06, FF07, FF08
+    FF04, FF06, FF08
     """
     attrs = elem.attrib
     elemBytes = bytes.fromhex(attrs.get('content'))
@@ -176,6 +177,33 @@ def getContainerContentBytes(elem: ET.Element) -> bytes:
 
     return binary
 
+def getAddFreq(elem: ET.Element) -> bytes:
+    """
+    This is for FF04, add contact to codec mem. 
+    Content/length should be fixed earlier. 
+    """
+    binary = b''
+    content = elem.get('content') + elem.get('name') + "00"
+    binary += content.hex()
+
+    return binary
+
+def getGoblinBytes(elem: ET.Element) -> bytes:
+    """
+    For the innards of the Prompt user and Save Block data
+    """
+    binary = b''
+    if elem.tag ==  'USR_OPTN':
+        content = "07" + int(elem.get('length')).to_bytes().hex() + elem.get('text').encode('ascii').hex() + "00"
+    elif elem.tag ==  'SAVE_OPT':
+        binary = bytes.fromhex("07") + int(elem.get('length')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'))[0] + bytes.fromhex("00")
+        binary += bytes.fromhex("07") + int(elem.get('lengthB')).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
+    else:
+        print(f'WE GOT THE WRONG ELEMENT! Should be goblin, got {elem.text}')
+    
+    return binary
+
+
 def handleElement(elem: ET.Element) -> bytes:
     """
     Takes an element and returns the bytes for that element and all subelements. 
@@ -191,10 +219,14 @@ def handleElement(elem: ET.Element) -> bytes:
             binary = getVoxBytes(elem)
         # case 'ADD_FREQ':
             # binary = getFreqAddBytes(elem)
-        case 'ANI_FACE' | 'ADD_FREQ' | 'MEM_SAVE' | 'MUS_CUES' | 'ASK_USER' | 'SAVEGAME' | 'EVAL_CMD': 
+        case 'ANI_FACE' | 'ADD_FREQ' | 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD': 
             # ff03-08, FF40
             binary = getContentBytes(elem)
-        case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN': 
+        case 'USR_OPTN' | 'SAVE_OPT':
+            binary = getGoblinBytes(elem)
+        case 'ADD_FREQ':
+            binary = getAddFreq(elem)
+        case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN' | 'MEM_SAVE' | 'ASK_USER': 
             binary = bytes.fromhex(attrs.get('content'))
             binary += getContainerContentBytes(elem)
             # Troubleshooting

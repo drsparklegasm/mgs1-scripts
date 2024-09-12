@@ -20,8 +20,11 @@ args = parser.parse_args()
 originalFile = open(f'extractedCallBins/{args.input}.bin', 'rb')
 originalData = originalFile.read()
 
-compareFile = open(f'recompiledCallBins/{args.input}-mod.bin', 'rb')
-compareData = compareFile.read()
+if args.output:
+    print()
+else:
+    compareFile = open(f'recompiledCallBins/{args.input}-mod.bin', 'rb')
+    compareData = compareFile.read()
 
 print(f'Original file: {len(originalData)} bytes. New file: {len(compareData)} bytes')
 
