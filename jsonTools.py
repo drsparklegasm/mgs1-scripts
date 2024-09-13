@@ -33,6 +33,7 @@ codecNames = {
     "マスター" : "MASTER",
     "ナスターシャ" : "NASTASHA",
     "ディープスロート" : "DEEPTHROAT",
+    "STAFF" : "STAFF",
 }
 
 matchingCalls = {
