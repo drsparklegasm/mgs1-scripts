@@ -96,8 +96,11 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
 
     if subUseOriginalHex:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
-    else:
+    elif "newTextHex" in attrs.keys():
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('newTextHex')) + bytes.fromhex('00')
+    else:
+        subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
+        
     return subtitleBytes
 
 def getVoxBytes(vox: ET.Element) -> bytes:
@@ -199,8 +202,10 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        binary = bytes.fromhex("07") + int(elem.get('lengthA')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] + bytes.fromhex("00")
-        binary += bytes.fromhex("07") + int(elem.get('lengthB')).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
+        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0]
+        contentB = elem.get('contentB').encode("shift-jis")
+        binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
+        binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
     else:
         print(f'WE GOT THE WRONG ELEMENT! Should be goblin, got {elem.text}')
     
@@ -271,6 +276,7 @@ def main(args=None):
     global subUseOriginalHex 
     global stageBytes
     global debug
+    
     
     if args == None:
         args = parser.parse_args()

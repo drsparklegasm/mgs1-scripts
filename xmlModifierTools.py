@@ -367,16 +367,28 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     
     innerLength = 0
     for option in saveBlockElem:
-        contLength = len(option.get('contentA')) * 2 # x2 for two bytes per character TODO: Check this on recompiler
-        innerLength += (contLength + 3) * 2 # Each has 07{len}{content}{0x00}
+        contlength = int(option.get("length")) # x2 for two bytes per character TODO: Check this on recompiler
+        innerLength += contlength # Each has 07{len}{content}{0x00}
     lengthBytes = struct.pack('>H', innerLength + 7).hex()  
     newHeader = "ff05" + lengthBytes + origContent[8:16]
 
     newLength = innerLength + 2
-    saveBlockElem.set("length", str(int(innerLength + 2)))
+    saveBlockElem.set("length", str(int(innerLength + 7)))
     saveBlockElem.set("content", newHeader)
     
     return newLength - origLength
+
+def injectSubs(jsonData: dict):
+    global root
+    for call in root.findall(".//Call"):
+        if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
+            continue
+        newCallDialogue: dict = jsonData["calls"][call.get('offset')]
+        for subelem in call.findall(".//SUBTITLE"):
+            offset = subelem.get('offset')
+            subelem.set('text', newCallDialogue.get(offset))
+            if debug:
+                print(f'Set {offset} to {newCallDialogue.get(offset)}')
 
 def injectSaveBlocks(jsonData: dict): 
     global root
@@ -490,19 +502,10 @@ def main(args=None, radioXML=None):
             jsonData = json.load(open(jsonDataFile, 'r'))
             root = ET.parse(xmlOutputFile).getroot()
 
-            # Inject subs
-            for call in root.findall(".//Call"):
-                if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
-                    continue
-                newCallDialogue: dict = jsonData["calls"][call.get('offset')]
-                for subelem in call.findall(".//SUBTITLE"):
-                    offset = subelem.get('offset')
-                    subelem.set('text', newCallDialogue.get(offset))
-                    print(f'Set {offset} to {newCallDialogue.get(offset)}')
-
+            # injectSubs(jsonData)
             injectSaveBlocks(jsonData)
-            injectCallNames(jsonData)
-            injectUserPrompts(jsonData)
+            # injectCallNames(jsonData)
+            # injectUserPrompts(jsonData)
 
             outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
@@ -533,8 +536,8 @@ def main(args=None, radioXML=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
-            fixCodecMemLengths()
-            fixPromptLengths()
+            # fixCodecMemLengths()
+            # fixPromptLengths()
             fixSaveBlockLengths()
 
             outputXml = open(xmlOutputFile, 'wb')
@@ -553,6 +556,7 @@ def init(xmlInputFile: str) -> ET.Element:
     Returns the finished ET "root" element.
     """
     global multithreading 
+    global root
 
     root = ET.parse(xmlInputFile).getroot()
 
@@ -572,8 +576,8 @@ def init(xmlInputFile: str) -> ET.Element:
             print(f'\nProcessing call {count} of {numCalls}')
             processSubtitle(call)
     
-    fixCodecMemLengths()
-    fixPromptLengths()
+    # fixCodecMemLengths()
+    # fixPromptLengths()
     fixSaveBlockLengths()
     
     return root
