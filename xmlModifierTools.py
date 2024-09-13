@@ -564,6 +564,7 @@ def init(xmlInputFile: str) -> ET.Element:
         # Pooling mya not work because each element would have to be replaced with the element we process :|
         with Pool(processes=8) as pool:
             # Use map to process elements in parallel
+            print(f'Recomputing Subtitle Lengths. Please wait...')
             listOfCalls = [(call, root) for call in root]
             modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
             for i, call in enumerate(modifiedCalls):
@@ -576,8 +577,8 @@ def init(xmlInputFile: str) -> ET.Element:
             print(f'\nProcessing call {count} of {numCalls}')
             processSubtitle(call)
     
-    # fixCodecMemLengths()
-    # fixPromptLengths()
+    fixCodecMemLengths()
+    fixPromptLengths()
     fixSaveBlockLengths()
     
     return root

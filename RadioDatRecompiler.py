@@ -29,6 +29,7 @@ import StageDirTools.callsInStageDirFinder as stageTools
 import radioTools.radioDict as RD
 import codecs
 import xmlModifierTools as xmlFix
+import time
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
@@ -89,17 +90,17 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     if "newTextHex" in attrs.keys():
         text = bytes.fromhex(attrs.get('newTextHex'))
     # textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
-    text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
-
-    if not subUseOriginalHex:
+    text = text.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e')) # Replace \r\n with in-game byte codes for new lines
+    
+    print(text)
+    #time.sleep(1)
+    """if not subUseOriginalHex:
         text = text.replace(bytes.fromhex("22") , bytes.fromhex("8022")) # TODO: Replace this with the encodeText in RadioDict
-
+    """
     if subUseOriginalHex:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
-    elif "newTextHex" in attrs.keys():
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('newTextHex')) + bytes.fromhex('00')
     else:
-        subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
         
     return subtitleBytes
 
@@ -202,7 +203,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0]
+        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", False)[0]
         contentB = elem.get('contentB').encode("shift-jis")
         binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
