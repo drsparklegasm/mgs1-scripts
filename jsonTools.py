@@ -38,8 +38,9 @@ codecNames = {
 
 matchingCalls = {
     "0": "0",
-    "505": "910",
-    
+    "505": "910", # Meryl call
+    "26537": "42370",
+    "293536": "283744", # 140.85
 }
 
 def replaceJsonText(callOffsetA: str, callOffsetB: str):
