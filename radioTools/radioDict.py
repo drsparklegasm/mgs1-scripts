@@ -199,9 +199,9 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 	# THIS IS ONLY UNTIL WE IDENTIFY ALL MISSING CHARACTERS!
 	if unknownChars:
 		if "[" in dialogue:
-			print(f'Replace DIALOGUE: {dialogue}')
+			# print(f'Replace DIALOGUE: {dialogue}') # Used for debugging what dialogue was looking like
 			dialogue = re.sub(r"\[[0-9A-Fa-f]{72}\]", "?", dialogue)
-			print(f'New Dialogue: {dialogue}')
+			# print(f'New Dialogue: {dialogue}')
 	
 	for character in dialogue:
 		if ord(character) < 128:
