@@ -292,6 +292,7 @@ def main(args=None):
     
     if args.debug:
         debug = True
+        xmlFix.debug = True
 
     outputContent = b''
 

@@ -22,20 +22,11 @@ from radioTools import radioDict as RD
 import progressbar
 bar = progressbar.ProgressBar()
 
-"""
-jsonInputFile = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
-jsonOutputFile = "extractedCallBins/textswapping-output.json"
-"""
-
-usaSubs = "extractedCallBins/usa-d1/0-decrypted-Iseeva.json"
-jpnSubs = "extractedCallBins/jpn-d1/0-decrypted-Iseeva.json"
+root: ET.Element = None
 
 # flags
 debug = False
 multithreading = True
-
-# Open the XML tree and the json data
-# newSubsData = json.load(open('14085-testing/modifiedCall.json', 'r')) 
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -259,7 +250,8 @@ def processSubtitle(call: ET.Element):
     # Inefficient. We need to speed this up. 
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
-    print(f'Call offset: {call.get("offset")}, Compiling {numSubtitles} subtitles...')
+    if debug:
+        print(f'Call offset: {call.get("offset")}, Compiling {numSubtitles} subtitles...')
 
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
@@ -295,7 +287,8 @@ def processSubtitle(call: ET.Element):
 def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
     count = 0
     numSubtitles = len(call.findall('.//SUBTITLE'))
-    print(f"Call {call.get('offset')} - Compiling {numSubtitles} subtitles...")
+    if debug:
+        print(f"Call {call.get('offset')} - Compiling {numSubtitles} subtitles...")
     
     for subtitle in call.findall(f".//SUBTITLE"):
         count += 1
@@ -385,9 +378,90 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     
     return newLength - origLength
 
+def injectSaveBlocks(jsonData: dict): 
+    global root
+
+    newBlockDict = next(iter(jsonData['saves'].values()))
+    for saveBlock in root.findall(".//MEM_SAVE"):
+        i = 0
+        for elem in saveBlock:
+            newLocation = newBlockDict.get(str(i))
+            elem.set("contentA", newLocation)
+            elem.set("contentB", newLocation)
+            i += 1
+
+def injectCallNames(jsonData: dict):
+    global root
+
+    # inject codec mem names:
+    callNames: dict = jsonData['freqAdd']
+    for codecSave in root.findall(".//FREQ_ADD"):
+        offset = codecSave.get('offset')
+        codecSave.set('name', callNames.get(offset))
+
+def injectUserPrompts(jsonData: dict):
+    global root
+
+    # Inject user prompts:
+    prompts: dict = next(iter(jsonData['prompts'].values()))
+    for promptOption in root.findall(".//ASK_USER"):
+        i = 0
+        for option in promptOption:
+            option.set('text', prompts.get(str(i)))
+            i += 1
+
+def fixCodecMemLengths():
+    global root
+    # Update Save Frequency lengths (FF04) 
+    print(f'Fixing codec memory names...', end="")
+    i = 0
+    for call in root:
+        i += 1
+        if debug: 
+            print(f'Processing call {i}: offset: {call.get("offset")}')
+        for prompt in call.findall(".//ADD_FREQ"):
+            lengthChange = fixCodecMem(prompt)
+            if lengthChange != 0:
+                parents = getParentTree(prompt, call)
+                updateParentLength(parents, lengthChange)
+    print(f' Done!')
+
+def fixPromptLengths():
+    global root
+    # Update Prompt lengths (FF07)
+    print(f'Updating Prompt Lengths...', end="")
+    i = 0
+    for call in root:
+        i += 1
+        if debug: 
+            print(f'Processing call {i}: offset: {call.get("offset")}')
+        for prompt in call.findall(".//ASK_USER"):
+            lengthChange = fixSavePrompt(prompt)
+            if lengthChange != 0:
+                parents = getParentTree(prompt, call)
+                updateParentLength(parents, lengthChange)
+    print(f' Done!')
+    
+def fixSaveBlockLengths():
+    global root
+    # Update Mem Save Block lengths (FF05)
+    print(f'Updating Prompt Lengths...', end="")
+    i = 0
+    for call in root:
+        i += 1
+        if debug: 
+            print(f'Processing call {i}: offset: {call.get("offset")}')
+        for saveblock in call.findall(".//MEM_SAVE"):
+            lengthChange = fixSaveBlock(saveblock)
+            if lengthChange != 0:
+                parents = getParentTree(saveblock, call)
+                updateParentLength(parents, lengthChange)
+    print(f' Done!')
+
 def main(args=None, radioXML=None):
     global multithreading
     global debug
+    global root
 
     if args == None:
         args = parser.parse_args()
@@ -407,8 +481,9 @@ def main(args=None, radioXML=None):
             exit(0)
         
         case "inject":
-            print(f'Unfinished!')
-            # All of this is to test replacing the 140.85 call
+            """
+            Take the input json and inject the data. 
+            """
             jsonDataFile = args.input
             xmlOutputFile = args.output
             
@@ -416,31 +491,18 @@ def main(args=None, radioXML=None):
             root = ET.parse(xmlOutputFile).getroot()
 
             # Inject subs
-            print('injecting subs...')
+            for call in root.findall(".//Call"):
+                if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
+                    continue
+                newCallDialogue: dict = jsonData["calls"][call.get('offset')]
+                for subelem in call.findall(".//SUBTITLE"):
+                    offset = subelem.get('offset')
+                    subelem.set('text', newCallDialogue.get(offset))
+                    print(f'Set {offset} to {newCallDialogue.get(offset)}')
 
-            # Inject Save Opts.
-            newBlockDict = next(iter(jsonData['saves'].values()))
-            for saveBlock in root.findall(".//MEM_SAVE"):
-                i = 0
-                for elem in saveBlock:
-                    newLocation = newBlockDict.get(str(i))
-                    elem.set("contentA", newLocation)
-                    elem.set("contentB", newLocation)
-                    i += 1
-            """
-            # inject codec mem names:
-            callNames: dict = jsonData['freqAdd']
-            for codecSave in root.findall(".//FREQ_ADD"):
-                offset = codecSave.get('offset')
-                codecSave.set('name', callNames.get(offset))
-            
-            # Inject user prompts:
-            prompts: dict = next(iter(jsonData['prompts'].values()))
-            for promptOption in root.findall(".//ASK_USER"):
-                i = 0
-                for option in promptOption:
-                    option.set('text', prompts.get(str(i)))
-                    i += 1"""
+            injectSaveBlocks(jsonData)
+            injectCallNames(jsonData)
+            injectUserPrompts(jsonData)
 
             outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
@@ -449,13 +511,8 @@ def main(args=None, radioXML=None):
             
 
         case 'prepare':
-
             xmlInputFile = args.input
             xmlOutputFile = args.output
-
-            """# For now we'll leave these as static for testing
-            xmlInputFile = "recompiledCallBins/RADIO-goblin.xml"
-            xmlOutputFile = "recompiledCallBins/RADIO-goblin-encode.xml"""
 
             root = ET.parse(xmlInputFile).getroot()
 
@@ -476,43 +533,9 @@ def main(args=None, radioXML=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
-            # Update Save Frequency lengths (FF04) 
-            print(f'Fixing call frequency saves [NOT IMPLEMENTED]')
-            i = 0
-            for call in root:
-                i += 1
-                print(f'Processing call {i}: offset: {call.get("offset")}')
-                for prompt in call.findall(".//ADD_FREQ"):
-                    lengthChange = fixCodecMem(prompt)
-                    if lengthChange != 0:
-                        parents = getParentTree(prompt, call)
-                        updateParentLength(parents, lengthChange)
-            
-            # Update Prompt lengths (FF07)
-            print(f'Updating Prompt Lengths...')
-            i = 0
-            for call in root:
-                i += 1
-                print(f'Processing call {i}: offset: {call.get("offset")}')
-                for prompt in call.findall(".//ASK_USER"):
-                    lengthChange = fixSavePrompt(prompt)
-                    if lengthChange != 0:
-                        parents = getParentTree(prompt, call)
-                        updateParentLength(parents, lengthChange)
-            
-            # Update Mem Save Block lengths (FF05)
-            print(f'Updating Prompt Lengths...')
-            i = 0
-            for call in root:
-                i += 1
-                print(f'Processing call {i}: offset: {call.get("offset")}')
-                for saveblock in call.findall(".//MEM_SAVE"):
-                    lengthChange = fixSaveBlock(saveblock)
-                    if lengthChange != 0:
-                        parents = getParentTree(saveblock, call)
-                        updateParentLength(parents, lengthChange)
-            
-            # Update Save Info (FF05)
+            fixCodecMemLengths()
+            fixPromptLengths()
+            fixSaveBlockLengths()
 
             outputXml = open(xmlOutputFile, 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
@@ -541,6 +564,17 @@ def init(xmlInputFile: str) -> ET.Element:
             modifiedCalls = pool.starmap(processSubtitleThreaded, listOfCalls)
             for i, call in enumerate(modifiedCalls):
                 root[i] = call # This replaces the work done into the original root object.
+    else:
+        count = 0
+        numCalls = len(root.findall('Call'))
+        for call in root:
+            count += 1
+            print(f'\nProcessing call {count} of {numCalls}')
+            processSubtitle(call)
+    
+    fixCodecMemLengths()
+    fixPromptLengths()
+    fixSaveBlockLengths()
     
     return root
 
