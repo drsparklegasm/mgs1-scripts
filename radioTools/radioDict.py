@@ -1,6 +1,6 @@
 #!/bin/python
 
-import os, struct
+import os, struct, re
 # import characters as characters
 import radioTools.characters as characters
 
@@ -180,6 +180,8 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 	"""
 	WORK IN PROGRESS! Re-encodes japanese characters. 
 	"""
+	unknownChars = True # For now we still dont know some characters
+
 	newBytestring = b''
 	def addCharToDict(customHex: str):
 		print(f'Character {character} was not found in custom call dict. Adding...')
@@ -194,7 +196,13 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 			newBytestring += b'\x96'
 		callDict += customHex
 	
-	# customCharacter = False
+	# THIS IS ONLY UNTIL WE IDENTIFY ALL MISSING CHARACTERS!
+	if unknownChars:
+		if "[" in dialogue:
+			print(f'Replace DIALOGUE: {dialogue}')
+			dialogue = re.sub(r"\[[0-9A-Fa-f]{72}\]", "?", dialogue)
+			print(f'New Dialogue: {dialogue}')
+	
 	for character in dialogue:
 		if ord(character) < 128:
 			if useDoubleLength:
@@ -233,7 +241,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 					newBytestring += b'\x97'
 				else:
 					newBytestring += b'\x96'
-				newBytestring += bytes(index)
+				newBytestring += index.to_bytes()
 			else:
 				# addCharToDict(customHex)
 				print(f'Character {character} was not found in custom call dict. Adding...')

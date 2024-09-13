@@ -437,7 +437,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     parser += 2 + lengthB
 
                     saveOption = ET.SubElement(SaveCommand, "SAVE_OPT", {
-                        'length' : str(lengthA),
+                        'length' : str(lengthA + lengthB + 4),
+                        'lengthA' : str(lengthA),
                         'contentA' : str(translateJapaneseHex(contentA)),
                         'lengthB' : str(lengthB), 
                         'contentB' : bytes.decode(contentB[0:-1], encoding='shift-jis', errors='replace') # We could omit this, but the error checkign is good.

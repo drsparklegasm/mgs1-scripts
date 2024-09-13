@@ -86,7 +86,9 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
     text = attrs.get("text").encode('utf-8')
-    textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
+    if "newTextHex" in attrs.keys():
+        text = bytes.fromhex(attrs.get('newTextHex'))
+    # textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
     text = text.replace(b'\x5c\x72\x5c\x6e' , b'\x80\x23\x80\x4e') # Replace \r\n with in-game byte codes for new lines
 
     if not subUseOriginalHex:
@@ -95,7 +97,7 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     if subUseOriginalHex:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
     else:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('newTextHex')) + bytes.fromhex('00')
     return subtitleBytes
 
 def getVoxBytes(vox: ET.Element) -> bytes:
@@ -197,7 +199,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        binary = bytes.fromhex("07") + int(elem.get('length')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] + bytes.fromhex("00")
+        binary = bytes.fromhex("07") + int(elem.get('lengthA')).to_bytes() + RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] + bytes.fromhex("00")
         binary += bytes.fromhex("07") + int(elem.get('lengthB')).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
     else:
         print(f'WE GOT THE WRONG ELEMENT! Should be goblin, got {elem.text}')

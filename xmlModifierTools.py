@@ -50,19 +50,18 @@ def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE elemen
     # Subtitles need 11 added. Header is something like this:
     # (FF01) (Length 2 bytes) (95f2) (39c3) (0000) (Text) (0x00), total added = 11 bytes
     """
-    newDialogue = subtitleElement.get('text')
-    lengthElement = int(subtitleElement.attrib.get('length'))
-    oldTextLength = lengthElement - 11
-    # oldTextLength = int(len(subtitleElement.attrib.get('textHex')) / 2 - 1) # taking the hex and dividing by 2 and removing the trailing \x00
+    newDialogueHex = subtitleElement.get('newTextHex')
+    origLength = int(subtitleElement.get('length'))
+    origTextLength = int(len(subtitleElement.get('textHex')) / 2 - 1) # taking the hex and dividing by 2 and removing the trailing \x00
 
     if debug:
-        print(f'Lengths are {len(newDialogue)} [new] and {oldTextLength} [old], {lengthElement} [Element]')
+        print(f'Lengths are {int(len(newDialogueHex) / 2)} [new] and {origLength} [old], {origLength} [Element]')
     
-    lengthChange = len(newDialogue) - oldTextLength 
-    commandLength = int(subtitleElement.get('length'))
-    newLength = commandLength + lengthChange
+    lengthChange = int(len(newDialogueHex) / 2) - origTextLength 
+    newLength = origLength + lengthChange
+
     if debug:
-        print(f'Previous command length: {commandLength}, new length will be {newLength}')
+        print(f'Previous command length: {origLength}, new length will be {newLength}')
     if lengthChange != 0:
         subtitleElement.set("length", str(newLength))
     #else:
@@ -90,7 +89,14 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "Call": # DONE
                 # Remember length - header is 11
                 newLength = origLength + lengthChange
-                newHexLength = struct.pack('>H', newLength - 9).hex()
+                if (newLength - 9) > 65535:
+                    print(f'CALL AT OFFSET {parent.get("offset")} HAS A LENGTH THAT IS TOO LONG! Please fix!')
+                    newHexLength = "0000"
+                elif (newLength - 9) < 0: 
+                    print(f'CALL AT OFFSET {parent.get("offset")} HAS A LENGTH THAT IS TOO SHORT! Please fix!')
+                    newHexLength = "0000"
+                else:
+                    newHexLength = struct.pack('>H', newLength - 9).hex()
 
                 newContent = origContent[0:18] + newHexLength
 
@@ -270,6 +276,7 @@ def processSubtitle(call: ET.Element):
         # print(f'{subtitle.get("offset")}\n{textString}:{len(textString)}\n{textString2}:{len(textString2)}\n')
 
         subtitle.set('text', textString)
+        subtitle.set('newTextHex', newText.hex())
         subtitle.set('textEscaped', "True")
         if newDict != "":
             # print(f'Dict is not Null! {newDict}')
@@ -304,6 +311,7 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
 
         # subtitle.set('text', newText.decode('utf8', errors='backslashreplace'))
         subtitle.set('text', textString)
+        subtitle.set('newTextHex', newText.hex())
         subtitle.set('textEscaped', "True")
         if newDict != "":
             # print(f'Dict is not Null! {newDict}')
@@ -401,24 +409,44 @@ def main(args=None, radioXML=None):
         case "inject":
             print(f'Unfinished!')
             # All of this is to test replacing the 140.85 call
+            jsonDataFile = args.input
+            xmlOutputFile = args.output
+            
+            jsonData = json.load(open(jsonDataFile, 'r'))
+            root = ET.parse(xmlOutputFile).getroot()
+
+            # Inject subs
+            print('injecting subs...')
+
+            # Inject Save Opts.
+            newBlockDict = next(iter(jsonData['saves'].values()))
+            for saveBlock in root.findall(".//MEM_SAVE"):
+                i = 0
+                for elem in saveBlock:
+                    newLocation = newBlockDict.get(str(i))
+                    elem.set("contentA", newLocation)
+                    elem.set("contentB", newLocation)
+                    i += 1
             """
-            usaSubs = "14085-testing/293536-decrypted-Iseeva.json"
-            jpnSubs = "14085-testing/283744-decrypted-Iseeva.json"
+            # inject codec mem names:
+            callNames: dict = jsonData['freqAdd']
+            for codecSave in root.findall(".//FREQ_ADD"):
+                offset = codecSave.get('offset')
+                codecSave.set('name', callNames.get(offset))
+            
+            # Inject user prompts:
+            prompts: dict = next(iter(jsonData['prompts'].values()))
+            for promptOption in root.findall(".//ASK_USER"):
+                i = 0
+                for option in promptOption:
+                    option.set('text', prompts.get(str(i)))
+                    i += 1"""
 
-            jsonA = json.load(open(usaSubs, 'r'))
-            jsonB = json.load(open(jpnSubs, 'r'))
-
-            jsonTools.replaceJsonText("0", "0")
-            text = json.dumps(jsonB)
-
-            if debug:
-                print(text)
-
-            with open("14085-testing/modifiedCall.json", 'w') as f:
-                f.write(text)
-                f.close()
-                
-            """
+            outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
+            xmlbytes = ET.tostring(root, encoding=None)
+            outputXml.write(xmlbytes)
+            outputXml.close()
+            
 
         case 'prepare':
 
@@ -450,7 +478,7 @@ def main(args=None, radioXML=None):
             
             # Update Save Frequency lengths (FF04) 
             print(f'Fixing call frequency saves [NOT IMPLEMENTED]')
-            count = 0
+            i = 0
             for call in root:
                 i += 1
                 print(f'Processing call {i}: offset: {call.get("offset")}')
@@ -462,7 +490,7 @@ def main(args=None, radioXML=None):
             
             # Update Prompt lengths (FF07)
             print(f'Updating Prompt Lengths...')
-            count = 0
+            i = 0
             for call in root:
                 i += 1
                 print(f'Processing call {i}: offset: {call.get("offset")}')
@@ -474,7 +502,7 @@ def main(args=None, radioXML=None):
             
             # Update Mem Save Block lengths (FF05)
             print(f'Updating Prompt Lengths...')
-            count = 0
+            i = 0
             for call in root:
                 i += 1
                 print(f'Processing call {i}: offset: {call.get("offset")}')
