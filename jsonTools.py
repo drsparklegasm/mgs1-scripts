@@ -17,12 +17,29 @@ from xml.dom.minidom import parseString
 # flags
 debug = True
 
-jsonA = open("14085-testing/38411-decrypted-Iseeva.json", 'r')
-jsonB = open("14085-testing/59333-decrypted-Iseeva.json", 'r')
+# This should be the format moving forward
+newjson = {
+    "calls": {},
+    "saves": {},
+    "freqAdd": {},
+    "prompts": {}
+}
 
-newjson: json = {}
+codecNames = {
+    "メリル" : "MERYL",
+    "キャンベル" : "CAMPBELL",
+    "メイ・リン" : "MEI LING",
+    "オタコン" : "OTACON",
+    "マスター" : "MASTER",
+    "ナスターシャ" : "NASTASHA",
+    "ディープスロート" : "DEEPTHROAT",
+}
 
-matchingCalls = {}
+matchingCalls = {
+    "0": "0",
+    "505": "910",
+    
+}
 
 def replaceJsonText(callOffsetA: str, callOffsetB: str):
     """
@@ -33,9 +50,9 @@ def replaceJsonText(callOffsetA: str, callOffsetB: str):
     global jsonContentB
     global newjson
     
-    newCallSubs = dict(zip(jsonContentB[callOffsetB].keys(), jsonContentA[callOffsetA].values()))
+    newCallSubs = dict(zip(jsonContentB["calls"][callOffsetB].keys(), jsonContentA["calls"][callOffsetA].values()))
     jsonContentB[callOffsetB] = newCallSubs
-    newjson["0"] = newCallSubs 
+    newjson["calls"].update({"0": newCallSubs}) 
 
 def writeJsonToFile(outputFilename: str):
     """
@@ -49,11 +66,11 @@ def writeJsonToFile(outputFilename: str):
 
 # test 
 
-
+"""
 if __name__ == '__main__':
-    """
-    This one is for the whole json with all call information
-    """
+"""
+# This one is for the whole json with all call information
+"""
     parser = argparse.ArgumentParser(description=f'Zip subtitles json offsets from another. \nUsage: main.py subs.json:callOffsetA offsets.json:callOffsetB [outputFilename.json]')
 
     # REQUIRED
@@ -79,5 +96,40 @@ if __name__ == '__main__':
         # If we need to do only one, you can do {"0": "0"}
         replaceJsonText(key, matchingCalls.get(key))
     
-    outputFilename = "14085-testing/modifiedCall.json"
+    outputFilename = "recompiledCallBins/modifiedCall.json"
     writeJsonToFile(outputFilename)
+"""
+
+jsonA = open("recompiledCallBins/RADIO-usa-d1-Iseeva.json", 'r')
+jsonB = open("recompiledCallBins/RADIO-jpn-d1-Iseeva.json", 'r')
+
+outputFilename = 'recompiledCallBins/modifiedCalls.json'
+
+inputJson = json.load(jsonA)
+modJson = json.load(jsonB)
+
+# Def put calls together
+for call in inputJson['calls'].keys():
+    newSubs: dict = inputJson['calls'][call]
+    destCall = matchingCalls.get(call)
+    if destCall is None:
+        continue
+    newOffsets: dict = modJson['calls'][destCall]
+    newCall = dict(zip(newOffsets.keys(), newSubs.values()))
+    newjson['calls'][destCall] = newCall
+
+# Save file names (Dock, heliport, etc)
+# is coming out as unicode for some reason...
+newSaves: dict = inputJson['saves']["38729"]
+for save in modJson['saves'].keys():
+    newjson['saves'][save] = newSaves
+
+# Save options (SAVE / DO NOT SAVE)
+options: dict = inputJson['prompts']["38649"]
+for opt in modJson['prompts'].keys():
+    newjson['prompts'][opt] = options
+
+for name in modJson['freqAdd'].keys():
+    newjson['freqAdd'][name] = codecNames.get(mod['freqAdd'].get(name))
+
+writeJsonToFile(outputFilename)
