@@ -10,6 +10,9 @@ CURRENTLY A WORK IN PROGRESS!
 
 """
 
+failedOffsets = []
+offsetFailed = False
+
 import os, sys, struct
 import argparse
 import json
@@ -68,6 +71,7 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
     Each case is changing the content block and length as appropriate.
 
     """
+    global offsetFailed
     for parent in parents:
         
         origLength = int(parent.get('length')) # length in bytes total
@@ -83,9 +87,13 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 if (newLength - 9) > 65535:
                     print(f'CALL AT OFFSET {parent.get("offset")} HAS A LENGTH THAT IS TOO LONG! Please fix!')
                     newHexLength = "0000"
+                    failedOffsets.append(parent.get("offset"))
+                    offsetFailed = True
                 elif (newLength - 9) < 0: 
                     print(f'CALL AT OFFSET {parent.get("offset")} HAS A LENGTH THAT IS TOO SHORT! Please fix!')
                     newHexLength = "0000"
+                    failedOffsets.append(parent.get("offset"))
+                    offsetFailed = True
                 else:
                     newHexLength = struct.pack('>H', newLength - 9).hex()
 
@@ -109,11 +117,16 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "IF_CHECK":
                 # Header is variable. We just need to get the hex
                 headerTextLength = len(origContent)
-                origLengthB = int(parent[0].get('length')) + 2 # Get this from THEN_DO
+                innerLength = int(parent[0].get('length')) + 2 # Get this from THEN_DO
 
                 newLength = origLength + lengthChange
-                newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
-                newHexLengthB = struct.pack('>H', origLengthB).hex() # end of line. We're assuming the THEN_DO element is already correct and stealing that length value. 
+                if newLength < 65535:
+                    newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
+                    newHexLengthB = struct.pack('>H', innerLength).hex() # end of line. We're assuming the THEN_DO element is already correct and stealing that length value. 
+                else:
+                    print(f'Offset {parent.get("offset")} has failed check!!!')
+                    newHexLengthA = "0000"
+                    newHexLengthB = "0000"
                 newContent = origContent[0:4] + newHexLengthA + origContent[ 8 : headerTextLength - 4 ] + newHexLengthB
 
                 parent.set('length', str(newLength))
@@ -369,13 +382,19 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     
     innerLength = 0
     for option in saveBlockElem:
-        contlength = int(option.get("length")) # x2 for two bytes per character TODO: Check this on recompiler
+        lengthA = len(RD.encodeJapaneseHex(option.get('contentA'))[0]) + 1
+        lengthB = len(option.get('contentB').encode("shift-jis")) + 1
+        option.set('lengthA', str(lengthA))
+        option.set('lengthB', str(lengthB))
+        contlength = lengthA + lengthB + 6 # 3 bytes per save name
+        option.set('length', contlength)
         innerLength += contlength # Each has 07{len}{content}{0x00}
+
     lengthBytes = struct.pack('>H', innerLength + 7).hex()  
     newHeader = "ff05" + lengthBytes + origContent[8:16]
 
     newLength = innerLength + 2
-    saveBlockElem.set("length", str(int(innerLength + 7)))
+    saveBlockElem.set("length", str(int(newLength)))
     saveBlockElem.set("content", newHeader)
     
     return newLength - origLength
@@ -504,10 +523,10 @@ def main(args=None, radioXML=None):
             jsonData = json.load(open(jsonDataFile, 'r'))
             root = ET.parse(xmlOutputFile).getroot()
 
-            # injectSubs(jsonData)
+            injectSubs(jsonData)
             injectSaveBlocks(jsonData)
-            # injectCallNames(jsonData)
-            # injectUserPrompts(jsonData)
+            injectCallNames(jsonData)
+            injectUserPrompts(jsonData)
 
             outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
@@ -542,10 +561,14 @@ def main(args=None, radioXML=None):
             fixPromptLengths()
             fixSaveBlockLengths()
 
-            outputXml = open(xmlOutputFile, 'wb')
-            xmlbytes = ET.tostring(root, encoding='utf8')
-            outputXml.write(xmlbytes)
-            outputXml.close()
+            if not offsetFailed:
+                outputXml = open(xmlOutputFile, 'wb')
+                xmlbytes = ET.tostring(root, encoding='utf8')
+                outputXml.write(xmlbytes)
+                outputXml.close()
+            else:
+                print(f'PREP FAILED!!! The following calls exceeded the hex length of 65535 bytes:')
+                print(failedOffsets)
 
         case _:
             print(f"Usage: xmlOps.py <operation> [input] [output] : \n\tinject = import json [input] with subtitles and inject them into an XML [output]\n\tprepare = Encode custom characters, recalculate lengths, prepare the file for. [XML Radio file is input, output is a new file]")

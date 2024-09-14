@@ -102,7 +102,7 @@ if __name__ == '__main__':
     writeJsonToFile(outputFilename)
 """
 
-jsonA = open("recompiledCallBins/RADIO-usa-d1-Iseeva-halfwidthTest.json", 'r')
+jsonA = open("recompiledCallBins/RADIO-usa-d1-Iseeva-halfwidthTest copy.json", 'r')
 jsonB = open("recompiledCallBins/RADIO-jpn-d1-Iseeva.json", 'r')
 
 outputFilename = 'recompiledCallBins/modifiedCalls.json'
