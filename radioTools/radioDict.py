@@ -13,6 +13,7 @@ foundGraphics = []
 unidentifiedGraphics = []
 
 context = open("graphicsExport/contextList.txt", 'w')
+debug = False
 
 class graphicSegment:
 
@@ -186,7 +187,8 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 
 	newBytestring = b''
 	def addCharToDict(customHex: str):
-		print(f'Character {character} was not found in custom call dict. Adding...')
+		if debug:
+			print(f'Character {character} was not found in custom call dict. Adding...')
 		index = int(len(callDict) / 72)
 		if index > 508:
 			index -= 508
@@ -232,7 +234,8 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				continue
 			if callDict == None:
 				# addCharToDict(customHex)
-				print(f'Character {character} was not found in custom call dict. Adding...')
+				if debug:
+					print(f'Character {character} was not found in custom call dict. Adding...')
 				newBytestring += bytes.fromhex('9601')
 				callDict = customHex
 			elif customHex in callDict:
@@ -248,7 +251,8 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				newBytestring += index.to_bytes()
 			else:
 				# addCharToDict(customHex)
-				print(f'Character {character} was not found in custom call dict. Adding...')
+				if debug:
+					print(f'Character {character} was not found in custom call dict. Adding...')
 				index = int(len(callDict) / 72)
 				if index > 508:
 					index -= 508

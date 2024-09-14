@@ -716,10 +716,10 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     global radioData
     global fileSize
     global output
-    #global bar
+    global bar
 
-    """    bar.maxval = fileSize
-    bar.start()"""
+    bar.maxval = fileSize
+    bar.start()
     setOutputFile(outputFilename)
 
     while offset < fileSize: # We might need to change this to Case When... as well.
@@ -761,9 +761,9 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         
         # Add length to offset for next loop
         offset += length
-        #bar.update(offset)
+        bar.update(offset)
 
-    #bar.finish()
+    bar.finish()
     output.close()
 
     if offset >= fileSize - 1:
@@ -786,6 +786,7 @@ def main(args=None):
 
     if args.verbose:
         debugOutput = True
+        radioDict.debug = True
     
     if args.split:
         splitCalls = True

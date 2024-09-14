@@ -22,14 +22,11 @@ debug = False
 # ==== Dependencies ==== #
 
 import os, struct
-# import radioTools.radioDict as radioDict
 import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
 import radioTools.radioDict as RD
-import codecs
 import xmlModifierTools as xmlFix
-import time
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
@@ -198,7 +195,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", False)[0]
+        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] # TODO: Need to change to FALSE for input half-width savegames.
         contentB = elem.get('contentB').encode("shift-jis")
         binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
@@ -295,6 +292,7 @@ def main(args=None):
     if args.debug:
         debug = True
         xmlFix.debug = True
+        RD.debug = True
 
     outputContent = b''
 
