@@ -92,11 +92,6 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     # textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
     text = text.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e')) # Replace \r\n with in-game byte codes for new lines
     
-    print(text)
-    #time.sleep(1)
-    """if not subUseOriginalHex:
-        text = text.replace(bytes.fromhex("22") , bytes.fromhex("8022")) # TODO: Replace this with the encodeText in RadioDict
-    """
     if subUseOriginalHex:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
     else:

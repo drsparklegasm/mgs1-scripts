@@ -748,7 +748,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
                 length = handleUnknown(offset)
         # TEMPORARY SHIFT TO SEE IF WE FIXED THIS
         else: # Something went wrong, we need to kinda reset
-            print(f'Something went wrong, we need to kinda reset. Offset = {offset}')
+            # print(f'Something went wrong, we need to kinda reset. Offset = {offset}')
             length = handleUnknown(offset) # This will go until we find a call frequency
         
         checkStack = len(elementStack)

@@ -53,12 +53,13 @@ while offset < size:
         offset += 2
     else:
         differ = True
-        print(f"Files break at offset {offset}.")
+        print(f"Files break at offset {offset}")
         offsetHex = struct.pack('>L', offset)
         print(f'Offset in hex: 0x{offsetHex.hex()}')
         print(f'Original: \n{originalData[offset - 10 : offset + 10].hex()}')
         print(f'New Data: \n{compareData[offset - 10 : offset + 10].hex()}')
         offset += 1
+        break
         
 
 
