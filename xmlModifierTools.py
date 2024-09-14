@@ -387,7 +387,7 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
         option.set('lengthA', str(lengthA))
         option.set('lengthB', str(lengthB))
         contlength = lengthA + lengthB + 6 # 3 bytes per save name
-        option.set('length', contlength)
+        option.set('length', str(contlength))
         innerLength += contlength # Each has 07{len}{content}{0x00}
 
     lengthBytes = struct.pack('>H', innerLength + 7).hex()  
