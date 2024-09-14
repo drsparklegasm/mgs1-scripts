@@ -274,7 +274,8 @@ def processSubtitle(call: ET.Element):
             # print(f'Dict is not Null! {newDict}')
             if newDict != callDict:
                 subtitle.set('graphicsBytes', newDict)
-                print(f'Added Dict to call')
+                if debug:
+                    print(f'Added Dict to call')
 
         # Update the lengths for this subtitle
         lengthChange = updateLengths(subtitle)
@@ -310,7 +311,8 @@ def processSubtitleThreaded(call: ET.Element, root: ET.Element) -> ET.Element:
             # print(f'Dict is not Null! {newDict}')
             if newDict != callDict:
                 call.set('graphicsBytes', newDict)
-                print(f'Added Dict to call')
+                if debug:
+                    print(f'Added Dict to call')
 
         # Update the lengths for this subtitle
         lengthChange = updateLengths(subtitle)
@@ -536,12 +538,12 @@ def main(args=None, radioXML=None):
                     print(f'\nProcessing call {count} of {numCalls}')
                     processSubtitle(call)
             
-            # fixCodecMemLengths()
-            # fixPromptLengths()
+            fixCodecMemLengths()
+            fixPromptLengths()
             fixSaveBlockLengths()
 
             outputXml = open(xmlOutputFile, 'wb')
-            xmlbytes = ET.tostring(root, encoding=None)
+            xmlbytes = ET.tostring(root, encoding='utf8')
             outputXml.write(xmlbytes)
             outputXml.close()
 
