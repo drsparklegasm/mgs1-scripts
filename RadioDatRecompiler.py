@@ -276,6 +276,7 @@ def main(args=None):
 
     # Read new radio source
     if args.prepare:
+        print(f'Preparing XML by repairing lengths...')
         root = xmlFix.init(args.input)
     else:
         radioSource = ET.parse(args.input)

@@ -386,7 +386,7 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
         lengthB = len(option.get('contentB').encode("shift-jis")) + 1
         option.set('lengthA', str(lengthA))
         option.set('lengthB', str(lengthB))
-        contlength = lengthA + lengthB + 6 # 3 bytes per save name
+        contlength = lengthA + lengthB + 4 # 3 bytes per save name
         option.set('length', str(contlength))
         innerLength += contlength # Each has 07{len}{content}{0x00}
 
@@ -542,6 +542,7 @@ def main(args=None, radioXML=None):
 
             # Subtitle updates:
             if multithreading:
+                print(f'Recomputing Subtitle Lengths. Please wait...')
                 # Pooling may not work because each element would have to be replaced with the element we process :|
                 with Pool(processes=8) as pool:
                     # Use map to process elements in parallel
