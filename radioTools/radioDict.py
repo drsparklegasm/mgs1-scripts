@@ -94,7 +94,7 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 	
 	# We need to ensure this is evenly divisible by 36 bytes:
 	if len(graphicsBytes) % 36 != 0:
-		print(f'Error! LENGTH is not even number of graphics! Assuming nulls...')
+		print(f'Error! LENGTH is not even number of graphics! Assuming nulls after...')
 
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
@@ -105,6 +105,8 @@ def makeCallDictionary(offset: int, graphicsBytes: bytes):
 	count = int(len(graphicsBytes) / 36)
 	for x in range(count):
 		segment = graphicsBytes[x * 36: (x + 1) * 36 ]
+		if segment == bytes(36):
+			break
 
 		# This section only necessary if outputtting graphics we haven't identified.
 		global foundGraphics

@@ -731,7 +731,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         if radioData[offset].to_bytes() in [b'\xFF', b'\x31']: # Commands start with FF
             length = handleCommand(offset)
         elif checkFreq(offset):
-                length = handleCallHeader(offset)
+            length = handleCallHeader(offset)
         elif radioData[offset].to_bytes() == b'\x00':
             if elementStack[-1][1] == 1:
                 length = 1
@@ -753,7 +753,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         
         checkStack = len(elementStack)
         if offset < fileSize - 2: # Temp fix for the logic at end of the file.
-            if radioData[offset + 1].to_bytes() != b'\x10':
+            if radioData[offset : offset + 2] != bytes.fromhex("ff10"):
                 checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
             output.write(f"Null! (Main loop) offset = {offset}\n")
