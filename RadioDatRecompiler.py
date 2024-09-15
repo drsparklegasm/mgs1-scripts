@@ -30,6 +30,7 @@ import xmlModifierTools as xmlFix
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
+useDWinSaveB = False
 
 newOffsets = {}
 stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
@@ -197,7 +198,10 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", subUseOriginalHex)[0] # TODO: Need to change to FALSE for input half-width savegames.
+        if useDWinSaveB or subUseOriginalHex:
+            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=True)[0] # TODO: Need to change to FALSE for input half-width savegames.
+        else:
+            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=False)[0]
         contentB = elem.get('contentB').encode("shift-jis")
         binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
@@ -290,6 +294,10 @@ def main(args=None):
     if args.hex:
         subUseOriginalHex = True
         xmlFix.subUseOriginalHex = True
+        
+    if args.double:
+        useDWinSaveB = True
+        xmlFix.useDWSB = True
     
     if args.debug:
         debug = True
@@ -339,6 +347,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--prepare', action='store_true', help="Run the text encoder and recompute lengths")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
+    parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
     
     main()
     

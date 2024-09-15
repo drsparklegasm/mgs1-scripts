@@ -31,6 +31,7 @@ root: ET.Element = None
 debug = False
 multithreading = True
 subUseOriginalHex = False
+useDWSB = False
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -390,8 +391,8 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     
     innerLength = 0
     for option in saveBlockElem:
-        lengthA = len(RD.encodeJapaneseHex(option.get('contentA'))[0]) + 1
-        if subUseOriginalHex:
+        lengthA = len(RD.encodeJapaneseHex(option.get('contentA'), useDoubleLength=False)[0]) + 1
+        if subUseOriginalHex or useDWSB:
             lengthA = len(RD.encodeJapaneseHex(option.get('contentA'), useDoubleLength=True)[0]) + 1
         lengthB = len(option.get('contentB').encode("shift-jis")) + 1
         option.set('lengthA', str(lengthA))
@@ -531,7 +532,7 @@ def main(args=None, radioXML=None):
             jsonDataFile = args.input
             xmlOutputFile = args.output
             
-            jsonData = json.load(open(jsonDataFile, 'r'))
+            jsonData = json.load(open(jsonDataFile, 'r', encoding='utf8'))
             root = ET.parse(xmlOutputFile).getroot()
 
             injectSubs(jsonData)
@@ -539,7 +540,7 @@ def main(args=None, radioXML=None):
             injectCallNames(jsonData)
             injectUserPrompts(jsonData)
 
-            outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
+            outputXml = open("mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
             outputXml.write(xmlbytes)
             outputXml.close()
