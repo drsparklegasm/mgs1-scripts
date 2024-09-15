@@ -147,7 +147,7 @@ def getFreqAddBytes(elem: ET.Element) -> bytes:
     name = attrs.get('name').encode('utf8')
     
     if length == 8:
-        elemBytes =  elemBytes + struct.pack('>H', length) + freq + name + b'\x00'
+        elemBytes = elemBytes + struct.pack('>H', length) + freq + name + b'\x00'
     
     return elemBytes
 
@@ -195,7 +195,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", True)[0] # TODO: Need to change to FALSE for input half-width savegames.
+        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", False)[0] # TODO: Need to change to FALSE for input half-width savegames.
         contentB = elem.get('contentB').encode("shift-jis")
         binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
@@ -218,15 +218,13 @@ def handleElement(elem: ET.Element) -> bytes:
         case 'VOX_CUES': 
             # ff02
             binary = getVoxBytes(elem)
-        # case 'ADD_FREQ':
-            # binary = getFreqAddBytes(elem)
-        case 'ANI_FACE' | 'ADD_FREQ' | 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD': 
+            """case 'ADD_FREQ':
+            binary = getFreqAddBytes(elem)"""
+        case 'ANI_FACE' | 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD' | 'ADD_FREQ':  # ADD_FREQ temp as a check since we set the content.
             # ff03-08, FF40
             binary = getContentBytes(elem)
         case 'USR_OPTN' | 'SAVE_OPT':
             binary = getGoblinBytes(elem)
-        case 'ADD_FREQ':
-            binary = getAddFreq(elem)
         case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN' | 'MEM_SAVE' | 'ASK_USER': 
             binary = bytes.fromhex(attrs.get('content'))
             binary += getContainerContentBytes(elem)

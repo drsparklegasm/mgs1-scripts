@@ -344,13 +344,17 @@ def fixSavePrompt(promptElement: ET.Element) -> int:
     
     innerLength = 0
     for option in promptElement:
-        innerLength += int(option.get('length'))
+        text = option.get('text')
+        optLen = len(text) + 1
+        option.set('length', optLen)
+        innerLength += optLen + 2
+
     lengthBytes = struct.pack('>H', innerLength + 3).hex()
     newHeader = "ff07" + lengthBytes
 
-    newLength = innerLength + 2
+    newLength = innerLength + 5
     promptElement.set("length", str(int(newLength)))
-    promptElement.set("content", newHeader )
+    promptElement.set("content", newHeader)
     
     return newLength - origLength
 
@@ -361,14 +365,15 @@ def fixCodecMem(memElement: ET.Element) -> int:
     """
     origLength = int(memElement.get('length'))
     origContent = memElement.get('content')
-    origCallName = memElement.get('name')
+    callName = RD.encodeJapaneseHex(memElement.get('name'))[0] # posibly add .encode('utf8')
+    nameLength = len(callName)
     
-    lengthBytes = struct.pack('>H', len(origCallName) + 7).hex()
-    newContent = "ff04" + lengthBytes + origContent[8:12] + RD.encodeJapaneseHex(origCallName)[0].hex() + "00"
+    lengthBytes = struct.pack('>H', nameLength + 5).hex()
+    newContent = "ff04" + lengthBytes + origContent[8:12] + callName.hex() + "00"
 
-    newLength = len(newContent) / 2
+    newLength = nameLength + 7
     memElement.set("length", str(int(newLength)))
-    memElement.set("content", newContent )
+    memElement.set("content", newContent)
     
     return newLength - origLength
 
@@ -393,7 +398,7 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     lengthBytes = struct.pack('>H', innerLength + 7).hex()  
     newHeader = "ff05" + lengthBytes + origContent[8:16]
 
-    newLength = innerLength + 2
+    newLength = innerLength + 9
     saveBlockElem.set("length", str(int(newLength)))
     saveBlockElem.set("content", newHeader)
     
@@ -428,9 +433,10 @@ def injectCallNames(jsonData: dict):
 
     # inject codec mem names:
     callNames: dict = jsonData['freqAdd']
-    for codecSave in root.findall(".//FREQ_ADD"):
+    for codecSave in root.findall(".//ADD_FREQ"):
         offset = codecSave.get('offset')
-        codecSave.set('name', callNames.get(offset))
+        newName = callNames.get(offset)
+        codecSave.set('name', newName)
 
 def injectUserPrompts(jsonData: dict):
     global root

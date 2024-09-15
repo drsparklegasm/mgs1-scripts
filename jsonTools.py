@@ -102,7 +102,7 @@ if __name__ == '__main__':
     writeJsonToFile(outputFilename)
 """
 
-jsonA = open("recompiledCallBins/RADIO-usa-d1-Iseeva-halfwidthTest copy.json", 'r')
+jsonA = open("recompiledCallBins/RADIO-usa-d1-Iseeva.json", 'r')
 jsonB = open("recompiledCallBins/RADIO-jpn-d1-Iseeva.json", 'r')
 
 outputFilename = 'recompiledCallBins/modifiedCalls.json'
@@ -131,8 +131,10 @@ options: dict = next(iter(inputJson['prompts'].values()))
 for opt in modJson['prompts'].keys():
     newjson['prompts'][opt] = options
 
+# Codec frequency names
 for name in modJson['freqAdd'].keys():
-    newjson['freqAdd'][name] = codecNames.get(modJson['freqAdd'].get(name))
+    newName = codecNames.get(modJson['freqAdd'].get(name))
+    newjson['freqAdd'].update({name: newName})
 
 """matches = zip(inputJson['calls'].keys(), modJson['calls'].keys())
 for item in matches:
