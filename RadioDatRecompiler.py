@@ -187,6 +187,8 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
     """
     For the innards of the Prompt user and Save Block data
     """
+    global subUseOriginalHex
+
     binary = b''
     if elem.tag ==  'USR_OPTN':
         content = "07" + int(elem.get('length')).to_bytes().hex() + elem.get('text').encode('utf8').hex() + "00"
@@ -195,7 +197,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
     elif elem.tag ==  'SAVE_OPT':
-        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", False)[0] # TODO: Need to change to FALSE for input half-width savegames.
+        contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", subUseOriginalHex)[0] # TODO: Need to change to FALSE for input half-width savegames.
         contentB = elem.get('contentB').encode("shift-jis")
         binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
@@ -287,6 +289,7 @@ def main(args=None):
 
     if args.hex:
         subUseOriginalHex = True
+        xmlFix.subUseOriginalHex = True
     
     if args.debug:
         debug = True

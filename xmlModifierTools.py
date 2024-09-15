@@ -30,6 +30,7 @@ root: ET.Element = None
 # flags
 debug = False
 multithreading = True
+subUseOriginalHex = False
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -382,12 +383,16 @@ def fixSaveBlock(saveBlockElem: ET.Element) -> int:
     Fixes the text that is written when saving the game.
     Returns the difference in length 
     """
+    global subUseOriginalHex
+
     origLength = int(saveBlockElem.get('length'))
     origContent = saveBlockElem.get('content')
     
     innerLength = 0
     for option in saveBlockElem:
         lengthA = len(RD.encodeJapaneseHex(option.get('contentA'))[0]) + 1
+        if subUseOriginalHex:
+            lengthA = len(RD.encodeJapaneseHex(option.get('contentA'), useDoubleLength=True)[0]) + 1
         lengthB = len(option.get('contentB').encode("shift-jis")) + 1
         option.set('lengthA', str(lengthA))
         option.set('lengthB', str(lengthB))
