@@ -1346,7 +1346,7 @@ graphicsData = {
 	"6aaaa9bffffe00b4003ffffc3aebac3affac3aebac3affac3aebac3ffffc3aaaac000000": "面",
 	"024aa9038ffe1b000e7e900e2de00e0bd00e07800e0b700e6eb80e3eacae0014bd000000": "幻",
 	"2802e91eaaed12fffeb6eac026aad802a9ee2aabfc2ea9b83bbdb6b7fbee71a59d000000": "滅",
-	#"0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000": "?", # 滝 Waterfall ? Probably not correct
+	"0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000":  "俺", # "俺", # 滝 Waterfall ? Probably not correct
 	"6baffebffae929dbfcbfffac7aebfc3febac3abbfc3febacba7bfcbaeaa9278a59000000": "頭",
 	"6ee6e97aebfd7ab6acabb6f91aa2982ffff82eae902eae902eaea82aaaac77bbb8000000": "?",
 	"0ffff00eaab00e00b00e00b00ffff00aeba002cb0002cb00078b096e0bae2807fd000000": "兄",
@@ -1811,7 +1811,7 @@ graphicsData = {
 	"3ffffc3aaeac3ffffc3aaeac2aaaa82ffff82eaab82eaab82ffff82c02b82c02f4000000": "胃",
 	"2803801efffe25baa9783ae81db3ac01faac0efbb82db6b428b1f478bbbd70b618000000": "液",
 	"2c6ea92cbefebfb0ee6eb0ee2eb0ee2fb0eebcb5ee6dbeee2ce4e86c00e03800e0000000": "抑",
-	"0b74d0bff9e06ba6feabbbedbffbecabb9e86ba4f8bff8b02ea4f87abaed25f588000000": "?",
+	"0b74d0bff9e06ba6feabbbedbffbecabb9e86ba4f8bff8b02ea4f87abaed25f588000000": "敷",
 	"783aa828bffc049b682d6fe079f4bd2ffff82eaab82eaab82eaab81bffe47e82bd000000": "資",
 	"0e0ea80e2ffc3faba92e7ffe2f5eb93fbee9bebffc2eaee80e2ee80e2ffe0e2ea9000000": "権",
 	"002c00bffffebaaaae6fffe90eaae00fffe00eaa900ffff00eaab00ffff00eaab0000000": "官",
