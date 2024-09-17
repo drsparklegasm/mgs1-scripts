@@ -326,12 +326,17 @@ def main(args=None):
     radioOut.write(outputContent)
     radioOut.close()
 
+    if args.stage-out:
+        stageOutFile = args.stage-out
+    else:
+        stageOutFile = 'new-STAGE.DIR'
+    
     if args.stage:
         stageDirFilename = args.stage
         stageTools.init(stageDirFilename)
         stageBytes = bytearray(stageTools.stageData)
         fixStageDirOffsets()
-        stageOut = open("new-STAGE.DIR", 'wb')
+        stageOut = open(stageOutFile), 'wb')
         stageOut.write(stageBytes)
         stageOut.close()
 
@@ -343,11 +348,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=f'recompile an XML exported from RadioDatTools.py. Usage: script.py <input.xml> [output.bin]')
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
-    parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename")
+    parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename. Use -S for output filename.")
     parser.add_argument('-p', '--prepare', action='store_true', help="Run the text encoder and recompute lengths")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
+    parser.add_argument('-S', '--stage-out', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
+    
     
     main()
     
