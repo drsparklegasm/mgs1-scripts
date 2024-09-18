@@ -9,8 +9,12 @@ I started this to finally have an un-dubbed version of Metal Gear Solid to play 
 1. Be able to extract all instructions and dialogue >> DONE
 2. Have a readable format by another tool to adjust the dialogue and replace >> Exported to json >> DONE
 3. Be able to recreate a 1:1 copy of the RADIO.DAT file when created from the tool >> DONE!
-4. Be able to create a new RADIO.DAT file with translations, offsets agnostic! >> TESTING
-5. Insert offsets into stage.dir for seamless integration, regardless of subtitle length
+4. Be able to create a new RADIO.DAT file with translations, offsets agnostic! >> DONE
+5. Insert offsets into stage.dir for seamless integration, regardless of subtitle length >> DONE
+
+# Next steps:
+
+Testing, creating a json to inject and replace the japanese dialogue completely. Once that is ready, I'll move onto Demos. 
 
 # Usage
 
@@ -41,21 +45,29 @@ options:
   ```
 
 ## Known issues:
-- MGS Integral does nto recompile correctly. I think there is extra null space between call data (after graphics data) that will need to be accounted for. 
+- MGS Integral does nto recompile correctly. I think there is extra null space between call data (after graphics data) that will need to be accounted for. The data is correct, but there's also too much graphics data. 
 - Recompiler works but will not correctly count/re-encode special characters. 
-- Still missing several kanji characters that need to be OCR'd from their graphics files. ~72-80 remain. Reach out to me if you would like to help translate them!
-- Have not tested the offset adjustments to STAGE.DIR yet. Could be faulty.
+- Still missing/incorrect kanji characters that need to be OCR'd from their graphics files. ~30 yet to identify, numerous others are wrong. Reach out to me if you would like to help translate them!
+- Have not tested the offset adjustments to STAGE.DIR yet. Could be faulty. Works so far as I've tested.
 
 This tool is now functional with some limitations:
-1. Re-encoding byte data will not accout for ANY special characters yet, which means lengths will be off. 
-2. Length calculations across the call have not been fully tested. 
+1. Save blocks need some manual tweaks in the code to be 100% accurate on recompile, but it can be done. 
+2. Length calculations should be correct. The script will warn you if a call exceeds the safe limit (length bytes are only 2, so max length in bytes of a call is 65535, if we exceed this the files may not work properly.)
 
-To use this to make changes, run it in more or less this way:
+# Using this script to replace the dialogue. 
 
-1. Use RadioDatTools.py to export an XML and json file containing the full data. 
-2. Edit the XML data. If using the json, use the jsonTools.py to inject call dialogue into XML data
-3. Use xmlModifierTools.py to re-calculate all lengths for new dialogues.
-4. Once the XML is fully completed, it's time to recompile RADIO.DAT. Use the radioDatRecompiler to recompile any valid XML into a binary DAT file. use the -S to modify STAGE.DIR offset numbers. There will be expected errors, but at this time it might work. 
+To use this to make changes, run it in more or less this way... Here's an example workflow:
+
+1. Use RadioDatTools.py to export an `XML` and `json` file containing the full data. 
+```python radioDatTools.py RADIO.DAT -zx```
+2. Edit the XML data. If using the json, use the jsonTools.py to inject call dialogue into XML data. Optionally use json tools to merge dialogue with offsets from different versions. 
+```python jsontools.py subtitles.json offsets.json```
+3. Use xmlModifierTools.py to inject the json data to the XML. Differnt aspects can be commeted out, but should match the original if untouched.
+```python xmlModifierTools.py inject RADIO-output-Iseeva.json RADIO-output.xml```
+4. Once the XML is fully completed, it's time to recompile RADIO.DAT. Use the radioDatRecompiler to recompile any valid XML into a binary DAT file. use the -S to modify STAGE.DIR offset numbers. There will be expected errors, but at this time it might work. If STAGE.DIR is specified (-s) we use that as a template to fix offsets and output a new file (use -S to set output name)
+```python RadioDatRecompiler.py -p RADIO-output.xml new-RADIO.DAT -s STAGE.DIR -S new-STAGE.DIR```
+
+There are nuances there but that's basically the gist. either `RadioRecompiler -p` or `xmlModifierTools prepare` will calculate the lenght changes needed. For more info, use -h on any script.
 
 [Note: Recompiling with the -x uses the original hex for dialogue and overrides any changes, but DOES NOT RECALCULATE LENGTHS! Use it to ensure recompilation is working, not for xml files where lengths were changed.]
 
