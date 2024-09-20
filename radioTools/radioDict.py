@@ -208,10 +208,10 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 			# print(f'New Dialogue: {dialogue}')
 	
 	for character in dialogue:
-		if ord(character) < 128:
+		if ord(character) == 65294:
+				newBytestring += b'\x80\x2e'
+		elif ord(character) < 128:
 			if useDoubleLength:
-				newBytestring += b'\x80'
-			if ord(character) == 46:
 				newBytestring += b'\x80'
 			newBytestring += character.encode('ascii')
 		elif character in characters.revSpanish:

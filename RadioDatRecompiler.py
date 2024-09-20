@@ -189,6 +189,7 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
     For the innards of the Prompt user and Save Block data
     """
     global subUseOriginalHex
+    global useDWidSaveB
 
     binary = b''
     if elem.tag ==  'USR_OPTN':
@@ -276,6 +277,7 @@ def main(args=None):
     global subUseOriginalHex 
     global stageBytes
     global debug
+    global useDWidSaveB
     
     
     if args == None:

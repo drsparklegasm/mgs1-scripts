@@ -18,7 +18,7 @@ done
 
 for original in "$output_dir"/*.xml; do
     base_filename=$(basename "$original" .xml)
-    python3 $RECOMPILESCRIPT "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.DAT" -x
+    python3 $RECOMPILESCRIPT -D "$output_dir/$base_filename.xml" "$output_dir/$base_filename-mod.DAT" -x
     if diff "$input_dir/$base_filename.DAT" "$output_dir/$base_filename-mod.DAT" >/dev/null; then
         echo "Files are the same: $original"
         ((same_count++))
