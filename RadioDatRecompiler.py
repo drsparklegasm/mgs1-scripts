@@ -200,9 +200,9 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
     elif elem.tag ==  'SAVE_OPT':
         if useDWidSaveB or subUseOriginalHex:
             contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=True)[0] # DOES THIS WITH THE FLAG NOW
-            if bytes.fromhex("2E") in binary:
+            """if bytes.fromhex("2E") in binary:
                 period = contentA.find(bytes.fromhex("2e"))
-                contentA = contentA[0 : period] + bytes.fromhex("80") + contentA[period:] # TODO: NEEDS TESTING
+                contentA = contentA[0 : period] + bytes.fromhex("80") + contentA[period:] # TODO: NEEDS TESTING"""
         else:
             contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=False)[0]
         contentB = elem.get('contentB').encode("shift-jis")

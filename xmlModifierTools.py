@@ -538,7 +538,7 @@ def main(args=None, radioXML=None):
             injectSubs(jsonData)
             injectCallNames(jsonData)
             injectUserPrompts(jsonData)
-            # injectSaveBlocks(jsonData) # Not working for some reason. 
+            injectSaveBlocks(jsonData) # Not working for some reason. 
 
             outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
