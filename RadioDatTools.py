@@ -679,37 +679,6 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     global callDict
     return radioDict.translateJapaneseHex(bytestring, callDict)
 
-"""def extractRadioCallHeaders(outputFilename: str) -> None:
-    offset = 0
-    global debugOutput
-    global fileSize
-    
-    setOutputFile(outputFilename)
-
-    # Handle inputting radio file:
-    global radioData
-
-    while offset < fileSize - 1: # We might need to change this to Case When... as well.
-        # Offset Tracking
-        if debugOutput:
-            print(f'offset is {offset}')
-
-        # MAIN LOGIC
-        if radioData[offset].to_bytes() == b'\x00': # Add logic to tally the nulls for reading ease
-            length = 1
-        elif checkFreq(offset):
-            handleCallHeader(offset) 
-            length = 11
-        else:
-            length = 1
-        offset += length
-        if offset == fileSize:
-            print(f'File was parsed successfully! Written to {outputFilename}')
-            break
-    
-    print(f'File was parsed successfully! Written to {outputFilename}')
-    output.close()"""
-
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
     global debugOutput
@@ -741,9 +710,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
                 length = 1
             elif checkFreq(offset + 1):
                 length = 1
-            """elif elementStack[-1][1] == 1:
-                length = 1
-                output.write(f'WE HANDLED A NULL AND WE DONT KNOW WHY!\n')"""
         elif len(elementStack) == 1 and not checkFreq(offset):
                 length = handleUnknown(offset)
         # TEMPORARY SHIFT TO SEE IF WE FIXED THIS
