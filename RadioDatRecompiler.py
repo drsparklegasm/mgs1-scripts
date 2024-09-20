@@ -30,7 +30,7 @@ import xmlModifierTools as xmlFix
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
-useDWinSaveB = False
+useDWidSaveB = False
 
 newOffsets = {}
 stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
@@ -196,10 +196,13 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
         binary = bytes.fromhex(content)
         if bytes.fromhex("2E") in binary:
             period = binary.find(bytes.fromhex("2e"))
-            binary = binary[0 : period] + bytes.fromhex("80") + binary[period:]
+            binary = binary[0 : period - 1] + bytes.fromhex("80") + binary[period - 1:] # TODO: NEEDS TESTING
     elif elem.tag ==  'SAVE_OPT':
-        if useDWinSaveB or subUseOriginalHex:
-            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=True)[0] # TODO: Need to change to FALSE for input half-width savegames.
+        if useDWidSaveB or subUseOriginalHex:
+            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=True)[0] # DOES THIS WITH THE FLAG NOW
+            if bytes.fromhex("2E") in binary:
+                period = contentA.find(bytes.fromhex("2e"))
+                contentA = contentA[0 : period] + bytes.fromhex("80") + contentA[period:] # TODO: NEEDS TESTING
         else:
             contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=False)[0]
         contentB = elem.get('contentB').encode("shift-jis")
@@ -296,7 +299,7 @@ def main(args=None):
         xmlFix.subUseOriginalHex = True
         
     if args.double:
-        useDWinSaveB = True
+        useDWidSaveB = True
         xmlFix.useDWSB = True
     
     if args.debug:
