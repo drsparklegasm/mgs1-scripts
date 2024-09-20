@@ -211,7 +211,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 		if ord(character) < 128:
 			if useDoubleLength:
 				newBytestring += b'\x80'
-			if ord(character) == 34:
+			if ord(character) == 46:
 				newBytestring += b'\x80'
 			newBytestring += character.encode('ascii')
 		elif character in characters.revSpanish:
