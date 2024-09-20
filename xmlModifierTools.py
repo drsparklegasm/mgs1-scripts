@@ -540,7 +540,7 @@ def main(args=None, radioXML=None):
             injectCallNames(jsonData)
             injectUserPrompts(jsonData)
 
-            outputXml = open("mergedXML.xml", 'wb')
+            outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
             outputXml.write(xmlbytes)
             outputXml.close()

@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser("Compare two binary files and figure out where 
 
 parser.add_argument('input', type=str, help="Input Filename from script (.bin).")
 parser.add_argument('output', type=str, help="Output Filename from script (.bin).")
+parser.add_argument('-a','--allDiffs', action='store_true', help="Prints all errors (as opposed to breaking at the first one)")
 
 args = parser.parse_args()
 
@@ -59,7 +60,8 @@ while offset < size:
         print(f'Original: \n{originalData[offset - 10 : offset + 10].hex()}')
         print(f'New Data: \n{compareData[offset - 10 : offset + 10].hex()}')
         offset += 1
-        break
+        if not args.allDiffs:
+            break
         
 
 
