@@ -42,7 +42,16 @@ bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
 debug = True
 
 # List of files to skip (Ex: 005.bin does not contain texts)
-skipFilesList = ['005.bin']
+skipFilesListD1 = ['demo-5',
+                 'demo-6',
+                 'demo-31',
+                 'demo-33',
+                 'demo-35',
+                 'demo-63',
+                 'demo-67',
+                 'demo-71',
+                 'demo-72',
+                 ]
 
 # Set up progress bar
 bar.maxval = len(bin_files)
