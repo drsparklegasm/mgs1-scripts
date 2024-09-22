@@ -42,7 +42,7 @@ patternC = bytes.fromhex("0104 2000 0002")
 patternD = bytes.fromhex("0104 2000")
 
 # flags
-debug = False
+debug = True
 
 # List of files to skip (005.bin does not contain texts)
 skipFilesList = ['005.bin']
@@ -54,15 +54,17 @@ bar.start()
 
 # DEBUG
 if debug:
-    print(f'Only doing Call 001.bin!')
-    # bin_files = ['goblin-tools/demo/jpn/001.bin']
+    print(f'Only doing demo-1.bin!')
+    # bin_files = ['demoWorkingDir/jpn/bins/demo-1.bin']
 
 def getTextOffsets(textToAnalyze: bytes) -> list:
     global debug
     global patternD
     
+    startingPoint = struct.unpack("<H", textToAnalyze[10:12])[0]
+    
     segments = []
-    offset = 0
+    offset = startingPoint
     # Search for the second pattern while looking for size pointers
     while offset < len(textToAnalyze):
         if debug:
@@ -70,11 +72,18 @@ def getTextOffsets(textToAnalyze: bytes) -> list:
         # Check if the specified pattern is found, and if so, exit the loop # bytes.fromhex("0104 2000 0002")
         if textToAnalyze[offset:offset + 4] == patternD: # This is then end of the pattern
             break
-        if textToAnalyze[offset] == 0x00: # This is the last segment, always the same length?
-            segments.append((offset, offset + 52))
+        if textToAnalyze[offset] == 0x00: # This is the last segment, always the same length? # TODO CLEAN THIS UP
+            lastEnd = textToAnalyze.find(bytes.fromhex('00'), offset + 16)
+            subset = textToAnalyze[offset: lastEnd]
+            evenBytes = (4 - (len(subset) % 4))
+            subset = textToAnalyze[offset: lastEnd + evenBytes]
+            print(f'Final length = {len(subset)}') 
+            segments.append((offset, len(subset)))
+            # callDictBytes = textToAnalyze[offset + len(subset): -4 ]
             break
-        # Extract the double byte value (little-endian) as a pointer to the size
-        textSize = struct.unpack('<H', textToAnalyze[offset:offset + 2])[0]
+        else:
+            # Extract the double byte value (little-endian) as a pointer to the size
+            textSize = struct.unpack('<H', textToAnalyze[offset:offset + 2])[0]
 
         # Append the size pointer and its offset to the list
         segments.append((offset, textSize))
@@ -83,11 +92,12 @@ def getTextOffsets(textToAnalyze: bytes) -> list:
         offset += textSize
     return segments
 
-def getDialogue(offsets: list, textData: bytes) -> list:
+def getDialogue(offsets: list, textData: bytes, graphicsData: bytes) -> list:
     global debug
     dialogue = []
+    demoDict = RD.makeCallDictionary(0, graphicsData)
     for segment in offsets:
-            text = RD.translateJapaneseHex(textData[segment[0] + 16: segment[0] + segment[1]], "")
+            text = RD.translateJapaneseHex(textData[segment[0] + 16: segment[0] + segment[1]], demoDict)
             # text = text.encode(encoding='utf8', errors='ignore')
             if debug:
                 print(text)
@@ -139,11 +149,26 @@ for bin_file in bin_files:
     # Check if the first pattern was found
     if offsetA != -1:
         # Initialize offset with the initial pattern offset # 0x1B8 / 440
-        textToAnalyze = demoData[offsetA + 52 : offsetC]
+        lengthHeaderA: bytes = demoData[offsetA: offsetA + 32]
+        totalLength = struct.unpack("<H", lengthHeaderA[-3:-1])[0]
+        lengthHeaderB = demoData[offsetA + 32: offsetA + 64 ]
+        # headerLength = struct.unpack("<H", textToAnalyze[10:12])[0]
+        
+        bytesToMatch = offsetA + 52
+        bytesToMatchEnd = offsetC
+        
+        # This is the full thing after length A (0x160)
+        textToAnalyze = demoData[offsetA + 32 : offsetA + 32 + totalLength]
+        print(textToAnalyze[10:12])
 
         # Create a list to store size pointers and their offsets
         segments = getTextOffsets(textToAnalyze)
-        texts: list = getDialogue(segments, textToAnalyze)
+        offset, finalLength = segments[-1]
+        graphicsData = textToAnalyze[offset + finalLength: -4]
+        print(len(graphicsData) % 36)
+        texts: list = getDialogue(segments, textToAnalyze, graphicsData)
+        
+        
 
     offsetB = demoData.find(patternB, offsetC)
     if offsetB != -1:
@@ -155,7 +180,7 @@ for bin_file in bin_files:
 
         # Create a list to store size pointers and their offsets
         segments = getTextOffsets(textToAnalyze)
-        texts.extend(getDialogue(segments, textToAnalyze))
+        texts.extend(getDialogue(segments, textToAnalyze, b""))
     
 
     

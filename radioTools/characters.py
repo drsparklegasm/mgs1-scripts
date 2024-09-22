@@ -2385,6 +2385,7 @@ graphicsData = {
 	#"1e3ffe2bbbae76fbae7fbbae2e7ffebff9de6ebaeaaefaea3f7bfe6ff82e7ab82d000000": "?",
 	#"2c3af82c3aae2c1aa8bfbbac6ebbfc2cbbac2cbbac2fbbfcbebaa9a46eb900796d000000": "?",
 	#"2ffff82eaab82eaab81aaaa42aaea83aadac3aadac1aaaa06aaaa96beaf92ffeb8000000": "?",
+ 	#"003800003800003ff8003aa40038001abaa42ffff82c00382c00382ffff82eaab8000000": "?",
 }
 
 revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))

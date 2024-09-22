@@ -132,7 +132,7 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: #
 	customCharacter = False
 	while i < len(bytestring) - 1:
 		# print(f'i is {i}\n') # For debugging
-		if bytestring[i].to_bytes() in ( b'\x96' , b'\x97' , b'\x98'):
+		if bytestring[i].to_bytes() in ( b'\x96' , b'\x97' , b'\x98', b'\x9c'): # TEMP CHANGE, might last. TODO: Review
 			customCharNum = int(bytestring[i + 1])
 			if bytestring[i].to_bytes() ==  b'\x97':
 				customCharNum += 254
