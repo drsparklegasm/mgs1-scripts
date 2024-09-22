@@ -24,28 +24,24 @@ demoScriptData: dict = {}
 
 bar = progressbar.ProgressBar()
 
+version = "usa"
+version = "jpn"
+
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
-inputDir = 'demoWorkingDir/jpn/bins'
-outputDir = 'demoWorkingDir/jpn/texts'
-outputJsonFile = "demoWorkingDir/jpn/demoText.json"
+inputDir = f'demoWorkingDir/{version}/bins'
+outputDir = f'demoWorkingDir/{version}/texts'
+os.makedirs(outputDir, exist_ok=True)
+outputJsonFile = f"demoWorkingDir/{version}/demoText-{version}.json"
 
+# Grab all files in the directory and sort into order.
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
 bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
-
-os.makedirs(outputDir, exist_ok=True)
-outputJsonFile = "demoWorkingDir/jpn/demoText.json"
-
-# Define the first pattern to search for in hexadecimal
-patternA = bytes.fromhex("3f ff 0c 00 02 01 00 00 00 00 00 00 10 08 00 00 03 00 00 00 04 08 00 00 01 00 00 00 03")
-patternB = bytes.fromhex("ff ff ff 7f 10 00")
-patternC = bytes.fromhex("0104 2000 0002")
-patternD = bytes.fromhex("0104 2000")
 
 # flags
 debug = True
 
-# List of files to skip (005.bin does not contain texts)
+# List of files to skip (Ex: 005.bin does not contain texts)
 skipFilesList = ['005.bin']
 
 # Set up progress bar
@@ -56,9 +52,9 @@ bar.start()
 # DEBUG
 if debug:
     print(f'Only doing demo-1.bin!')
-    # bin_files = ['demoWorkingDir/jpn/bins/demo-1.bin']
+    # bin_files = [f'demoWorkingDir/{version}/bins/demo-1.bin']
 
-def getTextOffsets(textToAnalyze: bytes) -> tuple[list, bytes]:
+def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
     global debug
     
     startingPoint = struct.unpack("<H", textToAnalyze[18:20])[0]
@@ -164,6 +160,8 @@ def findOffsets(byteData: bytes, pattern: bytes) -> list:
 for bin_file in bin_files:
     # Skip files in the skip list
     filename = os.path.basename(bin_file)
+
+    # Manual override to skip certain demos
     if filename in skipFilesList:
         continue
 
@@ -182,59 +180,13 @@ for bin_file in bin_files:
     for offset in textOffsets:
         length = struct.unpack('<H', demoData[offset + 5: offset + 7])[0]
         subset = demoData[offset: offset + 4 + length]
-        textHexes, graphicsBytes = getTextOffsets(subset)
+        textHexes, graphicsBytes = getTextHexes(subset)
         texts.append(getDialogue(textHexes, graphicsBytes))
     
-
-    """
-    # Find the first pattern in the binary demoData
-    offsetA = demoData.find(patternA)
-    offsetB = demoData.find(patternB)
-    offsetC = demoData.find(patternC)
-
-    if debug:
-        print(f'Found first pattern: {offsetA}')
-        print(f'Found second pattern: {offsetB}')
-        print(f'Found third pattern: {offsetC}')
-
-    # Check if the first pattern was found
-    if offsetA != -1:
-        # Initialize offset with the initial pattern offset # 0x1B8 / 440
-        lengthHeaderA: bytes = demoData[offsetA: offsetA + 32]
-        totalLength = struct.unpack("<H", lengthHeaderA[-3:-1])[0]
-        lengthHeaderB = demoData[offsetA + 32: offsetA + 64 ]
-        # headerLength = struct.unpack("<H", textToAnalyze[10:12])[0]
-        
-        bytesToMatch = offsetA + 52
-        bytesToMatchEnd = offsetC
-        
-        # This is the full thing after length A (0x160)
-        textToAnalyze = demoData[offsetA + 32 : offsetA + 32 + totalLength]
-        print(textToAnalyze[10:12])
-
-        # Create a list to store size pointers and their offsets
-        segments = getTextOffsets(textToAnalyze)
-        offset, finalLength = segments[-1]
-        graphicsData = textToAnalyze[offset + finalLength: -4]
-        print(len(graphicsData) % 36)
-        texts: list = getDialogue(segments, textToAnalyze, graphicsData)
-    
-    offsetB = demoData.find(patternB, offsetC)
-    if offsetB != -1:
-        print(f'More data was found! {bin_file}!')
-        # video_data_size = int.from_bytes(demoData[offsetB + 6:offsetB + 8], byteorder='little')
-        # print(f'Video data size: {video_data_size:x}')
-        lengthOfText = struct.unpack('<H', demoData[offsetB + 8 :offsetB + 10])[0]
-        textToAnalyze = demoData[ offsetB + 16 : offsetB + lengthOfText] 
-
-        # Create a list to store size pointers and their offsets
-        segments = getTextOffsets(textToAnalyze)
-        texts.extend(getDialogue(segments, textToAnalyze, b""))
-    """
     basename = filename.split('.')[0]
     demoScriptData[basename] = textToDict(texts)
-    writeTextToFile(f'{outputDir}/{basename}.txt', texts)
+    writeTextToFile(f'{outputDir}/{basename}-{version}.txt', texts)
     
 with open(outputJsonFile, 'w') as f:
-    f.write(json.dumps(demoScriptData))
+    f.write(json.dumps(demoScriptData, ensure_ascii=False))
     f.close()
