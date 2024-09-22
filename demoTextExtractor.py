@@ -25,7 +25,7 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-version = "jpn"
+# version = "jpn"
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
@@ -181,7 +181,7 @@ for bin_file in bin_files:
         length = struct.unpack('<H', demoData[offset + 5: offset + 7])[0]
         subset = demoData[offset: offset + 4 + length]
         textHexes, graphicsBytes = getTextHexes(subset)
-        texts.append(getDialogue(textHexes, graphicsBytes))
+        texts.extend(getDialogue(textHexes, graphicsBytes))
     
     basename = filename.split('.')[0]
     demoScriptData[basename] = textToDict(texts)
