@@ -20,7 +20,7 @@ import progressbar
 from radioTools import radioDict as RD
 import json
 
-import demoTextExtractor as DTE
+import myScripts.DemoTools.demoTextExtractor as DTE
 
 version = "usa"
 version = "jpn"

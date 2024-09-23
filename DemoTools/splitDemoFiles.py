@@ -1,3 +1,7 @@
+"""
+I don't remember who wrote this. Looks like mine but could've been Goblin. 
+Either way... modified.
+
 # Script for working with Metal Gear Solid data
 #
 # Copyright (C) 2023 Green_goblin (https://mgsvm.blogspot.com/)
@@ -5,22 +9,22 @@
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
+"""
 
 import os
 
 version = 'usa'
 version = 'jpn'
 filename = f"demoWorkingDir/originalDats/DEMO-{version}-d1.DAT"
+outputDir = f"demoWorkingDir/{version}/bins"
+os.makedirs(f'demoWorkingDir/{version}/bins', exist_ok=True)
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
 
-outputDir = f"demoWorkingDir/{version}/bins"
-
-offsets = []
-os.makedirs(f'demoWorkingDir/{version}/bins', exist_ok=True)
 opening = b'\x10\x08\x00\x00'  # Adjusted opening pattern
 
+offsets = []
 def findDemoOffsets():
     offset = 0
     while offset < len(demoData) - 4:  # Adjusted for the new opening length
