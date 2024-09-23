@@ -42,16 +42,17 @@ bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
 debug = True
 
 # List of files to skip (Ex: 005.bin does not contain texts)
-skipFilesListD1 = ['demo-5',
-                 'demo-6',
-                 'demo-31',
-                 'demo-33',
-                 'demo-35',
-                 'demo-63',
-                 'demo-67',
-                 'demo-71',
-                 'demo-72',
-                 ]
+skipFilesListD1 = [
+    'demo-5',
+    'demo-6',
+    'demo-31',
+    'demo-33',
+    'demo-35',
+    'demo-63',
+    'demo-67',
+    'demo-71',
+    'demo-72',
+]
 
 # Set up progress bar
 bar.maxval = len(bin_files)
@@ -63,7 +64,12 @@ if debug:
     print(f'Only doing demo-1.bin!')
     # bin_files = [f'demoWorkingDir/{version}/bins/demo-1.bin']
 
-def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
+def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]: 
+    """
+    This just grabs all the text from each sector of the text area.
+    We just grab the hex and return it. We also return the custom 
+    character bytes at the end, which should always make a dictionary.
+    """
     global debug
     
     startingPoint = struct.unpack("<H", textToAnalyze[18:20])[0]
@@ -102,9 +108,10 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
 def getTextAreaOffsets(demoData: bytes) -> list:
     """
     This is awful, but it should to a certain degree find demo offset spots.
+    If there's a better way to do this lmk, but it's not too inefficient. 
     """
     patternA = b".\x00\x00." + b"...\x00" + b"..\x00\x00..\x00\x00\x10\x00.."
-    # ?? 00 00 ?? ?? ?? ?? 00 ?? ?? 00 00 ?? ?? 00 00 10 00 
+    # ?? 00 00 ?? ?? ?? ?? 00 ?? ?? 00 00 ?? ?? 00 00 10 00 >> For IMHEX usage
     patternB = bytes.fromhex("FF FF FF 7F 10 00")
 
     matches = re.finditer(patternA, demoData, re.DOTALL)
@@ -171,7 +178,7 @@ for bin_file in bin_files:
     filename = os.path.basename(bin_file)
 
     # Manual override to skip certain demos
-    if filename in skipFilesList:
+    if filename in skipFilesListD1:
         continue
 
     if debug:
