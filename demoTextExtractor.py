@@ -25,7 +25,7 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
@@ -129,6 +129,16 @@ def getTextAreaOffsets(demoData: bytes) -> list:
 
     return finalMatches
 
+def getTextAreaBytes(offset, demoData):
+    """
+    Returns the data from that offset found in the amount we expect 
+    for processing. 
+    """
+    length = struct.unpack('<H', demoData[offset + 5: offset + 7])[0]
+    subset = demoData[offset: offset + 4 + length]
+
+    return subset
+
 def getDialogue(textHexes: list, graphicsData: bytes) -> list:
     global debug
     global filename
@@ -172,37 +182,38 @@ def findOffsets(byteData: bytes, pattern: bytes) -> list:
             foundPatterns.append(pattern)
     return foundPatterns
 
-# Loop through each .bin file in the folder
-for bin_file in bin_files:
-    # Skip files in the skip list
-    filename = os.path.basename(bin_file)
+if __name__ == "__main__":
+    # Loop through each .bin file in the folder
+    for bin_file in bin_files:
+        # Skip files in the skip list
+        filename = os.path.basename(bin_file)
 
-    # Manual override to skip certain demos
-    if filename in skipFilesListD1:
-        continue
+        # Manual override to skip certain demos
+        if filename in skipFilesListD1:
+            continue
 
-    if debug:
-        print(f"Processing file: {bin_file}")
+        if debug:
+            print(f"Processing file: {bin_file}")
 
-    # Open the binary file for reading in binary mode
-    with open(bin_file, 'rb') as binary_file:
-        demoData = binary_file.read()
-    
-    textOffsets = getTextAreaOffsets(demoData)
+        # Open the binary file for reading in binary mode
+        with open(bin_file, 'rb') as binary_file:
+            demoData = binary_file.read()
+        
+        textOffsets = getTextAreaOffsets(demoData)
 
-    print(f'{os.path.basename(bin_file)}: {textOffsets}')
+        print(f'{os.path.basename(bin_file)}: {textOffsets}')
 
-    texts = []
-    for offset in textOffsets:
-        length = struct.unpack('<H', demoData[offset + 5: offset + 7])[0]
-        subset = demoData[offset: offset + 4 + length]
-        textHexes, graphicsBytes = getTextHexes(subset)
-        texts.extend(getDialogue(textHexes, graphicsBytes))
-    
-    basename = filename.split('.')[0]
-    demoScriptData[basename] = textToDict(texts)
-    writeTextToFile(f'{outputDir}/{basename}-{version}.txt', texts)
-    
-with open(outputJsonFile, 'w') as f:
-    f.write(json.dumps(demoScriptData, ensure_ascii=False))
-    f.close()
+        texts = []
+
+        for offset in textOffsets:
+            subset = getTextAreaBytes(offset, demoData)
+            textHexes, graphicsBytes = getTextHexes(subset)
+            texts.extend(getDialogue(textHexes, graphicsBytes))
+        
+        basename = filename.split('.')[0]
+        demoScriptData[basename] = textToDict(texts)
+        writeTextToFile(f'{outputDir}/{basename}.txt', texts)
+        
+    with open(outputJsonFile, 'w') as f:
+        f.write(json.dumps(demoScriptData, ensure_ascii=False))
+        f.close()
