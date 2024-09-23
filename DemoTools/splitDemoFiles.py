@@ -15,6 +15,7 @@ import os
 
 version = 'usa'
 version = 'jpn'
+
 filename = f"demoWorkingDir/originalDats/DEMO-{version}-d1.DAT"
 outputDir = f"demoWorkingDir/{version}/bins"
 os.makedirs(f'demoWorkingDir/{version}/bins', exist_ok=True)

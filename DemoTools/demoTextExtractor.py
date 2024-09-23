@@ -12,12 +12,13 @@ This is really heavily based on his awesome work.
 
 """
 
-import os
+import os, sys
+sys.path.append(os.path.abspath('../'))
 import re
 import glob
 import struct
 import progressbar
-from radioTools import radioDict as RD
+import radioTools.radioDict as RD
 import json
 
 demoScriptData: dict = {}

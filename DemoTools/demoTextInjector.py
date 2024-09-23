@@ -12,15 +12,16 @@ This is really heavily based on his awesome work.
 
 """
 
-import os
+import os, sys
+sys.path.append(os.path.abspath('../'))
 import re
 import glob
 import struct
 import progressbar
-from radioTools import radioDict as RD
+import radioTools.radioDict as RD
 import json
 
-import myScripts.DemoTools.demoTextExtractor as DTE
+import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
 version = "jpn"
@@ -41,8 +42,8 @@ bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
 injectTexts = json.load(open(injectJson, 'r'))
 
 skipFilesListD1 = [
-    'demo-5',
-    'demo-6',
+    'demo-05',
+    'demo-06',
     'demo-31',
     'demo-33',
     'demo-35',

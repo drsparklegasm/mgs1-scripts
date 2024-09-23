@@ -1,2 +1,3 @@
-import sys
-sys.path.append('/home/solidmixer/projects/mgs1-undub/myScripts')
+# radioTools/__init__.py
+PACKAGE_NAME = "Radio Tools"
+VERSION = "1.0"

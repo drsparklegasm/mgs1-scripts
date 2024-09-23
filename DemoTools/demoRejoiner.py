@@ -3,10 +3,10 @@ import re
 import glob
 import struct
 import progressbar
-from radioTools import radioDict as RD
+import radioTools.radioDict as RD
 import json
 
-import myScripts.DemoTools.demoTextExtractor as DTE
+import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
 version = "jpn"
