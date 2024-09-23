@@ -37,7 +37,7 @@ def splitDemoFiles():
             end = offsets[i + 1]
         else:
             end = len(demoData) - 1
-        f = open(f'{outputDir}/demo-{i + 1}.bin', 'wb')
+        f = open(f'{outputDir}/demo-{i + 1:02}.bin', 'wb')
         f.write(demoData[start:end])
         f.close()
         print(f'Demo {i + 1} written!')
