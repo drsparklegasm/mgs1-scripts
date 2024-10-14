@@ -76,8 +76,9 @@ def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
     print(f'{width} x {height}')
     for line in lines:
         print(f'{len(line)}')
+    
     print(f'Height is {height}, we have {len(lines)} lines!')
-    return newGfxBytes
+    return lines
 
 def getImages(fileData: bytes) -> list:
     images = []
@@ -91,6 +92,9 @@ def getImages(fileData: bytes) -> list:
     
     return images
 
+def outputToTGA():
+    print(f'Dostufff')
+
 # def analyzeImage(imgData: bytes) -> tuple[bytes, int, int, bytes]:
 
 if __name__ == "__main__":
@@ -99,6 +103,11 @@ if __name__ == "__main__":
     print(f'{len(imageList)} images found!')
     for image in imageList:
         size = (image.width, image.height)
-        decompressBytes(image.compData, size)
+        lines = decompressBytes(image.compData, size)
+        print(f'Color Palette:\n{image.palette.hex()}')
+        print(f'Lines: \n')
+        for line in lines:
+            print(line.hex())
+        
     
     
