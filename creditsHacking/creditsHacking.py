@@ -20,7 +20,10 @@ Notes from Green Goblin:
 
 """
 
+creditsFilename = "creditsHacking/imagedata2.bin"
+creditsFilename = "creditsHacking/00b8ba.rar"
 creditsFilename = "creditsHacking/00b8b9.rar"
+creditsFilename = "creditsHacking/00eae8.rar"
 creditsData = open(creditsFilename, 'rb').read()
 
 class imageData:
@@ -51,52 +54,77 @@ def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
     pointer = 0
     while pointer < length:
         command = gfxData[pointer]
+        
+        """if len(newGfxBytes) > int(width / 2):
+            print(f'We got off somewhere! Pointer is {pointer}')"""
+            
         match command:
             case 0x00:
-                lines.append(newGfxBytes)
-                allbytesGenerated += newGfxBytes
-                if len(newGfxBytes) != int(width / 2):
-                    print(f'Line did not match! Width: {width}, bytes: {len(newGfxBytes)}. Should be doubled!')
-                    # Temporarily finish the line: ???
-                    numBytesToAdd = int(width - (len(newGfxBytes) / 2))
-                    newGfxBytes += bytes.fromhex('ff') * numBytesToAdd
-                newGfxBytes = b''
-                pointer += 1
-            case 0x40:
-                newGfxBytes += bytes.fromhex('ff') * int(width / 2)
+                # End of a line
                 lines.append(newGfxBytes)
                 allbytesGenerated += newGfxBytes
                 newGfxBytes = b''
                 pointer += 1
+                
+                
             case 0x80:
+                print(f'We hit an 0x80 in the middle of a line! Position: {pointer}')
+                """
+            
+                # New logic (before removal)
+                if command == 0x80:
+                    fillByte = bytes.fromhex('00')
+                else:
+                    fillByte = bytes.fromhex('FF')
+
+                # newGfxBytes += fillByte * int(width / 2)
+                remainLine = int(width / 2) - len(newGfxBytes)
+                newGfxBytes += fillByte * remainLine
+                
+                lines.append(newGfxBytes)
+                allbytesGenerated += newGfxBytes
+
+                newGfxBytes = fillByte * (int(width / 2 ) - remainLine)
+                pointer += 1
+                
+            case 0x80:
+                print(f'Full line 0x80! {pointer}')
                 newGfxBytes += bytes.fromhex('00') * int(width / 2)
                 lines.append(newGfxBytes)
                 allbytesGenerated += newGfxBytes
                 newGfxBytes = b''
-                pointer += 1
+                pointer += 1"""
+            
             case _:
                 if command < 0x80:
+                    # The simple one
                     dataToAdd = gfxData[pointer + 1: pointer + 1 + command]
                     newGfxBytes += dataToAdd
                     pointer += command + 1
+
                 elif command > 0x80:
+                    # Find number of bytes to add
                     numBytesToAdd = command - 0x80
+                    # How far back do we go to find the byte(s) we're adding
                     position = 0 - gfxData[pointer + 1]
-                    if numBytesToAdd > (0 - position):
-                        if abs(position) <= len(newGfxBytes):
-                            bytesToRepeat = newGfxBytes[position:]
-                        else:
-                            bytesToRepeat = allbytesGenerated[position:]
+                    # bytesToRepeat = newGfxBytes[position:]
+                    if numBytesToAdd > abs(position):
+                        bytesToRepeat = newGfxBytes[position:]
+
+                        if len(bytesToRepeat) > 1:
+                            print(f'Coord: {len(lines), len(newGfxBytes) * 2}')
+                            # I'm not sure what to do in this secnario!
+                            print(f'{pointer}: Num to be added: {numBytesToAdd}, Bytes template: {len(bytesToRepeat)}, will repeat {int(numBytesToAdd / len(bytesToRepeat))} times!')
+                        
+                        newGfxBytes += bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
                     else:
-                        if abs(position) <= len(newGfxBytes):
-                            bytesToRepeat = newGfxBytes[position:position + numBytesToAdd]
-                        else:
-                            bytesToRepeat = allbytesGenerated[position:position + numBytesToAdd]
-                    newGfxBytes += bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
+                        # print(f'Case when Number of Bytes ot add is less than position!')
+                        newGfxBytes += newGfxBytes[position: position + numBytesToAdd]
+                    # Adjust pointer + 2
                     pointer += 2
 
-    print(f'{width} x {height}')
-    lines.remove(b'')
+    # print(f'{width} x {height}')
+    # lines.remove(b'')
     print(f'Height is {height}, we have {len(lines)} lines!')
     
     return lines
@@ -122,7 +150,7 @@ def getColors(palette: bytes) -> list:
     # Quick def for getting the RGB values
     def getRGBfromHex(colorBytes: bytes) -> tuple [int, int, int]:
         # Swap the two bytes for little-endian (since color is coming in as a 16-bit integer)
-        color = int.from_bytes(colorBytes[i:i+2], byteorder='big')
+        color = int.from_bytes(colorBytes, byteorder='big')
         color = (color >> 8) | ((color & 0xFF) << 8)
 
         # Mask out the first bit (16th bit, which is always 0)
@@ -151,13 +179,12 @@ def getColors(palette: bytes) -> list:
     
 def exportImage(filename: str, image: imageData) -> None:
     # Convert each line of hex into bytes
+    palette = getColors(image.palette)
     pixel_data = decompressBytes(image.compData, (image.width, image.height))
 
     # Define the image dimensions (you'll need to specify width and height based on your data)
     width = image.width  
     height = image.height
-    
-    palette = getColors(image.palette)
 
     # Create an empty image array
     image_array = np.zeros((height, width, 3), dtype=np.uint8)
@@ -176,7 +203,7 @@ def exportImage(filename: str, image: imageData) -> None:
     # Create and save the image
     image = Image.fromarray(image_array)
     # image.show()  # This will display the image
-    image.save(filename, format="tga")
+    image.save(filename)
 
 # def analyzeImage(imgData: bytes) -> tuple[bytes, int, int, bytes]:
 
@@ -186,6 +213,7 @@ if __name__ == "__main__":
     print(f'{len(imageList)} images found!')
     for i, image in enumerate(imageList):
         exportImage(f'file-{i}.tga', image)
+        print(f'IMAGE {i} DONE!\n=========================================================')
         
         
         
