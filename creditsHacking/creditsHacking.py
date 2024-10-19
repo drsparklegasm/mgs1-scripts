@@ -24,6 +24,16 @@ creditsFilename = "creditsHacking/imagedata2.bin"
 creditsFilename = "creditsHacking/00b8ba.rar"
 creditsFilename = "creditsHacking/00b8b9.rar"
 creditsFilename = "creditsHacking/00eae8.rar"
+creditsFilename = "creditsHacking/goblinExample/spanishBinFile.bin"
+# creditsFilename = "creditsHacking/jpn/00eae8.rar"
+
+filesToRun = [
+    "creditsHacking/00eae8.rar",
+    "creditsHacking/goblinExample/spanishBinFile.bin",
+    "creditsHacking/jpn/00eae8.rar"
+]
+
+spanish = True
 creditsData = open(creditsFilename, 'rb').read()
 
 class imageData:
@@ -34,6 +44,7 @@ class imageData:
     palette: bytes
     dataLength: int
     compData: bytes
+    lines = []
     
     def __init__(self, allData: bytes):
         self.width = struct.unpack('<H', allData[0:2])[0]
@@ -44,92 +55,97 @@ class imageData:
         self.dataLength = struct.unpack('<L', allData[36:40])[0]
         self.compData = allData[40: 40 + self.dataLength]
         
-def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
+# def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
+def decompressBytes(image: imageData) -> bytes:
+    global spanish
+    gfxData = image.compData
+    width, height = image.width, image.height
     newGfxBytes = b''
     allbytesGenerated = b''
     lines = []
-    width, height = size
     length = len(gfxData)
     
     pointer = 0
     while pointer < length:
+        # Before we evaluate, check if we're over length. If so, add the line and reset.
+        if len(newGfxBytes) > int(width / 2):
+            lines.append(newGfxBytes[0:int(width / 2)])
+            allbytesGenerated += newGfxBytes
+            newGfxBytes = b''
+            # This is to be used in conjunction with the other logic for > 0x80"""
+
         command = gfxData[pointer]
-        
-        """if len(newGfxBytes) > int(width / 2):
-            print(f'We got off somewhere! Pointer is {pointer}')"""
             
-        match command:
-            case 0x00:
-                # End of a line
-                lines.append(newGfxBytes)
-                allbytesGenerated += newGfxBytes
-                newGfxBytes = b''
-                pointer += 1
+        if command == 0x00:
+            # End of a line
+            lines.append(newGfxBytes)
+            allbytesGenerated += newGfxBytes
+            newGfxBytes = newGfxBytes[int(width / 2):]
+            pointer += 1
                 
-                
-            case 0x80:
-                print(f'We hit an 0x80 in the middle of a line! Position: {pointer}')
-                """
+        elif command == 0x80 or (spanish and command == 0x40):
+            # New logic (before removal)
+            if command == 0x80:
+                fillByte = bytes.fromhex('00')
+            else:
+                fillByte = bytes.fromhex('FF')
+
+            # Find remaining bytes and fill with color
+            remainLine = int(width / 2) - len(newGfxBytes)
+            newGfxBytes += fillByte * remainLine
             
-                # New logic (before removal)
-                if command == 0x80:
-                    fillByte = bytes.fromhex('00')
+            # Add to the lines
+            lines.append(newGfxBytes)
+            allbytesGenerated += newGfxBytes
+            
+            # In case this was hit mid-line, fill the rest on the next line
+            newGfxBytes = fillByte * (int(width / 2 ) - remainLine)
+            pointer += 1
+
+        elif command < 0x80:
+            # The simple one
+            dataToAdd = gfxData[pointer + 1: pointer + 1 + command]
+            newGfxBytes += dataToAdd
+            pointer += command + 1
+
+        else: # command > 0x80:
+            # Find number of bytes to add
+            numBytesToAdd = command - 0x80
+            # How far back do we go to find the byte(s) we're adding
+            position = 0 - gfxData[pointer + 1]
+            # bytesToRepeat = newGfxBytes[position:]
+            if numBytesToAdd > abs(position):
+                bytesToRepeat = newGfxBytes[position:]
+                # If we just sent back a line, grab from last bytes done
+                if len(newGfxBytes) == 0: 
+                    bytesToRepeat = allbytesGenerated[position:]
+                newGfxBytes += bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
+                # Checking for uneven repeats, we repeat until the numBytes is satisfied
+                if numBytesToAdd % abs(position) > 0:
+                    # print(f'Line: {len(lines)} Adding {numBytesToAdd}, but only {abs(position)} to work with!')
+                    addbytes = bytesToRepeat[0 : numBytesToAdd % abs(position) ]
+                    newGfxBytes += addbytes
+            else:
+                # Distinguish position to end of line from being a number less than that number's absolute
+                if position + numBytesToAdd == 0:
+                    addbytes = newGfxBytes[position: ]
                 else:
-                    fillByte = bytes.fromhex('FF')
+                    addbytes = newGfxBytes[position: position + numBytesToAdd]
+                newGfxBytes += addbytes 
+            pointer += 2
 
-                # newGfxBytes += fillByte * int(width / 2)
-                remainLine = int(width / 2) - len(newGfxBytes)
-                newGfxBytes += fillByte * remainLine
-                
-                lines.append(newGfxBytes)
-                allbytesGenerated += newGfxBytes
+    # Cleanup, as there are some extra 0x00's 
+    if b'' in lines:
+        lines.remove(b'')
 
-                newGfxBytes = fillByte * (int(width / 2 ) - remainLine)
-                pointer += 1
-                
-            case 0x80:
-                print(f'Full line 0x80! {pointer}')
-                newGfxBytes += bytes.fromhex('00') * int(width / 2)
-                lines.append(newGfxBytes)
-                allbytesGenerated += newGfxBytes
-                newGfxBytes = b''
-                pointer += 1"""
-            
-            case _:
-                if command < 0x80:
-                    # The simple one
-                    dataToAdd = gfxData[pointer + 1: pointer + 1 + command]
-                    newGfxBytes += dataToAdd
-                    pointer += command + 1
-
-                elif command > 0x80:
-                    # Find number of bytes to add
-                    numBytesToAdd = command - 0x80
-                    # How far back do we go to find the byte(s) we're adding
-                    position = 0 - gfxData[pointer + 1]
-                    # bytesToRepeat = newGfxBytes[position:]
-                    if numBytesToAdd > abs(position):
-                        bytesToRepeat = newGfxBytes[position:]
-
-                        if len(bytesToRepeat) > 1:
-                            print(f'Coord: {len(lines), len(newGfxBytes) * 2}')
-                            # I'm not sure what to do in this secnario!
-                            print(f'{pointer}: Num to be added: {numBytesToAdd}, Bytes template: {len(bytesToRepeat)}, will repeat {int(numBytesToAdd / len(bytesToRepeat))} times!')
-                        
-                        newGfxBytes += bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
-                    else:
-                        # print(f'Case when Number of Bytes ot add is less than position!')
-                        newGfxBytes += newGfxBytes[position: position + numBytesToAdd]
-                    # Adjust pointer + 2
-                    pointer += 2
-
-    # print(f'{width} x {height}')
-    # lines.remove(b'')
-    print(f'Height is {height}, we have {len(lines)} lines!')
-    
+    # print(f'Height is {height}, we have {len(lines)} lines!') # Debug no lo0nger needed
+    image.lines = lines # This currently won't happen because the image is not returned!
     return lines
 
 def getImages(fileData: bytes) -> list:
+    """
+    Gets the images from a file. Returns list of imageData objects
+    """
     images = []
     numImg = struct.unpack('<L', fileData[0:4])[0]
     i = 0
@@ -146,9 +162,15 @@ def outputToTGA():
     print(f'Dostufff')
     
 def getColors(palette: bytes) -> list:
-    
+    """
+    Returns a list of colors in the palette.
+    Each color is a Tuple (r, g, b) of 0 <= 255
+    """
     # Quick def for getting the RGB values
     def getRGBfromHex(colorBytes: bytes) -> tuple [int, int, int]:
+        """
+        Calculates the color from the 2-byte color in the palette.
+        """
         # Swap the two bytes for little-endian (since color is coming in as a 16-bit integer)
         color = int.from_bytes(colorBytes, byteorder='big')
         color = (color >> 8) | ((color & 0xFF) << 8)
@@ -180,7 +202,8 @@ def getColors(palette: bytes) -> list:
 def exportImage(filename: str, image: imageData) -> None:
     # Convert each line of hex into bytes
     palette = getColors(image.palette)
-    pixel_data = decompressBytes(image.compData, (image.width, image.height))
+    # pixel_data = decompressBytes(image.compData, (image.width, image.height))
+    pixel_data = decompressBytes(image)
 
     # Define the image dimensions (you'll need to specify width and height based on your data)
     width = image.width  
@@ -203,7 +226,9 @@ def exportImage(filename: str, image: imageData) -> None:
     # Create and save the image
     image = Image.fromarray(image_array)
     # image.show()  # This will display the image
-    image.save(filename)
+    image.save(f'creditsHacking/output/{filename}')
+
+    return
 
 # def analyzeImage(imgData: bytes) -> tuple[bytes, int, int, bytes]:
 
@@ -213,9 +238,13 @@ if __name__ == "__main__":
     print(f'{len(imageList)} images found!')
     for i, image in enumerate(imageList):
         exportImage(f'file-{i}.tga', image)
+        with open(f'file-{i}-blocks.txt', 'w') as f:
+            for line in image.lines:
+                f.write(f'{line.hex()}\n')
         print(f'IMAGE {i} DONE!\n=========================================================')
-        
-        
-        
-    
-    
+
+"""       
+if __name__ == "__main__":
+    for file in filesToRun:
+        outputGraphicsFromFile(file)
+    print('done')"""
