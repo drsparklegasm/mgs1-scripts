@@ -18,6 +18,16 @@ Testing, creating a json to inject and replace the japanese dialogue completely.
 
 # Usage
 
+Each of the files have several scripts to help with editing. 
+
+## Radio.dat
+
+Quick overview:
+
+1. RadioDatTools.py -- Extract game text in xml and json format
+2. xmlModifierTools.py -- Imports adjusted json dialogue into the XML file. Recomputes lengths of all calls as needed
+3. RadioDatRecompiler.py -- Takes an XML Radio data and creates a .dat file. Can run the recompiler and also adjust stage.dir values (using -s and -S flags)
+
 Most scripts have an arg parser, use -h for help.
 
 ex: 
@@ -44,11 +54,22 @@ options:
   -z, --iseeeva    Exports the dialogue in a json like Iseeeva's script
   ```
 
+## Demo.dat
+
+Example usage:
+
+1. splitDemoFiles.py -- Splits all demo files to individual demos
+2. demoTextExtractor.py -- Extracts texts from all demo files in the output folder
+3. demoTextInjector.py -- Injects json text back into demo files, outputs the binaries as new files
+4. demoRejoiner.py -- Joins all demo files into one large DAT file. 
+
+
+
 ## Known issues:
-- MGS Integral does nto recompile correctly. I think there is extra null space between call data (after graphics data) that will need to be accounted for. The data is correct, but there's also too much graphics data. 
-- Recompiler works but will not correctly count/re-encode special characters. 
-- Still missing/incorrect kanji characters that need to be OCR'd from their graphics files. ~30 yet to identify, numerous others are wrong. Reach out to me if you would like to help translate them!
-- Have not tested the offset adjustments to STAGE.DIR yet. Could be faulty. Works so far as I've tested.
+- RADIO.DAT: MGS Integral does nto recompile correctly. I think there is extra null space between call data (after graphics data) that will need to be accounted for. The data is correct, but there's also too much graphics data. 
+- RADIO.DAT: Recompiler works but will not correctly count/re-encode special characters. 
+- RADIO.DAT: Still missing/incorrect kanji characters that need to be OCR'd from their graphics files. ~30 yet to identify, numerous others are wrong. Reach out to me if you would like to help translate them!
+- RADIO.DAT: Have not tested all the offset adjustments to STAGE.DIR yet. Could be faulty. Works so far as I've tested.
 
 This tool is now functional with some limitations:
 1. Save blocks need some manual tweaks in the code to be 100% accurate on recompile, but it can be done. 
