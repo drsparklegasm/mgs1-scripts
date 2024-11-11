@@ -33,7 +33,7 @@ filesToRun = [
     "creditsHacking/jpn/00eae8.rar"
 ]
 
-spanish = True
+spanish = False
 creditsData = open(creditsFilename, 'rb').read()
 
 class imageData:
@@ -58,7 +58,7 @@ class imageData:
 # def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
 def decompressBytes(image: imageData) -> bytes:
     global spanish
-    gfxData = image.compData
+    gfxData: bytes = image.compData
     width, height = image.width, image.height
     newGfxBytes = b''
     allbytesGenerated = b''
@@ -141,6 +141,12 @@ def decompressBytes(image: imageData) -> bytes:
     # print(f'Height is {height}, we have {len(lines)} lines!') # Debug no lo0nger needed
     image.lines = lines # This currently won't happen because the image is not returned!
     return lines
+
+def encodePicture(lines: list [bytes], height) -> bytes:
+    # Get spanish flag
+    global spanish
+    
+    
 
 def getImages(fileData: bytes) -> list:
     """
