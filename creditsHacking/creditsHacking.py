@@ -20,12 +20,13 @@ Notes from Green Goblin:
 
 """
 
+# Been testing a bunch of these
 creditsFilename = "creditsHacking/imagedata2.bin"
 creditsFilename = "creditsHacking/00b8ba.rar"
 creditsFilename = "creditsHacking/00b8b9.rar"
 creditsFilename = "creditsHacking/00eae8.rar"
 creditsFilename = "creditsHacking/goblinExample/spanishBinFile.bin"
-# creditsFilename = "creditsHacking/jpn/00eae8.rar"
+creditsFilename = "creditsHacking/jpn/00eae8.rar"
 
 filesToRun = [
     "creditsHacking/00eae8.rar",
@@ -57,6 +58,10 @@ class imageData:
         
 # def decompressBytes(gfxData: bytes, size: tuple [int, int]) -> bytes:
 def decompressBytes(image: imageData) -> bytes:
+    """
+    This is the main logic to decompress the image data. 
+    Based on GreenGoblin's hacked logic. 
+    """
     global spanish
     gfxData: bytes = image.compData
     width, height = image.width, image.height
@@ -142,11 +147,11 @@ def decompressBytes(image: imageData) -> bytes:
     image.lines = lines # This currently won't happen because the image is not returned!
     return lines
 
+"""
 def encodePicture(lines: list [bytes], height) -> bytes:
     # Get spanish flag
     global spanish
-    
-    
+    """
 
 def getImages(fileData: bytes) -> list:
     """
@@ -236,14 +241,18 @@ def exportImage(filename: str, image: imageData) -> None:
 
     return
 
-# def analyzeImage(imgData: bytes) -> tuple[bytes, int, int, bytes]:
-
 if __name__ == "__main__":
     print(f'Outputting graphics from {creditsFilename}')
+
+    # Make a list of imageData objects, list how many were found.
     imageList: list [imageData] = getImages(creditsData)
     print(f'{len(imageList)} images found!')
+
+    # For each image found, output an image file.
     for i, image in enumerate(imageList):
+        # 1. Export the file
         exportImage(f'file-{i}.tga', image)
+        # 2. Export the lines
         with open(f'file-{i}-blocks.txt', 'w') as f:
             for line in image.lines:
                 f.write(f'{line.hex()}\n')
