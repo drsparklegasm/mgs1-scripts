@@ -10,7 +10,7 @@ Notes from Green Goblin:
 - First 4 bytes: Little endian number of files
 - 2 bytes width, LE
 - 2 bytes height, LE
-- following 32 bytes  (0x20) are the color palette
+- following 32 bytes (0x20) are the color palette (16 colors, 2 bytes each)
 - 4 bytes compressed image size, LE (NOT part of the image)
 
 # Compressed bytes:
@@ -25,8 +25,8 @@ creditsFilename = "creditsHacking/imagedata2.bin"
 creditsFilename = "creditsHacking/00b8ba.rar"
 creditsFilename = "creditsHacking/00b8b9.rar"
 creditsFilename = "creditsHacking/00eae8.rar"
-creditsFilename = "creditsHacking/goblinExample/spanishBinFile.bin"
-creditsFilename = "creditsHacking/jpn/00eae8.rar"
+# creditsFilename = "creditsHacking/goblinExample/spanishBinFile.bin"
+# creditsFilename = "creditsHacking/jpn/00eae8.rar"
 
 filesToRun = [
     "creditsHacking/00eae8.rar",
@@ -199,6 +199,7 @@ def getColors(palette: bytes) -> list:
         g_normalized = int((g / 31) * 255)
         b_normalized = int((b / 31) * 255)
 
+        print(f'{colorBytes.hex()} ({r_normalized}, {g_normalized}, {b_normalized})')
         # Return normalized 8-bit values for red, green, and blue
         return (r_normalized, g_normalized, b_normalized)
     
@@ -258,8 +259,3 @@ if __name__ == "__main__":
                 f.write(f'{line.hex()}\n')
         print(f'IMAGE {i} DONE!\n=========================================================')
 
-"""       
-if __name__ == "__main__":
-    for file in filesToRun:
-        outputGraphicsFromFile(file)
-    print('done')"""
