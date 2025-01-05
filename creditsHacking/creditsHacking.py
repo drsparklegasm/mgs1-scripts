@@ -194,7 +194,8 @@ def getColors(palette: bytes) -> list:
         g = (color >> 5) & 0x1F   # Green: bits 5-9
         b = color & 0x1F          # Blue: bits 0-4
 
-        # Normalize the 5-bit values to 8-bit (0-255) range
+        # Normalize the 5-bit values to 8-bit (0-255) range 
+        # Special note. Math gets funky here, so leave it at 31 or it won't recompile correctly!
         r_normalized = int((r / 31) * 255)
         g_normalized = int((g / 31) * 255)
         b_normalized = int((b / 31) * 255)
