@@ -54,6 +54,7 @@ while i < 32:
     i += 1"""
 
 originalBytes =     b'73 4E 52 4A 31 46 10 42 CE 39 AD 35 8C 31 4A 29 29 25 E7 1C A5 14 84 10 63 0C 42 08 21 04 00 00'
+NewLogic =          b'73 4e 52 4a 31 46 10 42 ce 39 ad 35 8c 31 4a 29 29 25 e7 1c a5 14 84 10 63 0c 42 08 21 04 00 00'
 myBytes =           b'52 4a 31 46 10 42 ef 3d ad 35 8c 31 6b 2d 29 25 08 21 c6 18 84 10 63 0c 42 08 21 04 00 00 00 00'
 
 print(getColors(originalBytes))

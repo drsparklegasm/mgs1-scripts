@@ -1,16 +1,12 @@
+"""
+This script re-encodes and tests images originally extracted from the .rar files.
+
+"""
+import os
 from PIL import Image
 import numpy as np
-
 # from creditsHacking.creditsHacking import imageData
-
-
-# For testing use file 1
-filename = 'creditsHacking/output/file-0.tga'
-# Assume you have a PIL Image object
-image = Image.open(filename)
-
-# Convert PIL Image to NumPy array
-image_array = np.array(image)
+import argparse
 
 imagePalette = []
 
@@ -21,8 +17,7 @@ def getPalette(numpyArray: np.array) -> list:
     """
     palette = [] # Instantiate the specific array type
 
-    """ # This is my way, but there's a better one.
-
+    """ # This is my way, but there's a better one suggested by copilot.
     for y, line in enumerate(image_array):
         for x in range(len(line) // 2):
             # Get the RGB values for the two pixels
@@ -58,7 +53,7 @@ def paletteToBytes(colors: list[tuple[int, int, int]]) -> bytes:
         raise ValueError('Palette has more than 16 colors! Original game uses no more than 16 distinct colors.')
     
     colorBytes = b''
-    r, g, b = 0, 0, 0
+    # r, g, b = 0, 0, 0
 
     for color in colors:
         r, g, b = color
@@ -68,14 +63,32 @@ def paletteToBytes(colors: list[tuple[int, int, int]]) -> bytes:
 
         # Combine the 5-bit values into a single 16-bit value
         colorValue = (r << 10) | (g << 5) | b
-        print(f'{color}, {colorValue:04x}')
+        # print(f'{color}, {colorValue:04x}')
         # Reverse the byte order
         colorBytes = colorValue.to_bytes(2, byteorder='little') + colorBytes
 
     return colorBytes
 
+def writeLines(numpyArray: np.array, palette: list[tuple [int, int, int]]) -> list[str]:
+    """
+    creates the lines needed for the image.
+    """
+    pixelLines = []
 
+    for y, line in enumerate(image_array):
+        pixelLine = ''
+        for x in range(len(line) // 2):
+            # This is ugly but if i don't do it we get numpy specific objects in the tuple
+            indexB = 15 - palette.index(tuple(int(value) for value in line[x * 2]))
+            indexA = 15 - palette.index(tuple(int(value) for value in line[x * 2 + 1]))
 
+            byte = (indexA << 4) | indexB
+            pixelLine += f'{byte:02x}'
+        pixelLines.append(pixelLine)
+
+    return pixelLines
+
+"""
 # Get the palette from the image
 imagePalette = getPalette(image_array)
 # Convert the palette to bytes
@@ -85,3 +98,38 @@ paletteBytes = paletteToBytes(imagePalette)
 print(len(paletteBytes))
 print(paletteBytes.hex(sep=' ', bytes_per_sep=1))
 
+outputLines = writeLines(image_array, imagePalette)
+
+with open('output.txt', 'w') as f:
+    for line in outputLines:
+        f.write(f'{line}\n')
+        
+"""
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
+    parser.add_argument('filename', type=str, help='The filename of the TGA file to convert')
+    args = parser.parse_args()
+
+    # Assume you have a PIL Image object
+    image = Image.open(args.filename) 
+
+    # Convert PIL Image to NumPy array
+    image_array = np.array(image)
+
+    # Get the palette from the image
+    imagePalette = getPalette(image_array)
+    # Convert the palette to bytes
+    paletteBytes = paletteToBytes(imagePalette)
+
+    
+
+    outputLines = writeLines(image_array, imagePalette)
+
+    newFilename = args.filename.split('/')[-1].split('.')[0]
+    with open(f'creditsHacking/output/verification/{newFilename}-blocks.txt', 'w') as f:
+        for line in outputLines:
+            f.write(f'{line}\n')
+    
+    # Print the palette bytes
+    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')

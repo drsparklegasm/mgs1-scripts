@@ -1,6 +1,7 @@
 import os, struct
 import numpy as np
 from PIL import Image
+import argparse
 
 
 """
@@ -21,10 +22,9 @@ Notes from Green Goblin:
 """
 
 # Been testing a bunch of these
-creditsFilename = "creditsHacking/imagedata2.bin"
-creditsFilename = "creditsHacking/00b8ba.rar"
-creditsFilename = "creditsHacking/00b8b9.rar"
-creditsFilename = "creditsHacking/00eae8.rar"
+creditsFilename = "creditsHacking/usa/00b8ba.rar"
+creditsFilename = "creditsHacking/usa/00b8b9.rar"
+creditsFilename = "creditsHacking/usa/00eae8.rar"
 # creditsFilename = "creditsHacking/goblinExample/spanishBinFile.bin"
 # creditsFilename = "creditsHacking/jpn/00eae8.rar"
 
@@ -147,11 +147,6 @@ def decompressBytes(image: imageData) -> bytes:
     image.lines = lines # This currently won't happen because the image is not returned!
     return lines
 
-"""
-def encodePicture(lines: list [bytes], height) -> bytes:
-    # Get spanish flag
-    global spanish
-    """
 
 def getImages(fileData: bytes) -> list:
     """
@@ -200,14 +195,15 @@ def getColors(palette: bytes) -> list:
         g_normalized = int((g / 31) * 255)
         b_normalized = int((b / 31) * 255)
 
-        print(f'{colorBytes.hex()} ({r_normalized}, {g_normalized}, {b_normalized})')
         # Return normalized 8-bit values for red, green, and blue
         return (r_normalized, g_normalized, b_normalized)
     
     rgbColors = []
     i = 0
+    # Loop through the palette, getting the RGB values for each color [2 bytes each]
     while i < len(palette):
-        rgbColors.append(getRGBfromHex(palette[i: i + 2]))
+        nextColor = getRGBfromHex(palette[i: i + 2])
+        rgbColors.append(nextColor)
         i += 2
     
     return rgbColors
@@ -229,6 +225,7 @@ def exportImage(filename: str, image: imageData) -> None:
     for y, line in enumerate(pixel_data):
         for x in range(len(line)):
             byte = line[x]
+            # Swap the nibbles; the first nibble (left) is the high-order bits, the second nibble is the low-order bits
             low_nibble = (byte >> 4) & 0x0F  # First pixel
             high_nibble = byte & 0x0F  # Second pixel
             
@@ -239,24 +236,33 @@ def exportImage(filename: str, image: imageData) -> None:
     # Create and save the image
     image = Image.fromarray(image_array)
     # image.show()  # This will display the image
-    image.save(f'creditsHacking/output/{filename}')
+    image.save(f'{filename}')
 
     return
 
 if __name__ == "__main__":
+    argparser = argparse.ArgumentParser(description='Extracts images from the credits file.')
+    argparser.add_argument('filename', type=str, help='The filename of the credits file to extract images from.')
+    args = argparser.parse_args()
+
     print(f'Outputting graphics from {creditsFilename}')
 
     # Make a list of imageData objects, list how many were found.
     imageList: list [imageData] = getImages(creditsData)
     print(f'{len(imageList)} images found!')
-
+    
+    paletteCheck = open('creditsHacking/output/paletteCheck.txt', 'w')
     # For each image found, output an image file.
     for i, image in enumerate(imageList):
         # 1. Export the file
-        exportImage(f'file-{i}.tga', image)
-        # 2. Export the lines
-        with open(f'file-{i}-blocks.txt', 'w') as f:
+        exportImage(f'creditsHacking/output/images/file-{i}.tga', image)
+        # 2. Export the blocks (lines of hex chars), this is mostly for verification later.
+        with open(f'creditsHacking/output/blocks/file-{i}-blocks.txt', 'w') as f:
             for line in image.lines:
                 f.write(f'{line.hex()}\n')
-        print(f'IMAGE {i} DONE!\n=========================================================')
+        paletteCheck.write(f'{i}: {image.palette.hex()}\n')
+        print(f'Palette for image {i}: {image.palette.hex()}')
+        print(f'IMAGE {i} DONE!\n')
 
+    paletteCheck.close()
+    
