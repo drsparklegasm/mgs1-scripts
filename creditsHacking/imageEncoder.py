@@ -8,6 +8,13 @@ import numpy as np
 # from creditsHacking.creditsHacking import imageData
 import argparse
 
+# testData from first image:
+
+testDataA = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeefeffefeeffffefeeeeeeeeeeeeeefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2e80eeaeeb06434411bea3ee4ea0ff0ee0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+
+
 imagePalette = []
 
 def getPalette(numpyArray: np.array) -> list:
@@ -88,6 +95,105 @@ def writeLines(numpyArray: np.array, palette: list[tuple [int, int, int]]) -> li
 
     return pixelLines
 
+def getBestPattern(data: bytes) -> tuple[bytes, int, int]:
+    """
+    This will return the best pattern found in the data.
+    """
+    patterns = []
+    bestPattern = (b'', 0, 0)
+    dataLength = len(data)
+    patternLength = 1
+    pointer = 0
+    count = 1
+    
+    # First loop is for how long to make the pattern
+    while patternLength < (dataLength // 2): # If it were half length we could only repeat it twice.
+        # Initialize the pattern and pointer
+        pattern = data[0:patternLength]
+        pointer = patternLength
+        
+        # Second loop is for how many times the pattern repeats
+        while pointer <= dataLength and count < 128: # Can't exceed 0x80 times...
+            # Check if the pattern repeats
+            if data[pointer: pointer + patternLength] == pattern:
+                count += 1
+                pointer += patternLength
+                # Check if we've reached the end of the data
+                if pointer == dataLength:
+                    if bestPattern[2] < patternLength * count:
+                        bestPattern = (pattern, count, patternLength * count)
+                    patterns.append((patternLength, count, patternLength * count))
+                    break
+            else: # Pattern doesn't repeat, end the check here
+                if bestPattern[2] < patternLength * count: # check if this pattern is better than the current best pattern
+                    bestPattern = (pattern, count, patternLength * count)
+                patterns.append((patternLength, count, patternLength * count))
+                break
+        # Reset counters for next pattern check
+        patternLength += 1
+        count = 1
+        
+    # Remember to account ELSEWHERE for extra bytes that continue a part of the pattern!
+    """for p in patterns:
+        print(p)"""
+    return bestPattern
+
+def compressImageData(pixelLines: list [str]) -> bytes:
+    """
+    This will compress the image data into bytes as it would be in the original game.
+    We'll need the image data, the palette, and the width of the image.
+    """
+    
+    def compressLine(data: str) -> bytes:
+        """
+        Compress a single line of pixel data.
+        
+        I think we can test how much we can compress 3 possibilities:
+        0. If the remaining bytes are all 00's add a 0x80 and ends the line.
+        1. Check if a single byte is repeated, and if so how many times.
+        2. Check if a pattern is repeated, and if so how many times.
+        3. check if the next pattern was already seen, and if so how long ago
+        4. (last resort) we have a new pattern.
+        
+        First approach is to use the byte search for repeated patterns. We'll iterate until we reach a length of pattern not repeated.
+        """
+        compressedData = b''
+        pointer = 0
+        dataLength = len(data)
+        
+        
+        
+        databytes = bytes.fromhex(data)
+        while pointer < dataLength:
+            firstbyte = databytes[pointer]
+            
+            
+            
+            # Case where we can get it by repeating characters
+            if databytes[pointer + 1] == firstbyte:
+                # We have a repeated byte
+                count = 2
+                while (pointer + count) < dataLength and databytes[pointer + count] == firstbyte:
+                    count += 1
+                """
+                if count > 2:
+                    compressedData += bytes([count - 1, firstbyte])
+                    pointer += count
+                else:
+                    # We have a new pattern
+                    compressedData += bytes([firstbyte])
+                    pointer += 1
+                    """
+        
+        
+                
+    compGfxData = b''
+    for line in pixelLines:
+        compSegment = compressLine(line)
+        compGfxData += compSegment
+    
+    pass
+
 """
 # Get the palette from the image
 imagePalette = getPalette(image_array)
@@ -106,6 +212,11 @@ with open('output.txt', 'w') as f:
         
 """
 
+if __name__ == "__main__":
+    bestPattern = getBestPattern(bytes.fromhex(testDataA))
+    print(bestPattern)
+
+"""
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
     parser.add_argument('filename', type=str, help='The filename of the TGA file to convert')
@@ -132,4 +243,4 @@ if __name__ == "__main__":
             f.write(f'{line}\n')
     
     # Print the palette bytes
-    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')
+    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')"""
