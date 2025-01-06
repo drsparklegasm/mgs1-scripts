@@ -82,7 +82,7 @@ def writeLines(numpyArray: np.array, palette: list[tuple [int, int, int]]) -> li
     """
     pixelLines = []
 
-    for y, line in enumerate(image_array):
+    for y, line in enumerate(numpyArray):
         pixelLine = ''
         for x in range(len(line) // 2):
             # This is ugly but if i don't do it we get numpy specific objects in the tuple
@@ -127,7 +127,7 @@ def getBestPattern(data: bytes) -> tuple[bytes, int, int]:
             else: # Pattern doesn't repeat, end the check here
                 if bestPattern[2] < patternLength * count: # check if this pattern is better than the current best pattern
                     bestPattern = (pattern, count, patternLength * count)
-                patterns.append((patternLength, count, patternLength * count))
+                patterns.append((pattern, count, patternLength * count))
                 break
         # Reset counters for next pattern check
         patternLength += 1
@@ -165,7 +165,28 @@ def compressImageData(pixelLines: list [str]) -> bytes:
         
         databytes = bytes.fromhex(data)
         while pointer < dataLength:
-            firstbyte = databytes[pointer]
+            # Get the best next pattern to add. Then add based on logic we can find. 
+            nextPattern = getBestPattern(databytes[pointer:])
+            if len(nextPattern[0]) == 1:
+                # Add logic for single byte repeated
+                compressedData += bytes.fromhex('01') + nextPattern[0]
+                repeatNum = nextPattern[1] - 1 # We already added the first byte, now how many times do we repeat it?
+                # Calculate the next byte is 0x80 more than expected. 
+                nextByte = repeatNum.to_bytes() + 0x80
+                compressedData += nextByte
+                compressedData += 0x01 # Pattern to repeat is pointed one prior
+                # Add the total length added to the pointer for next go-round
+                pointer += nextPattern[2]
+            elif # pattern appears in prior data:
+                # Repeat some of the logic of repeating the single byte X times
+            elif # new pattern
+                # Add the pattern. 
+                # Remember to check for subpattern!
+                
+                
+            else:
+                # Add logic for pattern repeated
+                pass
             
             
             
