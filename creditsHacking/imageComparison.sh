@@ -4,10 +4,10 @@ SCRIPT="python3 /home/solidmixer/projects/mgs1-undub/myScripts/creditsHacking/im
 echo "" > creditsHacking/output/recreatedPalletes.txt
 
 # Run the script on all the images
-for file in $(ls -1 creditsHacking/output/images/*.tga); do
-    echo "Running $file through script..."
-    $SCRIPT $file >> creditsHacking/output/recreatedPalletes.txt
-done
+# for file in $(ls -1 creditsHacking/output/images/*.tga); do
+#     echo "Running $file through script..."
+#     $SCRIPT $file >> creditsHacking/output/recreatedPalletes.txt
+# done
 
 # Compare the blocks generated
 for file in $(ls -1 creditsHacking/output/blocks/*.txt); do
