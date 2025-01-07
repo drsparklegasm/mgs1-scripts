@@ -11,6 +11,8 @@ import argparse
 # testData from first image:
 
 testDataA = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# Bytes should be 01 FF / FF 01 / A0 01 / 00
+# My bytes: 02 ff ff 82 9e 00
 testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeefeffefeeffffefeeeeeeeeeeeeeefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2e80eeaeeb06434411bea3ee4ea0ff0ee0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
@@ -98,6 +100,7 @@ def writeLines(numpyArray: np.array, palette: list[tuple [int, int, int]]) -> li
 def getBestPattern(data: bytes) -> tuple[bytes, int, int]:
     """
     This will return the best pattern found in the data.
+    TUPLE HAS: (pattern, count, total length)
     """
     patterns = []
     bestPattern = (b'', 0, 0)
@@ -159,52 +162,80 @@ def compressImageData(pixelLines: list [str]) -> bytes:
         """
         compressedData = b''
         pointer = 0
-        dataLength = len(data)
+        dataLength = len(data) // 2
         
         
+        """
+        Boolean tests:
+        1. Is it one byte?
+        2. Is it a repeated byte or pattern?
+        3. Has it been seen before?
+
+        We should test first if it's been seen before.
+        Then if it's one or many bytes.
+
+        
+        """
         
         databytes = bytes.fromhex(data)
         while pointer < dataLength:
             # Get the best next pattern to add. Then add based on logic we can find. 
             nextPattern = getBestPattern(databytes[pointer:])
+            # TUPLE HAS: (pattern, count, total length)!! 
+
             if len(nextPattern[0]) == 1:
                 # Add logic for single byte repeated
-                compressedData += bytes.fromhex('01') + nextPattern[0]
+                compressedData += bytes.fromhex('01')
+                compressedData += nextPattern[0]
                 repeatNum = nextPattern[1] - 1 # We already added the first byte, now how many times do we repeat it?
-                # Calculate the next byte is 0x80 more than expected. 
-                nextByte = repeatNum.to_bytes() + 0x80
+                # Calculate the next byte is 0x80 more to denote a repeat. 
+                nextByte = (repeatNum + 0x80).to_bytes()
                 compressedData += nextByte
-                compressedData += 0x01 # Pattern to repeat is pointed one prior
+                compressedData += bytes.fromhex('01') # Pattern to repeat is pointed one prior
                 # Add the total length added to the pointer for next go-round
                 pointer += nextPattern[2]
-            elif # pattern appears in prior data:
-                # Repeat some of the logic of repeating the single byte X times
-            elif # new pattern
-                # Add the pattern. 
-                # Remember to check for subpattern!
-                
-                
+            elif databytes[pointer - len(nextPattern[0]) : pointer] == nextPattern[0]: # pattern appears in prior data
+                nextByte = (len(nextPattern[0]) + 0x80).to_bytes()
+                compressedData += nextByte
+                compressedData += nextPattern[2].to_bytes() # Pattern to repeat is pointed one prior
+                # Add the total length added to the pointer for next go-round
+                pointer += nextPattern[2]# Repeat some of the logic of repeating the single byte X times
+            elif nextPattern[1] == 1 and databytes.find(nextPattern[0]) != -1: # new pattern, repeated
+                index = abs(databytes.find(nextPattern[0]) - pointer)
+                # Find the latest occurrence of the patern, if there are multiple
+                while index > 128 and databytes.find(nextPattern[0]) != -1: 
+                    index = abs(databytes.find(nextPattern[0]) - pointer)
+                # Add the bytes in
+                nextByte = (nextPattern[1] + 0x80).to_bytes()
+                compressedData += nextByte
+                compressedData += index.to_bytes()
+                pointer += nextPattern[2]
+            else: # Assuming new pattern, and it's not found previously, written once.
+                compressedData += len(nextPattern[0]).to_bytes()
+                compressedData += nextPattern[0]
+                pointer += len(nextPattern[0])
+        
+        compressedData += bytes.fromhex('00') # End of line
+
+        return compressedData
+
+            
+            
+        # Case where we can get it by repeating characters
+        if databytes[pointer + 1] == firstbyte:
+            # We have a repeated byte
+            count = 2
+            while (pointer + count) < dataLength and databytes[pointer + count] == firstbyte:
+                count += 1
+            """
+            if count > 2:
+                compressedData += bytes([count - 1, firstbyte])
+                pointer += count
             else:
-                # Add logic for pattern repeated
-                pass
-            
-            
-            
-            # Case where we can get it by repeating characters
-            if databytes[pointer + 1] == firstbyte:
-                # We have a repeated byte
-                count = 2
-                while (pointer + count) < dataLength and databytes[pointer + count] == firstbyte:
-                    count += 1
+                # We have a new pattern
+                compressedData += bytes([firstbyte])
+                pointer += 1
                 """
-                if count > 2:
-                    compressedData += bytes([count - 1, firstbyte])
-                    pointer += count
-                else:
-                    # We have a new pattern
-                    compressedData += bytes([firstbyte])
-                    pointer += 1
-                    """
         
         
                 
@@ -213,7 +244,7 @@ def compressImageData(pixelLines: list [str]) -> bytes:
         compSegment = compressLine(line)
         compGfxData += compSegment
     
-    pass
+    return compGfxData
 
 """
 # Get the palette from the image
@@ -233,10 +264,17 @@ with open('output.txt', 'w') as f:
         
 """
 
+## TESTING BRANCH 
 if __name__ == "__main__":
     bestPattern = getBestPattern(bytes.fromhex(testDataA))
     print(bestPattern)
 
+    lines = [testDataA]
+    compressedData = compressImageData(lines)
+
+    print(compressedData.hex())
+
+## MAIN BRANCH
 """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
