@@ -206,9 +206,9 @@ def compressImageData(pixelLines: list [str]) -> bytes:
                 while index > 128 and databytes.find(nextPattern[0]) != -1: 
                     index = abs(databytes.find(nextPattern[0]) - pointer)
                 # Add the bytes in
-                nextByte = (nextPattern[1] + 0x80).to_bytes()
+                nextByte = (index + 0x80).to_bytes()
                 compressedData += nextByte
-                compressedData += index.to_bytes()
+                compressedData += nextPattern[2].to_bytes()
                 pointer += nextPattern[2]
             else: # Assuming new pattern, and it's not found previously, written once.
                 compressedData += len(nextPattern[0]).to_bytes()
@@ -269,9 +269,8 @@ if __name__ == "__main__":
     bestPattern = getBestPattern(bytes.fromhex(testDataA))
     print(bestPattern)
 
-    lines = [testDataA]
+    lines = [testDataB]
     compressedData = compressImageData(lines)
-
     print(compressedData.hex())
 
 ## MAIN BRANCH
