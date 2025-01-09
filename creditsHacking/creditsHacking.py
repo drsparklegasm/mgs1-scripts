@@ -69,6 +69,8 @@ def decompressBytes(image: imageData) -> bytes:
     allbytesGenerated = b''
     lines = []
     length = len(gfxData)
+
+    log = open('creditsHacking/output/extactImageLog.txt', 'w')
     
     pointer = 0
     while pointer < length:
@@ -87,6 +89,8 @@ def decompressBytes(image: imageData) -> bytes:
             allbytesGenerated += newGfxBytes
             newGfxBytes = newGfxBytes[int(width / 2):]
             pointer += 1
+
+            log.write(f'Command: {command} - ENDING LINE \n')
                 
         elif command == 0x80 or (spanish and command == 0x40):
             # New logic (before removal)
@@ -107,11 +111,15 @@ def decompressBytes(image: imageData) -> bytes:
             newGfxBytes = fillByte * (int(width / 2 ) - remainLine)
             pointer += 1
 
+            log.write(f'Command: {command} - Wrote {fillByte.hex()} to end of line. Wrote {remainLine} new bytes in new line. \n')
+
         elif command < 0x80:
             # The simple one
             dataToAdd = gfxData[pointer + 1: pointer + 1 + command]
             newGfxBytes += dataToAdd
             pointer += command + 1
+
+            log.write(f'Command: {command} - Adding {int(command)} bytes: "{dataToAdd.hex()}" \n')
 
         else: # command > 0x80:
             # Find number of bytes to add
@@ -124,7 +132,8 @@ def decompressBytes(image: imageData) -> bytes:
                 # If we just sent back a line, grab from last bytes done
                 if len(newGfxBytes) == 0: 
                     bytesToRepeat = allbytesGenerated[position:]
-                newGfxBytes += bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
+                addbytes = bytesToRepeat * int(numBytesToAdd / len(bytesToRepeat))
+                newGfxBytes += addbytes
                 # Checking for uneven repeats, we repeat until the numBytes is satisfied
                 if numBytesToAdd % abs(position) > 0:
                     # print(f'Line: {len(lines)} Adding {numBytesToAdd}, but only {abs(position)} to work with!')
@@ -139,11 +148,15 @@ def decompressBytes(image: imageData) -> bytes:
                 newGfxBytes += addbytes 
             pointer += 2
 
+            log.write(f'Command: {command} Position: {position} - > 0x80: Repeating: Added {numBytesToAdd} bytes. Wrote {addbytes.hex()} \n')
+
     # Cleanup, as there are some extra 0x00's 
     if b'' in lines:
         lines.remove(b'')
-
-    # print(f'Height is {height}, we have {len(lines)} lines!') # Debug no lo0nger needed
+    
+    log.close()
+    
+    # print(f'Height is {height}, we have {len(lines)} lines!') # Debug no longer needed
     image.lines = lines # This currently won't happen because the image is not returned!
     return lines
 
@@ -163,9 +176,6 @@ def getImages(fileData: bytes) -> list:
         i += 1
     
     return images
-
-def outputToTGA():
-    print(f'Dostufff')
     
 def getColors(palette: bytes) -> list:
     """

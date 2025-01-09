@@ -13,9 +13,10 @@ import argparse
 testDataA = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 # Bytes should be 01 FF / FF 01 / A0 01 / 00
 # My bytes: 02 ff ff 82 9e 00
-testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeefeffefeeffffefeeeeeeeeeeeeeefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2e80eeaeeb06434411bea3ee4ea0ff0ee0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-
+testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f21fe9f11fb14000059000110fe3e60ff8fb2ffffffffcf0300d49f010040ff5f40ffcf0100b3ffffff3c0092ff6f0030fb6fd2ffff19f9150051fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# 
+testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f00f95f00fb049999bd6940a9ff0a21ff6fb0ffffffff2e708b709f509ab9ff1d01fccf408a12fdffff23ba33ff07b419e25fc0ffff09f9057604e3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# 
 
 imagePalette = []
 
@@ -42,7 +43,7 @@ def getPalette(numpyArray: np.array) -> list:
                 """
     
     # Get all unique pixel tuples
-    unique_pixels = np.unique(image_array.reshape(-1, image_array.shape[2]), axis=0)
+    unique_pixels = np.unique(numpyArray.reshape(-1, numpyArray.shape[2]), axis=0)
 
     # Convert the unique pixels to a list of tuples
     unique_pixel_tuples = [tuple(pixel) for pixel in unique_pixels]
