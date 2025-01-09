@@ -147,104 +147,82 @@ def compressImageData(pixelLines: list [str]) -> bytes:
     We'll need the image data, the palette, and the width of the image.
     """
     
-    def compressLine(data: str) -> bytes:
-        """
-        Compress a single line of pixel data.
-        
-        I think we can test how much we can compress 3 possibilities:
-        0. If the remaining bytes are all 00's add a 0x80 and ends the line.
-        1. Check if a single byte is repeated, and if so how many times.
-        2. Check if a pattern is repeated, and if so how many times.
-        3. check if the next pattern was already seen, and if so how long ago
-        4. (last resort) we have a new pattern.
-        
-        First approach is to use the byte search for repeated patterns. We'll iterate until we reach a length of pattern not repeated.
-        """
-        compressedData = b''
-        pointer = 0
-        dataLength = len(data) // 2
-        
-        
-        """
-        Boolean tests:
-        1. Is it one byte?
-        2. Is it a repeated byte or pattern?
-        3. Has it been seen before?
-
-        We should test first if it's been seen before.
-        Then if it's one or many bytes.
-
-        
-        """
-        
-        databytes = bytes.fromhex(data)
-        while pointer < dataLength:
-            # Get the best next pattern to add. Then add based on logic we can find. 
-            nextPattern = getBestPattern(databytes[pointer:])
-            # TUPLE HAS: (pattern, count, total length)!! 
-
-            if len(nextPattern[0]) == 1:
-                # Add logic for single byte repeated
-                compressedData += bytes.fromhex('01')
-                compressedData += nextPattern[0]
-                repeatNum = nextPattern[1] - 1 # We already added the first byte, now how many times do we repeat it?
-                # Calculate the next byte is 0x80 more to denote a repeat. 
-                nextByte = (repeatNum + 0x80).to_bytes()
-                compressedData += nextByte
-                compressedData += bytes.fromhex('01') # Pattern to repeat is pointed one prior
-                # Add the total length added to the pointer for next go-round
-                pointer += nextPattern[2]
-            elif databytes[pointer - len(nextPattern[0]) : pointer] == nextPattern[0]: # pattern appears in prior data
-                nextByte = (len(nextPattern[0]) + 0x80).to_bytes()
-                compressedData += nextByte
-                compressedData += nextPattern[2].to_bytes() # Pattern to repeat is pointed one prior
-                # Add the total length added to the pointer for next go-round
-                pointer += nextPattern[2]# Repeat some of the logic of repeating the single byte X times
-            elif nextPattern[1] == 1 and databytes.find(nextPattern[0]) != -1: # new pattern, repeated
-                index = abs(databytes.find(nextPattern[0]) - pointer)
-                # Find the latest occurrence of the patern, if there are multiple
-                while index > 128 and databytes.find(nextPattern[0]) != -1: 
-                    index = abs(databytes.find(nextPattern[0]) - pointer)
-                # Add the bytes in
-                nextByte = (index + 0x80).to_bytes()
-                compressedData += nextByte
-                compressedData += nextPattern[2].to_bytes()
-                pointer += nextPattern[2]
-            else: # Assuming new pattern, and it's not found previously, written once.
-                compressedData += len(nextPattern[0]).to_bytes()
-                compressedData += nextPattern[0]
-                pointer += len(nextPattern[0])
-        
-        compressedData += bytes.fromhex('00') # End of line
-
-        return compressedData
-
-            
-            
-        # Case where we can get it by repeating characters
-        if databytes[pointer + 1] == firstbyte:
-            # We have a repeated byte
-            count = 2
-            while (pointer + count) < dataLength and databytes[pointer + count] == firstbyte:
-                count += 1
-            """
-            if count > 2:
-                compressedData += bytes([count - 1, firstbyte])
-                pointer += count
-            else:
-                # We have a new pattern
-                compressedData += bytes([firstbyte])
-                pointer += 1
-                """
-        
-        
-                
     compGfxData = b''
     for line in pixelLines:
         compSegment = compressLine(line)
         compGfxData += compSegment
     
     return compGfxData
+
+def compressLine(data: str) -> bytes:
+    """
+    Compress a single line of pixel data.
+    
+    I think we can test how much we can compress 3 possibilities:
+    0. If the remaining bytes are all 00's add a 0x80 and ends the line.
+    1. Check if a single byte is repeated, and if so how many times.
+    2. Check if a pattern is repeated, and if so how many times.
+    3. check if the next pattern was already seen, and if so how long ago
+    4. (last resort) we have a new pattern.
+    
+    First approach is to use the byte search for repeated patterns. We'll iterate until we reach a length of pattern not repeated.
+    """
+    compressedData = b''
+    pointer = 0
+    dataLength = len(data) // 2
+    
+    """
+    Boolean tests:
+    1. Is it one byte?
+    2. Is it a repeated byte or pattern?
+    3. Has it been seen before?
+
+    We should test first if it's been seen before.
+    Then if it's one or many bytes.
+    
+    """
+    
+    databytes = bytes.fromhex(data)
+    while pointer < dataLength:
+        # Get the best next pattern to add. Then add based on logic we can find. 
+        nextPattern = getBestPattern(databytes[pointer:])
+        # TUPLE HAS: (pattern, count, total length)!! 
+
+        if len(nextPattern[0]) == 1:
+            # Add logic for single byte repeated
+            compressedData += bytes.fromhex('01')
+            compressedData += nextPattern[0]
+            repeatNum = nextPattern[1] - 1 # We already added the first byte, now how many times do we repeat it?
+            # Calculate the next byte is 0x80 more to denote a repeat. 
+            nextByte = (repeatNum + 0x80).to_bytes()
+            compressedData += nextByte
+            compressedData += bytes.fromhex('01') # Pattern to repeat is pointed one prior
+            # Add the total length added to the pointer for next go-round
+            pointer += nextPattern[2]
+        elif databytes[pointer - len(nextPattern[0]) : pointer] == nextPattern[0]: # pattern appears in prior data
+            nextByte = (len(nextPattern[0]) + 0x80).to_bytes()
+            compressedData += nextByte
+            compressedData += nextPattern[2].to_bytes() # Pattern to repeat is pointed one prior
+            # Add the total length added to the pointer for next go-round
+            pointer += nextPattern[2]# Repeat some of the logic of repeating the single byte X times
+        elif nextPattern[1] == 1 and databytes.find(nextPattern[0]) != -1: # new pattern, repeated
+            index = abs(databytes.find(nextPattern[0]) - pointer)
+            # Find the latest occurrence of the patern, if there are multiple
+            while index > 128 and databytes.find(nextPattern[0]) != -1: 
+                index = abs(databytes.find(nextPattern[0]) - pointer)
+            # Add the bytes in
+            nextByte = (index + 0x80).to_bytes()
+            compressedData += nextByte
+            compressedData += nextPattern[2].to_bytes()
+            pointer += nextPattern[2]
+        else: # Assuming new pattern, and it's not found previously, written once.
+            compressedData += len(nextPattern[0]).to_bytes()
+            compressedData += nextPattern[0]
+            pointer += len(nextPattern[0])
+    
+    compressedData += bytes.fromhex('00') # End of line
+
+    return compressedData
 
 """
 # Get the palette from the image
