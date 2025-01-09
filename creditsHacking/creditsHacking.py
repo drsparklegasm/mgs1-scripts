@@ -245,7 +245,10 @@ if __name__ == "__main__":
     argparser.add_argument('filename', type=str, help='The filename of the credits file to extract images from.')
     args = argparser.parse_args()
 
+    creditsFilename = args.filename
+
     print(f'Outputting graphics from {creditsFilename}')
+    creditsData = open(creditsFilename, 'rb').read()
 
     # Make a list of imageData objects, list how many were found.
     imageList: list [imageData] = getImages(creditsData)
