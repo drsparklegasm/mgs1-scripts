@@ -237,6 +237,34 @@ def compressLine(compressionBytes: bytes) -> bytes:
     3. Find the next unique pattern, including the next repeated byte.
 
     """
+
+    def findLongerFit(data: bytes, index: int) -> bool:
+        """
+        This function will check repeating one character is longer than a repeated pattern
+        """
+        before = data[:index]
+        after = data[index:]
+
+        count = 1
+        matchByte = after[0].to_bytes()
+        for i in range(0, len(after)):
+            if after[i].to_bytes() == matchByte:
+                count += 1
+            else:
+                break
+
+        patternCount = 1
+        for i in range(0, len(after)):
+            if before.find(after[:patternCount]) != -1:
+                patternCount += 1
+            else:
+                break
+        
+        if count > patternCount:
+            return True
+        else:
+            return False
+
     index = 0
     compressedData = b''
 
@@ -246,7 +274,7 @@ def compressLine(compressionBytes: bytes) -> bytes:
         count = 1
         
         # First check for single repeated byte:
-        if (workingBytes[0].to_bytes() * 3) == workingBytes[0:3]:
+        if (workingBytes[0].to_bytes() * 3) == workingBytes[0:3] and writtenBytes.find(workingBytes[0:5]) != -1:
             # FIrst byte repeats at least 4 times. Find how many total:
             matchByte = workingBytes[0].to_bytes()
             while count < min(128, len(workingBytes)):
