@@ -108,4 +108,29 @@ New logic (* 32)
 (148, 148, 148), 4a52
 (156, 156, 156), 4e73
 
+
+
+
 """
+
+# testData from first image:
+
+testDataA = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# Bytes should be 01 FF / FF 01 / A0 01 / 00
+# My bytes: 02 ff ff 82 9e 00
+testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f21fe9f11fb14000059000110fe3e60ff8fb2ffffffffcf0300d49f010040ff5f40ffcf0100b3ffffff3c0092ff6f0030fb6fd2ffff19f9150051fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+"""
+Command: 01 - Adding 1 bytes: "ff" 
+Command: b1 Position: -1 - > 0x80: Repeating: Added 49 bytes. Wrote ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 
+Command: 13 - Adding 19 bytes: "7f21fe9f11fb14000059000110fe3e60ff8fb2" 
+Command: 84 Position: -23 - > 0x80: Repeating: Added 4 bytes. Wrote ffffffff 
+Command: 10 - Adding 16 bytes: "cf0300d49f010040ff5f40ffcf0100b3" 
+Command: 83 Position: -19 - > 0x80: Repeating: Added 3 bytes. Wrote ffffff 
+Command: 12 - Adding 18 bytes: "3c0092ff6f0030fb6fd2ffff19f9150051fd" 
+Command: b2 Position: -110 - > 0x80: Repeating: Added 50 bytes. Wrote ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 
+Command: 00 - ENDING LINE 
+"""
+## 01 FF B1 01 13 7F 21 FE 9F 11 FB 14 00 00 59 00 01 10 FE 3E 60 FF 8F B2 84 17 10 CF 03 00 D4 9F 01 00 40 FF 5F 40 FF CF 01 00 B3 83 13 12 3C 00 92 FF 6F 00 30 FB 6F D2 FF FF 19 F9 15 00 51 FD B2 6E 00
+testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f00f95f00fb049999bd6940a9ff0a21ff6fb0ffffffff2e708b709f509ab9ff1d01fccf408a12fdffff23ba33ff07b419e25fc0ffff09f9057604e3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# 01 FF B1 01 13 6F 00 F9 5F 00 FB 04 99 99 BD 69 40 A9 FF 0A 21 FF 6F B0 84 17 25 2E 70 8B 70 9F 50 9A B9 FF 1D 01 FC CF 40 8A 12 FD FF FF 23 BA 33 FF 07 B4 19 E2 5F C0 FF FF 09 F9 05 76 04 E3 B2 6E 00 
+# 

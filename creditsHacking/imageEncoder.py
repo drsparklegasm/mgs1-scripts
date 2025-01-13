@@ -14,9 +14,22 @@ testDataA = 'fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # Bytes should be 01 FF / FF 01 / A0 01 / 00
 # My bytes: 02 ff ff 82 9e 00
 testDataB = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f21fe9f11fb14000059000110fe3e60ff8fb2ffffffffcf0300d49f010040ff5f40ffcf0100b3ffffff3c0092ff6f0030fb6fd2ffff19f9150051fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-# 
+"""
+Command: 01 - Adding 1 bytes: "ff" 
+Command: b1 Position: -1 - > 0x80: Repeating: Added 49 bytes. Wrote ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 
+Command: 13 - Adding 19 bytes: "7f21fe9f11fb14000059000110fe3e60ff8fb2" 
+Command: 84 Position: -23 - > 0x80: Repeating: Added 4 bytes. Wrote ffffffff 
+Command: 10 - Adding 16 bytes: "cf0300d49f010040ff5f40ffcf0100b3" 
+Command: 83 Position: -19 - > 0x80: Repeating: Added 3 bytes. Wrote ffffff 
+Command: 12 - Adding 18 bytes: "3c0092ff6f0030fb6fd2ffff19f9150051fd" 
+Command: b2 Position: -110 - > 0x80: Repeating: Added 50 bytes. Wrote ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 
+Command: 00 - ENDING LINE 
+"""
+## 01 FF B1 01 13 7F 21 FE 9F 11 FB 14 00 00 59 00 01 10 FE 3E 60 FF 8F B2 84 17 10 CF 03 00 D4 9F 01 00 40 FF 5F 40 FF CF 01 00 B3 83 13 12 3C 00 92 FF 6F 00 30 FB 6F D2 FF FF 19 F9 15 00 51 FD B2 6E 00
 testDataC = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f00f95f00fb049999bd6940a9ff0a21ff6fb0ffffffff2e708b709f509ab9ff1d01fccf408a12fdffff23ba33ff07b419e25fc0ffff09f9057604e3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+# 01 FF B1 01 13 6F 00 F9 5F 00 FB 04 99 99 BD 69 40 A9 FF 0A 21 FF 6F B0 84 17 25 2E 70 8B 70 9F 50 9A B9 FF 1D 01 FC CF 40 8A 12 FD FF FF 23 BA 33 FF 07 B4 19 E2 5F C0 FF FF 09 F9 05 76 04 E3 B2 6E 00 
 # 
+
 
 imagePalette = []
 
@@ -140,7 +153,7 @@ def getBestPattern(data: bytes) -> tuple[bytes, int, int]:
     # Remember to account ELSEWHERE for extra bytes that continue a part of the pattern!
     """for p in patterns:
         print(p)"""
-    return bestPattern
+    return bestPattern 
 
 def compressImageData(pixelLines: list [str]) -> bytes:
     """
@@ -155,7 +168,11 @@ def compressImageData(pixelLines: list [str]) -> bytes:
     
     return compGfxData
 
-def compressLine(data: str) -> bytes:
+# OLDE VERSION OF COMPRESSLINE
+"""
+This is my first version, it does alright but it does not match the original compressed data.
+"""
+def compressLineOld(data: str) -> bytes:
     """
     Compress a single line of pixel data.
     
@@ -225,6 +242,101 @@ def compressLine(data: str) -> bytes:
 
     return compressedData
 
+
+    """
+    Another stab at logically compressing the data. This time the check order is:
+    1. Pattern repeated in the earlier data.
+    2. Next pattern is a single byte (We either write it and then repeat, or we find it one earlier and repeat it)
+    3. Next pattern is a new pattern, we go until there's a character repeated more than 3 times.
+    """
+
+# New Hotness. This matches in the test data so far.
+def compressLine(compressionBytes: bytes) -> bytes:
+    """
+    1. check for initial repeated bytes. 
+    2. Check if the next few bytes have been seen before.
+    3. Find the next unique pattern, including the next repeated byte.
+
+    """
+    index = 0
+    compressedData = b''
+
+    while index < len(compressionBytes):
+        writtenBytes = compressionBytes[:index]
+        workingBytes = compressionBytes[index:]
+        count = 1
+        
+        # First check for single repeated byte:
+        if (workingBytes[0].to_bytes() * 3) == workingBytes[0:3]:
+            # FIrst byte repeats at least 4 times. Find how many total:
+            matchByte = workingBytes[0].to_bytes()
+            while count < min(128, len(workingBytes)):
+                if workingBytes[count].to_bytes() == matchByte:
+                    count += 1
+                else:
+                    break
+            # Write it either as new data (4 bytes compressed) or as a repeat (2 bytes compressed)
+            if writtenBytes.find(matchByte) != -1:
+                # Byte is found in the written bytes. 
+                """
+                As an aside, this is super dumb. If the last byte is the same as the matchByte, we need to write it as a repeat. 
+                But if it's not, we look for a long length of the repeated byte earlier in the data.
+                Seems inconsequential to differentiate, but it's necessary to match the original data.
+                """
+                if writtenBytes[-1:] == matchByte:
+                    # If the byte is the last byte of the compressed data... 
+                    lastOcc = writtenBytes.rfind(matchByte)
+                else:
+                    # If the byte is NOT the last byte of the compressed data...
+                    lastOcc = writtenBytes.rfind(matchByte * count)
+                seekNum = len(writtenBytes) - lastOcc
+                compressedData += (count + 0x80).to_bytes()
+                compressedData += seekNum.to_bytes()
+            else:
+                # Byte is not found in the written bytes. Write it once.
+                compressedData += int(1).to_bytes() + matchByte
+                compressedData += (count - 1 + 0x80).to_bytes() + int(1).to_bytes() 
+        else:
+            # find the longest repeated pattern that can be made:
+            while count < 128:
+                if writtenBytes.find(workingBytes[:count + 1]) != -1:
+                    count += 1
+                else:
+                    break # Breaks when the pattern is no longer repeated.
+            if count > 3:
+                # We have a repeated pattern. Find the last occurrence of it.
+                lastOcc = writtenBytes.rfind(workingBytes[:count])
+                seekNum = len(writtenBytes) - lastOcc
+                compressedData += (count + 0x80).to_bytes()
+                compressedData += seekNum.to_bytes()
+            else:
+                # new pattern, stop when something else is repeated 3 bytes or more.
+                limit = min(128, len(workingBytes) - 1)
+                while count < limit:
+                    print(f'{(workingBytes[count].to_bytes() * 3).hex()} - {workingBytes[count: count + 3].hex()}')
+                    if (workingBytes[count].to_bytes() * 3) == workingBytes[count: count + 3]:
+                        break
+                    else:
+                        count += 1
+                compressedData += count.to_bytes()
+                compressedData += workingBytes[:count]
+        # Either case count is added to the index pointer.
+        print(f'{compressedData.hex(sep=" ", bytes_per_sep=1)}')    
+        index += count
+    
+    # Add the end of line byte
+    compressedData += int(0).to_bytes()
+    # Line encoded, return the compressed bytes.
+    return compressedData
+
+    """pointer = 1
+    compressedData = b''
+    
+    while pointer < len(line):
+        previous = line[:pointer]
+        nextPattern = newGetBestPattern(line[pointer:])"""
+
+
 """
 # Get the palette from the image
 imagePalette = getPalette(image_array)
@@ -245,12 +357,8 @@ with open('output.txt', 'w') as f:
 
 ## TESTING BRANCH 
 if __name__ == "__main__":
-    bestPattern = getBestPattern(bytes.fromhex(testDataA))
-    print(bestPattern)
-
-    lines = [testDataB]
-    compressedData = compressImageData(lines)
-    print(compressedData.hex())
+    # This is just a minimal test.
+    print(compressLine(bytes.fromhex(testDataC)).hex(sep=' ', bytes_per_sep=1))
 
 ## MAIN BRANCH
 """
@@ -271,9 +379,7 @@ if __name__ == "__main__":
     paletteBytes = paletteToBytes(imagePalette)
 
     
-
-    outputLines = writeLines(image_array, imagePalette)
-
+    # Write the lines to a text file
     newFilename = args.filename.split('/')[-1].split('.')[0]
     with open(f'creditsHacking/output/verification/{newFilename}-blocks.txt', 'w') as f:
         for line in outputLines:
