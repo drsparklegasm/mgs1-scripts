@@ -90,7 +90,7 @@ def decompressBytes(image: imageData) -> bytes:
             newGfxBytes = newGfxBytes[int(width / 2):]
             pointer += 1
 
-            log.write(f'Command: {command} - ENDING LINE \n')
+            log.write(f'Command: {command.to_bytes().hex()} - ENDING LINE \n')
                 
         elif command == 0x80 or (spanish and command == 0x40):
             # New logic (before removal)
@@ -105,13 +105,13 @@ def decompressBytes(image: imageData) -> bytes:
             
             # Add to the lines
             lines.append(newGfxBytes)
-            allbytesGenerated += newGfxBytes
+            allbytesGenerated += newGfxBytes 
             
             # In case this was hit mid-line, fill the rest on the next line
             newGfxBytes = fillByte * (int(width / 2 ) - remainLine)
             pointer += 1
 
-            log.write(f'Command: {command} - Wrote {fillByte.hex()} to end of line. Wrote {remainLine} new bytes in new line. \n')
+            log.write(f'Command: {command.to_bytes().hex()} - Wrote {fillByte.hex()} to end of line. Wrote {remainLine} new bytes in new line. \n')
 
         elif command < 0x80:
             # The simple one
@@ -119,7 +119,7 @@ def decompressBytes(image: imageData) -> bytes:
             newGfxBytes += dataToAdd
             pointer += command + 1
 
-            log.write(f'Command: {command} - Adding {int(command)} bytes: "{dataToAdd.hex()}" \n')
+            log.write(f'Command: {command.to_bytes().hex()} - Adding {int(command)} bytes: "{dataToAdd.hex()}" \n')
 
         else: # command > 0x80:
             # Find number of bytes to add
@@ -148,7 +148,7 @@ def decompressBytes(image: imageData) -> bytes:
                 newGfxBytes += addbytes 
             pointer += 2
 
-            log.write(f'Command: {command} Position: {position} - > 0x80: Repeating: Added {numBytesToAdd} bytes. Wrote {addbytes.hex()} \n')
+            log.write(f'Command: {command.to_bytes().hex()} Position: {position} - > 0x80: Repeating: Added {numBytesToAdd} bytes. Wrote {addbytes.hex()} \n')
 
     # Cleanup, as there are some extra 0x00's 
     if b'' in lines:
