@@ -98,6 +98,7 @@ Here are some naming conventions I try to keep to in the script, as well as a de
 | indentToggle | Toggles indenting for each container. <br>                                                                                                                |
 | debugOutput  | Adds additional terminal logging and Errors. Basically used for me to check if everything was following conventions or if there were things yet to define |
 |              |                                                                                                                                                           |
+|              |                                                                                                                                                           |
 
 ## Header overviews:
 
@@ -109,10 +110,10 @@ Most of these will come from 140.85 or ???. Offsets are from the USA version, D1
 | `FF 02` | VOX_START    | Yes            | Yes            | No             | `ff 02 03 1a 00 00 1f 25 80 03 13`                 | 293567       |     |
 | `FF 03` | ANIMATE      | No             | Yes            | Yes            | `ff 03 00 08 21 ca 59 f8 00 00`                    | 293547       |     |
 | `FF 04` | ADD FREQ     | No             | Yes            | No             | `ff 04 00 0d 37 05 43 41 4d 50 42 45 4c 4c 00`     | 294363       |     |
-| `FF 05` | ?            |                |                |                |                                                    |              |     |
+| `FF 05` | Save block   | Yes            | Yes            | Sort of**      | `ff 05 05 65 12 00 00 aa<br>`                      | 38729        |     |
 | `FF 06` | MUSIC CUE?   |                |                |                |                                                    |              |     |
-| `FF 07` | PROMPT       |                |                |                |                                                    |              |     |
-| `FF 08` | SAVEGAME ?   |                |                |                |                                                    |              |     |
+| `FF 07` | PROMPT       | Yes            | Yes            | Sort of**      | `ff07 00 18`                                       | 38649        |     |
+| `FF 08` | SAVEGAME     |                |                |                |                                                    |              |     |
 | `FF 10` | IF statement | Yes            | No             | No             |                                                    |              |     |
 | `FF 11` | ELSE IF      | Yes            | Yes            | No             |                                                    |              |     |
 | `FF 12` | ELSE ...     | Yes            | Yes            | No             |                                                    |              |     |
@@ -121,6 +122,8 @@ Most of these will come from 140.85 or ???. Offsets are from the USA version, D1
 | `FF 40` | EVAL         |                |                |                |                                                    |              |     |
 
 \* Container implies that it contains other commands. For example `FF 01` is variable and contains a dialogue line, but not other commands, so its a form of container but not defined here as a container. 
+
+** FF05 and FF07 are technically containers, but generally their contents are static. FF05 contains the stage names for saving to the memory card. FF07 exclusively has the yes/no for saving games. These should generally be consistent through the game. 
 
 ## Headers in depth
 
@@ -144,6 +147,7 @@ EX:
 | 00                                 | End of string, or command? (we're in C code after all)                                                                        |
 
 #### FF02 // Voice 
+
 EX:
 `FF02 0056 0001 3CFB 8000 4F`
 
@@ -197,10 +201,14 @@ I don't really know the format. But if we search for these most are 0008 in leng
 
 Sometimes they do have an `FF 05` towards the end. Might just be coincidence, but this is when we start music during the Meryl introducton:
 `ff06 0008 0001 ffff 05 00`
-### Save Game Commands
 
-These are a pain. I'd say just don't touch them and you're good.
-#### FF05 // Save Game 
+#### FF05 // Save Game Commands
+
+These are a pain.
+
+They can be modified. The issue is that some of Mei Ling's codec conversations are excessively long. There is a hard limit in the script due to the lengths of the Call container. it's a u16, so we cannot exceed a call size of 65535 (0xffff) or the call will break. There is a listed critical error if the call gets too long. 
+
+In the US version they use double-wide english characters, which is the same codes as Ascii/UTF8 but with 0x80 before each character.
 
 This one is extremely long, but it seems that everywhere it appears it has the same value, at least in a per-file capacity. 
 
@@ -219,7 +227,8 @@ EX: (offset 38649)
 
 FF10-FF12 all function like headers, with a `80 xx xx` length of container at the end.
 #### FF10 // IF statements
-- They end with TWO nulls in the container. 
+
+IF statements are tricky and contain really two containers. The reason I have the "Then" and "Do" containers is to account for this structure. It's weird when there is an else statement. 
 
 
 #### FF11 // Else If statement

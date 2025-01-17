@@ -40,7 +40,8 @@
 
 From ChatGPT
 
-Hiragana:
+## Hiragana:
+
 ```
 The shift calculated between your custom encoding and the standard Shift-JIS encoding for the vowels is consistently `-414` in hexadecimal, which translates to a static subtraction across all vowels.
 
@@ -56,10 +57,7 @@ These calculated custom encoding values for the k-series should correspond to th
 
 ```
 
-
-
-
-Katakana:
+## Katakana:
 
 Seems these are arranged in series like Hiragana from Shift-JIS, but offset. Like they were just listed in alphabetical order? 
 
@@ -69,3 +67,6 @@ The differences between the standard Shift-JIS values for Hiragana and Katakana 
 In your custom encoding, after considering the systematic Shift-JIS offset, there's an additional offset of `-0x13E` (318 in decimal) for each Katakana character relative to where they would be expected if only the Shift-JIS offset was applied.
 ```
 
+## Extra Characters
+
+Following the call, there are characters used in the call that are not 

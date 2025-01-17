@@ -278,7 +278,7 @@ def compressLine(compressionBytes: bytes) -> bytes:
             # FIrst byte repeats at least 4 times. Find how many total:
             matchByte = workingBytes[0].to_bytes()
             while count < min(128, len(workingBytes)):
-                if workingBytes[count].to_bytes() == matchByte:
+                if workingBytes[count].to_bytes() == matchByte: # should rewrite as gpt suggested... if len(set(workingBytes[:count])) == 1:
                     count += 1
                 else:
                     break
