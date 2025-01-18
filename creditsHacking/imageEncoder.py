@@ -347,7 +347,7 @@ def compressLine(data: bytes) -> bytes:
         or the next 4 bytes are a repeated pattern
         """
         count = 0
-        checkLength = 3
+        checkLength = 4
         while True:
             patternCheck = data[index + count: index + count + checkLength]
             if len(set(patternCheck)) == 1 or data[:index + count].find(patternCheck) != -1:
@@ -429,13 +429,14 @@ def compressLine(data: bytes) -> bytes:
             newBytes += newString.to_bytes() + data[i : i + newString]
             i += newString
         
+        if debug:
+            print(newBytes.hex(sep=' '))
         compressedData += newBytes
     
     compressedData += bytes.fromhex('00')
     
-    """if debug: 
-        print(f'Compressed data: {compressedData.hex(sep=' ')}')"""
-    
+    if debug: 
+        print(f'Compressed data: {compressedData.hex(sep=' ')}')
     return compressedData
 
 def formatImage(filename: str) -> bytes:
@@ -504,8 +505,8 @@ if __name__ == "__main__":
     # File buffer, ensures each image aligns with a multiple of this
     bufferNum = 4
 
-    """print(f'Filename: {args.filename}')"""
-    print(f'Folder: {args.folder}')
+    # print(f'Filename: {args.filename}')
+    # print(f'Folder: {args.folder}')
     
     if args.filename is not None:
         fileList = [args.filename]
@@ -530,8 +531,9 @@ if __name__ == "__main__":
 
 
 ## TESTING BRANCH 
-"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+
+"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeefeffefeeffffefeeeeeeeeeeeeeefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 if __name__ == "__main__":
     # This is just a minimal test.
-    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
-    """
+    debug = True
+    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))"""
