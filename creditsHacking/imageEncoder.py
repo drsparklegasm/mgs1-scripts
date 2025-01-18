@@ -149,7 +149,7 @@ def compressImageData(pixelLines: list [str]) -> bytes:
     
     return compGfxData
 
-# OLDE VERSION OF COMPRESSLINE
+# OLDE VERSIONS OF COMPRESSLINE (Deprecated)
 """
 This is my first version, it does alright but it does not match the original compressed data.
 """
@@ -223,16 +223,15 @@ def compressLineOld(data: str) -> bytes:
 
     return compressedData
 
-"""
+# New Hotness. This matches in the test data so far.
+def compressLineOld2(compressionBytes: bytes) -> bytes:
+    """
     Another stab at logically compressing the data. This time the check order is:
     1. Pattern repeated in the earlier data.
     2. Next pattern is a single byte (We either write it and then repeat, or we find it one earlier and repeat it)
     3. Next pattern is a new pattern, we go until there's a character repeated more than 3 times.
-    """
-
-# New Hotness. This matches in the test data so far.
-def compressLineOld2(compressionBytes: bytes) -> bytes:
-    """
+    
+    ====
     1. check for initial repeated bytes. 
     2. Check if the next few bytes have been seen before.
     3. Find the next unique pattern, including the next repeated byte.
@@ -485,25 +484,7 @@ def formatImage(filename: str) -> bytes:
 
     return outputImageData
 
-## TESTING BRANCH 
-"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-if __name__ == "__main__":
-    # This is just a minimal test.
-    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
-    """
-
 ## MAIN BRANCH
-
-"""
-Suggested by copilot, requires either folder or filename be added.
-"""
-class AtLeastOne(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        if not getattr(namespace, 'filename', None) and not getattr(namespace, 'folder', None):
-            parser.error('At least one of --filename or --folder is required')
-        """elif getattr(namespace, 'filename', None) and getattr(namespace, 'folder', None):
-            parser.error('Cannot have both --filename and --folder! Pick one!')"""
-        setattr(namespace, self.dest, values)
 
 def numerical_sort(value):
     """
@@ -514,11 +495,14 @@ def numerical_sort(value):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
-    parser.add_argument('--filename', '-f', nargs="?", type=str, help='The filename of the TGA file to convert', action=AtLeastOne)
+    parser.add_argument('--filename', '-f', nargs="?", type=str, help='The filename of the TGA file to convert')
     parser.add_argument('--folder', '-d', type=str, help='Directory of files to grab')
     parser.add_argument('--output', '-o', nargs="?", type=str, help='The filename of the output archive filename.')
     parser.add_argument('--blocks', '-b', action='store_true', help='outputs the blocks for reviewing pixel data.')
     args = parser.parse_args()
+
+    # File buffer, ensures each image aligns with a multiple of this
+    bufferNum = 4
 
     """print(f'Filename: {args.filename}')"""
     print(f'Folder: {args.folder}')
@@ -534,10 +518,20 @@ if __name__ == "__main__":
     fileData = struct.pack('I', len(fileList)) # Should be the number of files we're importing either way.
     
     for file in fileList:
-        print(file)
+        print(f'Processing {file}...')
         addBytes = formatImage(file)
+        # Buffer the number of bytes
+        addBytes += bytes(0) * (len(addBytes) % bufferNum)
         fileData += addBytes
 
     with open('creditsHacking/output/recompressedImage.bin', 'wb') as f:
         f.write(fileData)
     f.close()
+
+
+## TESTING BRANCH 
+"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+if __name__ == "__main__":
+    # This is just a minimal test.
+    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
+    """
