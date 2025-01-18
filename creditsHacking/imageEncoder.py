@@ -6,7 +6,7 @@ import os, struct
 from PIL import Image
 import numpy as np
 # from creditsHacking.creditsHacking import imageData
-import argparse, glob
+import argparse, glob, re
 
 debug = False
 blocks = False
@@ -505,6 +505,13 @@ class AtLeastOne(argparse.Action):
             parser.error('Cannot have both --filename and --folder! Pick one!')"""
         setattr(namespace, self.dest, values)
 
+def numerical_sort(value):
+    """
+    Needed for the files to be sorted by number correctly
+    """
+    parts = re.split(r'(\d+)', value)
+    return [int(part) if part.isdigit() else part for part in parts]
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
     parser.add_argument('--filename', '-f', nargs="?", type=str, help='The filename of the TGA file to convert', action=AtLeastOne)
@@ -520,7 +527,7 @@ if __name__ == "__main__":
         fileList = [args.filename]
     else:
         fileList = glob.glob(f'{args.folder}/*.tga')
-        fileList.sort()
+        fileList.sort(key=numerical_sort)
     
     blocks = args.blocks
     
