@@ -6,9 +6,10 @@ import os, struct
 from PIL import Image
 import numpy as np
 # from creditsHacking.creditsHacking import imageData
-import argparse
+import argparse, glob
 
-debug = True
+debug = False
+blocks = False
 
 def getPalette(numpyArray: np.array) -> list:
     """
@@ -438,42 +439,30 @@ def compressLine(data: bytes) -> bytes:
     
     return compressedData
 
-## TESTING BRANCH 
-"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-if __name__ == "__main__":
-    # This is just a minimal test.
-    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
-    """
-
-## MAIN BRANCH
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
-    parser.add_argument('filename', type=str, help='The filename of the TGA file to convert')
-    args = parser.parse_args()
-
+def formatImage(filename: str) -> bytes:
+    global blocks
     # Assume you have a PIL Image object
-    image = Image.open(args.filename) 
+    image = Image.open(filename) 
 
     # Convert PIL Image to NumPy array
     image_array = np.array(image)
 
     # Get the palette from the image
     imagePalette = getPalette(image_array)
+
     # Convert the palette to bytes
     paletteBytes = paletteToBytes(imagePalette)
-
     outputLines = writeLines(image_array, imagePalette)
     
-    # Write the lines to a text file
-    newFilename = args.filename.split('/')[-1].split('.')[0]
-    with open(f'creditsHacking/output/verification/{newFilename}-blocks.txt', 'w') as f:
-        for line in outputLines:
-            f.write(f'{line}\n')
+    if blocks:
+        # Write the lines to a text file
+        newFilename = filename.split('/')[-1].split('.')[0]
+        with open(f'creditsHacking/output/verification/{newFilename}-blocks.txt', 'w') as f:
+            for line in outputLines:
+                f.write(f'{line}\n')
     
     # Output the file in original MGS Compressed format
     outputImageData = b''
-    outputImageData += struct.pack('I', int(1)) # For now assume one file
 
     # Width, height
     height = struct.pack('H', len(outputLines))
@@ -489,17 +478,59 @@ if __name__ == "__main__":
     outputImageData += struct.pack('I', dataLength)
 
     # Final check before adding image data3
-
-    print(f'Header: {outputImageData.hex(sep=' ', bytes_per_sep=1)}')
+    # print(f'Header: {outputImageData.hex(sep=' ', bytes_per_sep=1)}')
 
     # Add the compressed data
     outputImageData += compressedData
 
-    # print(outputImageData.hex( sep=' ', bytes_per_sep=1))
-    
-    with open('creditsHacking/output/recompressedImage.bin', 'wb') as f:
-        f.write(outputImageData)
-    f.close()
+    return outputImageData
 
-    # Print the palette bytes
-    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')
+## TESTING BRANCH 
+"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+if __name__ == "__main__":
+    # This is just a minimal test.
+    print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
+    """
+
+## MAIN BRANCH
+
+"""
+Suggested by copilot, requires either folder or filename be added.
+"""
+class AtLeastOne(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not getattr(namespace, 'filename', None) and not getattr(namespace, 'folder', None):
+            parser.error('At least one of --filename or --folder is required')
+        """elif getattr(namespace, 'filename', None) and getattr(namespace, 'folder', None):
+            parser.error('Cannot have both --filename and --folder! Pick one!')"""
+        setattr(namespace, self.dest, values)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
+    parser.add_argument('--filename', '-f', nargs="?", type=str, help='The filename of the TGA file to convert', action=AtLeastOne)
+    parser.add_argument('--folder', '-d', type=str, help='Directory of files to grab')
+    parser.add_argument('--output', '-o', nargs="?", type=str, help='The filename of the output archive filename.')
+    parser.add_argument('--blocks', '-b', action='store_true', help='outputs the blocks for reviewing pixel data.')
+    args = parser.parse_args()
+
+    """print(f'Filename: {args.filename}')"""
+    print(f'Folder: {args.folder}')
+    
+    if args.filename is not None:
+        fileList = [args.filename]
+    else:
+        fileList = glob.glob(f'{args.folder}/*.tga')
+        fileList.sort()
+    
+    blocks = args.blocks
+    
+    fileData = struct.pack('I', len(fileList)) # Should be the number of files we're importing either way.
+    
+    for file in fileList:
+        print(file)
+        addBytes = formatImage(file)
+        fileData += addBytes
+
+    with open('creditsHacking/output/recompressedImage.bin', 'wb') as f:
+        f.write(fileData)
+    f.close()
