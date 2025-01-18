@@ -1,6 +1,9 @@
-def lz77_compress(data, window_size=20):
+def lz77_compress(data, window_size=128):
     """
     Compresses data using a simple LZ77 algorithm.
+    This was created by chatgpt. I wanted to see if we could
+    replicate the lz77 compression used on graphics. As it stands,
+    its very similar but the imlimentation is likely different.
     """
     compressed = []
     i = 0
@@ -29,13 +32,13 @@ def lz77_compress(data, window_size=20):
             i += match_length + 1
         else:
             # Literal (distance=0, length=0, char)
-            compressed.append((0, 0, data[i]))
+            compressed.append((0, 0, data[i].to_bytes().hex()))
             i += 1
 
     return compressed
 
 # Example: Compress 160 bytes of random data
-data = bytes.fromhex('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f00f95f00fb049999bd6940a9ff0a21ff6fb0ffffffff2e708b709f509ab9ff1d01fccf408a12fdffff23ba33ff07b419e25fc0ffff09f9057604e3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+data = bytes.fromhex('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f21fe9f11fb14000059000110fe3e60ff8fb2ffffffffcf0300d49f010040ff5f40ffcf0100b3ffffff3c0092ff6f0030fb6fd2ffff19f9150051fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 compressed = lz77_compress(data)
 

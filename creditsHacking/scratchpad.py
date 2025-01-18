@@ -156,10 +156,28 @@ testDataC = 'fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # 01 FF FF 01 A0 01 00
 # 01 FF FF 01 A0 01 00
 
+# 
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff b1 01 13 7f 21 fe 9f 11 fb 14 00 00 59 00 01 10 fe 3e 60 ff 8f b2 84 17 10 cf 03 00 d4 9f 01 00 40 ff 5f 40 ff cf 01 00 b3 83 13 12 3c 00 92 ff 6f 00 30 fb 6f d2 ff ff 19 f9 15 00 51 fd b2 6e 00
+# 01 ff b1 01 13 6f 00 f9 5f 00 fb 04 99 99 bd 69 40 a9 ff 0a 21 ff 6f b0 84 17 25 2e 70 8b 70 9f 50 9a b9 ff 1d 01 fc cf 40 8a 12 fd ff ff 23 ba 33 ff 07 b4 19 e2 5f c0 ff ff 09 f9 05 76 04 e3 b2 6e 00
+# 01 ff b1 01 07 6f 11 f5 2e 13 fb 04 83 0a 09 bf 70 ff ff 15 05 fb 6f b0 84 17 06 08 f7 ff eb 9f a0 84 09 1a 06 f6 cf 70 ff 06 fb ff ef 40 ff de ff 22 fe 8f 80 5f c0 ff ff 09 f9 05 fd 7f 83 30 b0 01 00
+# 01 ff b1 01 13 6f 40 f2 0b 04 fb 04 aa ba ff bf 60 ff ef 41 0d f5 6f b0 84 17 11 04 fd ee ff 9f 50 ab eb ff 14 3e f3 cf 60 ef 04 fc 83 13 11 83 fd bf 50 ff df 50 5f c0 ff ff 09 f9 05 fc ef 31 b2 6e 00
+# 01 ff b1 01 13 6f 81 c0 17 07 fb 04 00 40 ff bf 60 ff 9f 90 3f f2 6f b0 84 17 10 04 ff 04 31 9f 00 01 c1 df 50 6f b0 cf 10 23 60 83 13 12 6e 01 81 bf 70 ff ff 40 5f c0 ff ff 09 f9 05 fc ff 33 b2 6e 00
+# 01 ff b1 01 13 6f c0 60 44 09 fb 04 cb dc ff bf 60 ff 4f 30 14 a0 6f b0 84 17 10 04 fd 8a 23 9f 60 cc fc 8f 20 24 60 cf 40 28 f3 84 14 11 9e 02 cc 50 ff df 50 5f c0 ff ff 09 f9 05 fc ef 31 b2 6e 00
+# 01 ff b1 01 07 6f f0 34 91 0a fb 04 83 0a 09 bf 60 ff 1e 53 44 50 7f b0 84 17 25 08 f8 ff 25 9f a0 ff ff 4f 41 54 32 cf 70 9f 80 ff ff df c5 ff 08 f9 22 ff 8f 80 5f d0 ff ff 09 f9 05 fd 7f 70 b2 6e 00
+# 01 ff b1 01 3c 6f f0 07 d0 09 fb 04 99 99 fc bf 60 ff 09 f9 ff 13 7f 50 77 d7 ff ff 2e 91 ad 32 9f 50 9a b9 0c f5 ff 06 db 60 ff 13 fe ff cf 30 ba 04 fb 07 b4 19 e2 5f 60 77 e8 09 f9 05 76 04 e3 b2 6e 00
+# 01 ff b1 01 3c 7f f1 1c f3 19 fb 14 00 00 f7 bf 82 ff 14 fe ff 09 8b 01 00 b0 ff ff cf 03 01 b3 9f 01 00 30 17 fb ff 1c d7 71 ff 08 f6 ff ff 2a 00 70 ff 6f 00 30 fb 5f 01 00 d0 1a f9 15 00 51 fd b2 6e 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 01 ff ff 01 a0 01 00
+# 
 
-
-# 01 ff b1 01 07 6f 11 f5 2e 13 fb 04 0c ff ff ff bf 70 ff ff 15 05 fb 6f b0 84 17 06 08 f7 ff eb 9f a0 84 09 1b 06 f6 cf 70 ff 06 fb ff ef 40 ff de ff 22 fe 8f 80 5f c0 ff ff 09 f9 05 fd 7f 70 b2 6e 00
-#  MY lines:
+#  MY lines (OLD):
 
 # 01 ff ff 01 a0 01 00
 # 01 ff ff 01 a0 01 00
@@ -179,4 +197,3 @@ testDataC = 'fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # 01 ff ff 01 a0 01 00
 # 01 ff ff 01 a0 01 00
 # 01 ff ff 01 a0 01 00
-

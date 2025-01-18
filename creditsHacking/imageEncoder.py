@@ -230,7 +230,7 @@ def compressLineOld(data: str) -> bytes:
     """
 
 # New Hotness. This matches in the test data so far.
-def compressLine(compressionBytes: bytes) -> bytes:
+def compressLineOld2(compressionBytes: bytes) -> bytes:
     """
     1. check for initial repeated bytes. 
     2. Check if the next few bytes have been seen before.
@@ -336,9 +336,110 @@ def compressLine(compressionBytes: bytes) -> bytes:
     # Line encoded, return the compressed bytes.
     return compressedData
 
+def compressLine(data: bytes) -> bytes:
+
+    global debug
+
+    def findNextPatternOrRepeat(data: bytes, index: int) -> int:
+        """
+        Finds how many bytes starting at index
+        until either we repeat the same byte 4x 
+        or the next 4 bytes are a repeated pattern
+        """
+        count = 0
+        checkLength = 3
+        while True:
+            patternCheck = data[index + count: index + count + checkLength]
+            if len(set(patternCheck)) == 1 or data[:index + count].find(patternCheck) != -1:
+                break
+            else:
+                count += 1
+        
+        return count
+
+    def getLongestRepeat(data: bytes, index: int) -> int:
+        """
+        Get the longest repeated character starting at index.
+        """
+
+        before = data[:index]
+        after = data[index:]
+
+        count = 0
+        while count < min(128, len(after)):
+            if len(set(after[:count + 1])) == 1:
+                count += 1
+            else:
+                break
+
+        # print(f'{count} bytes were repeated following index {index}' )
+        return count
+
+    def getLongestPattern(data: bytes, index: int) -> tuple [int, int]:
+        """
+        For the index, return the longest pattern starting there that 
+        appears earlier in the data and how far back to go.
+        """
+        before = data[:index]
+        after = data[index:]
+
+        count = 0
+        while count < len(after):
+            if before.find(after[:count + 1]) != -1:
+                count += 1
+            else:
+                break
+        
+        distance = abs(len(before) - before.rfind(after[:count]))
+
+        return distance, count
+    
+    """
+    Actual compression Def starts here.
+
+    """
+    
+    compressedData = b''
+    i = 0
+
+    while i < len(data):
+        newBytes = b''
+        repeatCount = getLongestRepeat(data, i)
+        distance, patternLen = getLongestPattern(data, i)
+
+        if patternLen >= repeatCount and patternLen > 1:
+            if data[i - 1] == data[i]:
+                newBytes += (repeatCount + 0x80).to_bytes() + int(1).to_bytes()
+                i += repeatCount
+            else:
+                newBytes += (patternLen + 0x80).to_bytes() + distance.to_bytes()
+                i += patternLen
+        elif repeatCount > 3:
+            if data[i - 1] == data[i] and i != 0:
+                newBytes += (repeatCount + 0x80).to_bytes() + int(1).to_bytes()
+                i += repeatCount
+            else:
+                newBytes += int(1).to_bytes() + data[i].to_bytes()
+                newBytes += (repeatCount - 1 + 0x80).to_bytes() + int(1).to_bytes()
+                i += repeatCount
+        else:
+            newString = findNextPatternOrRepeat(data, i)
+            if newString < 1:
+                newString = 1
+            newBytes += newString.to_bytes() + data[i : i + newString]
+            i += newString
+        
+        compressedData += newBytes
+    
+    compressedData += bytes.fromhex('00')
+    
+    """if debug: 
+        print(f'Compressed data: {compressedData.hex(sep=' ')}')"""
+    
+    return compressedData
 
 ## TESTING BRANCH 
-malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+"""malfunctioningLine = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6f11f52e13fb04ffffffbf70ffff1505fb6fb0ffffffff08f7ffeb9fa0ffffff0806f6cf70ff06fbffef40ffdeff22fe8f805fc0ffff09f905fd7f70ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 if __name__ == "__main__":
     # This is just a minimal test.
     print(compressLine(bytes.fromhex(malfunctioningLine)).hex(sep=' ', bytes_per_sep=1))
@@ -401,4 +502,4 @@ if __name__ == "__main__":
     f.close()
 
     # Print the palette bytes
-    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')"""
+    print(f'{newFilename.split('-')[-1]}: {paletteBytes.hex()}')
