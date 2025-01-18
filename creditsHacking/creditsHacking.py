@@ -102,7 +102,9 @@ def decompressBytes(image: imageData) -> bytes:
             # Find remaining bytes and fill with color
             remainLine = int(width / 2) - len(newGfxBytes)
             newGfxBytes += fillByte * remainLine
-            
+            if True:
+                print(f'We hit a fill line! {remainLine} bytes remained! Were written to next line.')
+
             # Add to the lines
             lines.append(newGfxBytes)
             allbytesGenerated += newGfxBytes 
@@ -253,6 +255,7 @@ def exportImage(filename: str, image: imageData) -> None:
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description='Extracts images from the credits file.')
     argparser.add_argument('filename', type=str, help='The filename of the credits file to extract images from.')
+    argparser.add_argument('--palette', '-p', action='store_true', help='Prints the palette of each image (bytes) for debugging purposes')
     args = argparser.parse_args()
 
     creditsFilename = args.filename
@@ -274,8 +277,10 @@ if __name__ == "__main__":
             for line in image.lines:
                 f.write(f'{line.hex()}\n')
         paletteCheck.write(f'{i}: {image.palette.hex()}\n')
-        print(f'Palette for image {i}: {image.palette.hex()}')
-        print(f'IMAGE {i} DONE!\n')
+
+        if args.palette:
+            print(f'Palette for image {i}: {image.palette.hex()}')
+        print(f'IMAGE {i} DONE!')
 
     paletteCheck.close()
     
