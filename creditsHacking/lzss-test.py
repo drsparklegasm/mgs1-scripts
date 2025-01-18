@@ -1,4 +1,4 @@
-def lzss_compress(data, window_size=256, lookahead_buffer_size=15):
+def lzss_compress(data, window_size=128, lookahead_buffer_size=128):
     """
     Compress a bytes object using a simple LZSS algorithm.
 
@@ -45,8 +45,7 @@ def lzss_compress(data, window_size=256, lookahead_buffer_size=15):
     return compressed
 
 # Example usage
-data = b"ABABABABCCCCCCCCCCCCCCCCABABABABABAB"
-
+data = bytes.fromhex('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeefeffefeeffffefeeeeeeeeeeeeeefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 compressed_data = lzss_compress(data)
 print("Compressed Data:")
 for entry in compressed_data:
