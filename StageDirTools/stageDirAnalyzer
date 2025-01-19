@@ -1,0 +1,52 @@
+"""
+This is a testing script for developing a tool for working with STAGE.DIR
+
+"""
+
+import os, re, glob, struct
+
+
+extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/master/mgs/common/ext_table.h
+    0x62: "bin",
+    0x63: "con",
+    0x64: "dar",
+    0x65: "efx",
+    0x67: "gcx",
+    0x68: "hzm",
+    0x69: "img",
+    0x6B: "kmd",
+    0x6C: "lit",
+    0x6D: "mdx",
+    0x6F: "oar",
+    0x70: "pcx",
+    0x72: "rar",
+    0x73: "sgt",
+    0x77: "wvx",
+    0x7A: "zmd"
+}
+
+# First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
+
+filename = 'build/MGS/STAGE.DIR'
+stageData = open(filename, 'rb').read()
+"""
+class tableContents:
+    size = struct.unpack("I", stageData[0:4])[0]
+
+"""
+
+size = struct.unpack("I", stageData[0:4])[0]
+tableOfConts = {}
+
+print(size)
+
+offset = 4
+while offset < size:
+    stage = stageData[offset:offset + 8].decode('utf8')
+    location = struct.unpack("I", stageData[offset + 8: offset + 12])[0]
+    tableOfConts.update({stage: location})
+    offset += 12
+
+for key in tableOfConts.keys():
+    print(f'{key}: {tableOfConts.get(key)}')
+
