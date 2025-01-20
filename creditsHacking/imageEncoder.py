@@ -437,6 +437,7 @@ def compressLine(data: bytes) -> bytes:
     
     if debug: 
         print(f'Compressed data: {compressedData.hex(sep=' ')}')
+        
     return compressedData
 
 def formatImage(filename: str) -> bytes:
@@ -472,16 +473,21 @@ def formatImage(filename: str) -> bytes:
     # Palette
     outputImageData += paletteBytes
 
+    # File buffer, ensures each image aligns with a multiple of this
+    bufferNum = 4
+    
     # Compress the image data
     compressedData = compressImageData(outputLines)
-    dataLength = len(compressedData)
+    # Buffer the number of bytes
+    addBytes = bytes(0) * (len(compressedData) % bufferNum)
+    dataLength = len(compressedData) + len(addBytes)
     outputImageData += struct.pack('I', dataLength)
 
     # Final check before adding image data3
     # print(f'Header: {outputImageData.hex(sep=' ', bytes_per_sep=1)}')
 
     # Add the compressed data
-    outputImageData += compressedData
+    outputImageData += compressedData + addBytes
 
     return outputImageData
 
@@ -502,9 +508,6 @@ if __name__ == "__main__":
     parser.add_argument('--blocks', '-b', action='store_true', help='outputs the blocks for reviewing pixel data.')
     args = parser.parse_args()
 
-    # File buffer, ensures each image aligns with a multiple of this
-    bufferNum = 4
-
     # print(f'Filename: {args.filename}')
     # print(f'Folder: {args.folder}')
     
@@ -521,8 +524,6 @@ if __name__ == "__main__":
     for file in fileList:
         print(f'Processing {file}...')
         addBytes = formatImage(file)
-        # Buffer the number of bytes
-        addBytes += bytes(0) * (len(addBytes) % bufferNum)
         fileData += addBytes
 
     with open('creditsHacking/output/recompressedImage.bin', 'wb') as f:
