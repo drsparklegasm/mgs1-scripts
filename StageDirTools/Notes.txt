@@ -6,9 +6,9 @@ A7 96 73 62 8A 24 02 00 # Length of file: 0x02238A # SB / bin
 00 00 6E 64 38 E6 00 00 # nd # length E638? Starts 0x00023800 This is the DAR file 
 A7 96 63 6B 00 00 00 00 # CK 00
 A7 96 63 6C B4 00 00 00 # CL 180 bytes kmd
-A7 96 63 68 B8 00 00 00 # 184 bytes 
-54 EA 63 67 EC 00 00 00 # 
-00 00 63 FF F8 03 00 00 # 1016 b / this si the total size of all the c type stuff. 
+A7 96 63 68 B8 00 00 00 # CG 184 bytes 
+54 EA 63 67 EC 00 00 00 # CH EC = 
+00 00 63 FF F8 03 00 00 # C 0xff // 1016 b / 
 
 
 22 AD 73 77 40 46 01 00 # 00ad22.wvx

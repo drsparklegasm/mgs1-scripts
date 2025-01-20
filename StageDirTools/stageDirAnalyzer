@@ -80,6 +80,12 @@ STAGE.DIR:
 Source: https://problemkaputt.de/psxspx-cdrom-file-archive-stage-dir-and-dat-metal-gear-solid.htm
 """
 
+"""
+For hashed filenames we can grab them from this collection, props to netcat:
+https://raw.githubusercontent.com/KieronJ/restage/refs/heads/main/dict.txt
+
+"""
+
 # For now we'll hard code the brf folder.
 a, b = tableOfConts.get('brf')
 folderData = stageData[a * 0x800: b * 0x800]
@@ -96,28 +102,47 @@ class stageFile:
     nameChecksum: bytes
     fileFamily: int
     fileType: int
+    offset: int
     size: bytes
 
 
-    def __init__(self, data: bytes):
+    """def __init__(self, data: bytes):
         self.nameChecksum = data[0:2]
         self.fileType = data[2:4]
+        
 
-        pass
+        pass"""
 
 class stageContents:
     dataStart: int
     dataEnd: int
+    files = []
 
-    def __init__(self, data: bytes):
+    """def __init__(self, data: bytes):
         # First two u16's are start and end ranges. 
         self.dataStart = struct.unpack('H', data[0:2])
         self.dataEnd = struct.unpack('H', data[2:4])
-        pass
+        pass"""
     
 
 fileListBin = folderData[0:0x800]
-offset = 0
+offset = 4
 
-# for offset in range(0,0x800):
-#     print()
+cFiles = []
+
+while offset < len(fileListBin.rstrip(b'\x00')):
+    
+    if fileListBin[offset : offset + 8] == bytes(8):
+        print(f'Reached end of list! Breaking...')
+        break
+    elif fileListBin[offset + 3] == 0x63:
+        cFiles.append(fileListBin[offset : offset + 8])
+    else:  
+        fileHash = fileListBin[offset + 2: offset: -1].hex()
+        fileFamily = fileListBin[offset + 3]
+        fileType = fileListBin[offset + 3]
+        print(fileType)
+        fileSize = struct.unpack("I", fileListBin[offset + 4: offset + 8])[0]
+        fileBlocks = fileSize // 0x800 + 1
+        print(f'File: {fileHash}.{extTable.get(fileType)}, offset: {offset}')
+    offset += 8
