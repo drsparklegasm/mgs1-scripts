@@ -1,6 +1,5 @@
 """
 This is a testing script for developing a tool for working with STAGE.DIR
-
 """
 
 import os, re, glob, struct
@@ -84,3 +83,18 @@ Source: https://problemkaputt.de/psxspx-cdrom-file-archive-stage-dir-and-dat-met
 # For now we'll hard code the brf folder.
 a, b = tableOfConts.get('brf\x00\x00\x00\x00\x00')
 folderData = stageData[a * 0x800: b * 0x800]
+
+listSize = struct.unpack('H', folderData[0:2])
+numBlocks = struct.unpack('H', folderData[2:4])
+
+"""
+First file:
+b'A7 96 73 62 8A 24 02 00'
+
+0xA796 == Name checksum
+0x7362 == sb72 (mips binary?)
+0x8a240200 == Size?
+0x0002247F 
+"""
+# 0xB693
+

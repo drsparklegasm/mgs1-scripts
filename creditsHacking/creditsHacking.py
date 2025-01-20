@@ -34,6 +34,7 @@ filesToRun = [
     "creditsHacking/jpn/00eae8.rar"
 ]
 
+debug = False
 spanish = False
 creditsData = open(creditsFilename, 'rb').read()
 
@@ -256,9 +257,12 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description='Extracts images from the credits file.')
     argparser.add_argument('filename', type=str, help='The filename of the credits file to extract images from.')
     argparser.add_argument('--palette', '-p', action='store_true', help='Prints the palette of each image (bytes) for debugging purposes')
+    argparser.add_argument('--verbose', '-v', action='store_true', help='Adds additional terminal logging for debugging')
     args = argparser.parse_args()
 
     creditsFilename = args.filename
+    if args.verbose:
+        debug = True
 
     print(f'Outputting graphics from {creditsFilename}')
     creditsData = open(creditsFilename, 'rb').read()
@@ -271,6 +275,10 @@ if __name__ == "__main__":
     # For each image found, output an image file.
     for i, image in enumerate(imageList):
         # 1. Export the file
+        if debug:
+            # We needed to check the lengths for proper padding on recompile. Based on this it can be any multiple of 0x4
+            print(f'image data length: {struct.pack("I", image.dataLength).hex()}')
+
         exportImage(f'creditsHacking/output/images/file-{i}.tga', image)
         # 2. Export the blocks (lines of hex chars), this is mostly for verification later.
         with open(f'creditsHacking/output/blocks/file-{i}-blocks.txt', 'w') as f:

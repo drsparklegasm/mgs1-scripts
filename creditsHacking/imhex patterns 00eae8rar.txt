@@ -1,0 +1,15 @@
+
+// image 1
+u8 image00[0x422C] @ 0x2C;
+
+// image 2 0x00004258
+u8 image01[0x2914] @ 0x4280;
+
+// image 3
+u8 image02[0x6950] @ 0x6BBC;
+
+// image 4
+u8 image03[0x5ad4] @0xD534;
+
+// image 5
+u8 image04[0x3190] @0x13030;

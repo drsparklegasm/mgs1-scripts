@@ -473,12 +473,16 @@ def formatImage(filename: str) -> bytes:
     # Palette
     outputImageData += paletteBytes
 
+    """
+    Data compression starts here!
+    """
+    # Compress the image data
+    compressedData = compressImageData(outputLines)
+
     # File buffer, ensures each image aligns with a multiple of this
     bufferNum = 4
     
-    # Compress the image data
-    compressedData = compressImageData(outputLines)
-    # Buffer the number of bytes
+    # Buffer the number of bytes from above
     addBytes = bytes(0) * (len(compressedData) % bufferNum)
     dataLength = len(compressedData) + len(addBytes)
     outputImageData += struct.pack('I', dataLength)
