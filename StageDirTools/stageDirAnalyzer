@@ -44,9 +44,43 @@ offset = 4
 while offset < size:
     stage = stageData[offset:offset + 8].decode('utf8')
     location = struct.unpack("I", stageData[offset + 8: offset + 12])[0]
-    tableOfConts.update({stage: location})
+    locationEnd = struct.unpack("I", stageData[offset + 20: offset + 24])[0]
+    if locationEnd == 0:
+        locationEnd = len(stageData) // 0x800
+    tableOfConts.update({stage: (location, locationEnd)})
     offset += 12
 
 for key in tableOfConts.keys():
     print(f'{key}: {tableOfConts.get(key)}')
 
+# Next we read the table of contents:
+
+"""
+STAGE.DIR:
+
+  000h 4     Size of File List (N*0Ch)
+  004h N*0Ch Folder List
+  ...  ..    Zeropadding to 800h-byte boundary
+  ...  ..    Folder Data
+ Folder List entries:
+  000h 8     Foldername (zeropadded if less than 8 chars)  ;nickname=stg
+  008h 4     Offset/800h to File List
+ Folder Data (per folder):
+  000h 2     Unknown (always 1) (maybe File List size/800h?)
+  002h 2     Folder Size/800h (of whole folder, with file list plus file data)
+  004h N*8   File List
+  ...        Zeropadding to 800h-byte
+  800h       Data (for files in current folder)
+ File List entries:
+  000h 2     File ID (checksum on name)
+  002h 1     File Family (one of following chars: "cnrs")
+  003h 1     File Type   (one of following chars: "abcdeghiklmoprswz",FFh)
+  004h 4     File Size (or File Offset, when File Family="c")
+
+
+Source: https://problemkaputt.de/psxspx-cdrom-file-archive-stage-dir-and-dat-metal-gear-solid.htm
+"""
+
+# For now we'll hard code the brf folder.
+a, b = tableOfConts.get('brf\x00\x00\x00\x00\x00')
+folderData = stageData[a * 0x800: b * 0x800]
