@@ -450,9 +450,12 @@ def formatImage(filename: str) -> bytes:
 
     # Get the palette from the image
     imagePalette = getPalette(image_array)
-
+    
     # Convert the palette to bytes
     paletteBytes = paletteToBytes(imagePalette)
+    if len(paletteBytes) != 0x20:
+        print(f'Palette was not 32 bytes long! Length: {len(paletteBytes)} Palette: {paletteBytes.hex()}')
+
     outputLines = writeLines(image_array, imagePalette)
     
     if blocks:
@@ -483,7 +486,7 @@ def formatImage(filename: str) -> bytes:
     bufferNum = 4
     
     # Buffer the number of bytes from above
-    addBytes = bytes(0) * (len(compressedData) % bufferNum)
+    addBytes = bytes(1) * (4 - (len(compressedData) % bufferNum))
     dataLength = len(compressedData) + len(addBytes)
     outputImageData += struct.pack('I', dataLength)
 
