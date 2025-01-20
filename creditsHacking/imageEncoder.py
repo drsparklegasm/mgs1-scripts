@@ -507,16 +507,16 @@ def numerical_sort(value):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert a TGA file to a text file')
     parser.add_argument('--filename', '-f', nargs="?", type=str, help='The filename of the TGA file to convert')
-    parser.add_argument('--folder', '-d', type=str, help='Directory of files to grab')
+    parser.add_argument('--folder', '-d', nargs="?", type=str, help='Directory of files to grab')
     parser.add_argument('--output', '-o', nargs="?", type=str, help='The filename of the output archive filename.')
     parser.add_argument('--blocks', '-b', action='store_true', help='outputs the blocks for reviewing pixel data.')
     args = parser.parse_args()
-
-    # print(f'Filename: {args.filename}')
-    # print(f'Folder: {args.folder}')
     
     if args.filename is not None:
         fileList = [args.filename]
+    elif args.folder is None:
+        print(f'Error! Need either File or Folder specified! Exiting...')
+        exit()
     else:
         fileList = glob.glob(f'{args.folder}/*.tga')
         fileList.sort(key=numerical_sort)
