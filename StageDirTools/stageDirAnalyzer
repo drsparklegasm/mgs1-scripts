@@ -4,7 +4,6 @@ This is a testing script for developing a tool for working with STAGE.DIR
 
 import os, re, glob, struct
 
-
 extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/master/mgs/common/ext_table.h
     0x62: "bin",
     0x63: "con",
@@ -21,7 +20,8 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
     0x72: "rar",
     0x73: "sgt",
     0x77: "wvx",
-    0x7A: "zmd"
+    0x7A: "zmd",
+    0xFF: "noFile"
 }
 
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
@@ -103,14 +103,12 @@ class stageFile:
     fileFamily: int
     fileType: int
     offset: int
+    startBlock: int # This is the block where the file starts, where each block is 0x800 and first block is TOC
     size: bytes
-
 
     """def __init__(self, data: bytes):
         self.nameChecksum = data[0:2]
         self.fileType = data[2:4]
-        
-
         pass"""
 
 class stageContents:
@@ -118,31 +116,34 @@ class stageContents:
     dataEnd: int
     files = []
 
-    """def __init__(self, data: bytes):
-        # First two u16's are start and end ranges. 
-        self.dataStart = struct.unpack('H', data[0:2])
-        self.dataEnd = struct.unpack('H', data[2:4])
-        pass"""
-    
-
 fileListBin = folderData[0:0x800]
 offset = 4
 
-cFiles = []
+cFiles: list [ stageFile ]
+i = 0
 
-while offset < len(fileListBin.rstrip(b'\x00')):
-    
+while offset < len(fileListBin):
+    currentFile: stageFile
+    # We can loop to see which type of file we hit and add it. 
     if fileListBin[offset : offset + 8] == bytes(8):
         print(f'Reached end of list! Breaking...')
         break
     elif fileListBin[offset + 3] == 0x63:
         cFiles.append(fileListBin[offset : offset + 8])
     else:  
-        fileHash = fileListBin[offset + 2: offset: -1].hex()
-        fileFamily = fileListBin[offset + 3]
-        fileType = fileListBin[offset + 3]
-        print(fileType)
-        fileSize = struct.unpack("I", fileListBin[offset + 4: offset + 8])[0]
-        fileBlocks = fileSize // 0x800 + 1
-        print(f'File: {fileHash}.{extTable.get(fileType)}, offset: {offset}')
+        stageFile.nameChecksum = fileListBin[offset: offset + 2][::-1].hex()
+        stageFile.fileFamily = fileListBin[offset + 2]
+        stageFile.fileType = fileListBin[offset + 3]
+        print(stageFile.fileType)
+        stageFile.size = struct.unpack("I", fileListBin[offset + 4: offset + 8])[0]
+        fileBlocks = stageFile.size // 0x800 + 1
+        print(f'File: {stageFile.nameChecksum}.{extTable.get(stageFile.fileType)}, offset: {offset}')
+    
+    cFiles.append(stageFile)
     offset += 8
+
+
+"""
+Next step: Write block and file size calcs. 
+Then: The file exports on a per-stage basis.
+"""
