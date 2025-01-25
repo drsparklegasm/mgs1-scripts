@@ -93,6 +93,19 @@ folderData = stageData[a * 0x800: b * 0x800]
 listSize = struct.unpack('H', folderData[0:2])
 numBlocks = struct.unpack('H', folderData[2:4])
 
+
+def extractStageBins():
+    """
+    Writes individual stage binaries to individual folders/files
+    """
+    for stage in tableOfConts.keys():
+        os.makedirs(f"extractedStage/{stage}")
+        with open(f'extractedStage/{stage}/{stage}.bin', 'wb') as f:
+            start, end = tableOfConts.get(stage)
+            f.write(stageData[start * 0x800: end * 0x800])
+        print(f'{stage} written!')
+
+
 """
 Next: Write a def that pulls the table of contents and lists the files and their sizes. 
 
@@ -119,8 +132,9 @@ class stageContents:
 fileListBin = folderData[0:0x800]
 offset = 4
 
-cFiles: list [ stageFile ]
+cFiles = []
 i = 0
+blockOffset = 1
 
 while offset < len(fileListBin):
     currentFile: stageFile
@@ -143,7 +157,10 @@ while offset < len(fileListBin):
     offset += 8
 
 
+
+
 """
 Next step: Write block and file size calcs. 
 Then: The file exports on a per-stage basis.
 """
+
