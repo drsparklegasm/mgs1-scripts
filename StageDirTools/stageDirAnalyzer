@@ -24,20 +24,47 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
     0xFF: "noFile"
 }
 
+
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
 
 filename = 'build/MGS/STAGE.DIR'
 stageData = open(filename, 'rb').read()
+debug = True
+
 """
 class tableContents:
     size = struct.unpack("I", stageData[0:4])[0]
 
 """
 
-size = struct.unpack("I", stageData[0:4])[0]
-tableOfConts = {}
+class stageContents:
+    dataStart: int
+    dataEnd: int
+    files = []
 
-print(size)
+class stageFile:
+    nameChecksum: bytes
+    fileFamily: int
+    fileType: int
+    offset: int
+    startBlock: int # This is the block where the file starts, where each block is 0x800 and first block is TOC
+    # startOffset: int
+    start: int # 
+    size: int
+    
+    def __str__(self):
+        printText = f'File: {self.nameChecksum}.{extTable.get(self.fileType)}\n\tOffset: {self.start}\n\tSize: {self.size}'
+        return printText
+    
+    """def __init__(self, data: bytes):
+        self.nameChecksum = data[0:2]
+        self.fileType = data[2:4]
+        pass"""
+
+size = struct.unpack("I", stageData[0:4])[0]
+tableOfConts = {} # List of stages and their blocks (start, end)
+
+# print(size)
 
 offset = 4
 while offset < size:
@@ -87,11 +114,12 @@ https://raw.githubusercontent.com/KieronJ/restage/refs/heads/main/dict.txt
 """
 
 # For now we'll hard code the brf folder.
-a, b = tableOfConts.get('brf')
+a, b = tableOfConts.get('')
 folderData = stageData[a * 0x800: b * 0x800]
 
 listSize = struct.unpack('H', folderData[0:2])
 numBlocks = struct.unpack('H', folderData[2:4])
+
 
 
 def extractStageBins():
@@ -111,51 +139,82 @@ Next: Write a def that pulls the table of contents and lists the files and their
 
 """
 
-class stageFile:
-    nameChecksum: bytes
-    fileFamily: int
-    fileType: int
-    offset: int
-    startBlock: int # This is the block where the file starts, where each block is 0x800 and first block is TOC
-    size: bytes
-
-    """def __init__(self, data: bytes):
-        self.nameChecksum = data[0:2]
-        self.fileType = data[2:4]
-        pass"""
-
-class stageContents:
-    dataStart: int
-    dataEnd: int
-    files = []
-
 fileListBin = folderData[0:0x800]
 offset = 4
 
-cFiles = []
+stageFiles = []
 i = 0
 blockOffset = 1
 
 while offset < len(fileListBin):
-    currentFile: stageFile
+    currentFile = stageFile()
     # We can loop to see which type of file we hit and add it. 
-    if fileListBin[offset : offset + 8] == bytes(8):
-        print(f'Reached end of list! Breaking...')
+    if fileListBin[offset : offset + 8] == bytes(8): # Reached end of the contents
+        if debug:
+            print(f'Reached end of list! Breaking...')
         break
-    elif fileListBin[offset + 3] == 0x63:
-        cFiles.append(fileListBin[offset : offset + 8])
+    elif fileListBin[offset + 2] == 0x63: # Handling C files... 
+        stageCFiles = []
+        cfileHeaders = []
+        while fileListBin[offset + 3] != 0xFF:
+            cfileHeaders.append(fileListBin[offset: offset + 8])
+            offset += 8
+        cfileHeaders.reverse()
+        cfileEnd = struct.unpack("I", fileListBin[offset + 4: offset + 8])[0] # Used to track the end of a file, as these are crunched together.
+        cFileBlocks = cfileEnd // 0x800 + 1
+        for header in cfileHeaders:
+            currentCFile = stageFile()
+            currentCFile.nameChecksum = header[0:2][::-1].hex()
+            currentCFile.fileFamily = header[2]
+            currentCFile.fileType = header[3]
+            currentCFile.startBlock = blockOffset # Doesnt mean anything for the cfiles.
+            # Start and end
+            currentCFile.end = cfileEnd
+            currentCFile.start = (blockOffset * 0x800) + struct.unpack("I", header[4:8])[0]
+            
+            currentCFile.size = (blockOffset * 0x800) + currentCFile.end - currentCFile.start
+            cfileEnd = currentCFile.start
+            # Add to sub list, which is then reversed and added to stageFiles
+            stageCFiles.append(currentCFile)
+        # Before exiting handle the last cFile (total)
+        blockOffset += cFileBlocks
+        # Add the C files to stage files
+        stageCFiles.reverse()
+        for file in stageCFiles:
+            print(file)
+            stageFiles.append(file) # Not sure about this syntax
+        # Offset stil at the cfile total, ok to add 8 bytes.
     else:  
-        stageFile.nameChecksum = fileListBin[offset: offset + 2][::-1].hex()
-        stageFile.fileFamily = fileListBin[offset + 2]
-        stageFile.fileType = fileListBin[offset + 3]
-        print(stageFile.fileType)
-        stageFile.size = struct.unpack("I", fileListBin[offset + 4: offset + 8])[0]
-        fileBlocks = stageFile.size // 0x800 + 1
-        print(f'File: {stageFile.nameChecksum}.{extTable.get(stageFile.fileType)}, offset: {offset}')
+        tocEntry = fileListBin[offset : offset + 8]
+        currentFile.nameChecksum = tocEntry[0:2][::-1].hex()
+        currentFile.fileFamily = tocEntry[2]
+        currentFile.fileType = tocEntry[3]
+
+        # Now the dicey bits...
+        currentFile.size = struct.unpack("I", tocEntry[4:8])[0]
+        currentFile.startBlock = blockOffset
+        currentFile.start = blockOffset * 0x800
+        currentFile.end = currentFile.start + currentFile.size
+
+        # Update the file blocks (blocks is how many blocks of 0x800 size it needs)
+        fileBlocks = currentFile.size // 0x800 + 1
+        blockOffset += fileBlocks
+
+        print(f'File: {currentFile.nameChecksum}.{extTable.get(currentFile.fileType)}, offset: {blockOffset * 0x800}')
+        # Add to the files list
+        stageFiles.append(currentFile)
+        print(currentFile)
     
-    cFiles.append(stageFile)
     offset += 8
 
+def printStageFiles():
+    global tableOfConts
+    global 
+
+
+
+for file in stageFiles:
+    print(file.start)
 
 
 
@@ -164,3 +223,4 @@ Next step: Write block and file size calcs.
 Then: The file exports on a per-stage basis.
 """
 
+def exportStageFiles(stageName: str, file:str=None) -> None:
