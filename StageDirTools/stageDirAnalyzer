@@ -48,6 +48,12 @@ class stageContents:
 
     files = [] # List of stageFile class objects, each is a file in the stage data.
 
+    """
+    Not sure if this will work?
+    """
+    def getFiles(self):
+        self.files = getStageFiles(self)
+
 class stageFile:
     """
     An individual file in a stage. Should have the info
@@ -66,7 +72,7 @@ class stageFile:
     def __str__(self):
         global filename
         filename = extTable.get(self.fileType)
-        printText = f'File: {self.nameChecksum}.{filename)}\n\tOffset: {self.start}\n\tSize: {self.size}'
+        printText = f'File: {self.nameChecksum}.{filename}\n\tOffset: {self.start}\n\tSize: {self.size}'
         return printText
     
 def getStagesInBin():
@@ -119,7 +125,7 @@ def printStageOffsets() -> None:
     return
 
 # Next we read the table of contents:
-
+"""
 # For now we'll hard code the brf folder.
 workingStage = getStage('brf')
 
@@ -130,6 +136,7 @@ folderData = stageData[a * 0x800: b * 0x800]
 
 listSize = struct.unpack('H', folderData[0:2])
 numBlocks = struct.unpack('H', folderData[2:4])
+"""
 
 """def extractStageBins(): # Removed with table of contents.
     """
@@ -157,14 +164,11 @@ Next: Write a def that pulls the table of contents and lists the files and their
 
 """
 
-def getStageFiles(stage: stageFile) -> list:
+def getStageFiles(fileListBin: bytes) -> list:
 
-    fileListBin = folderData[0:0x800]
     offset = 4
-
     stageFiles = []
-    i = 0
-    blockOffset = 1
+    blockOffset = 1 # Always 1, never seen a table of contents longer than 0x800 bytes.
 
     while offset < len(fileListBin):
         currentFile = stageFile()
@@ -247,3 +251,10 @@ Then: The file exports on a per-stage basis.
 
 def exportStageFiles(stageName: str, file:str=None) -> None:
     pass
+
+if __name__ == "__main__":
+    stageSelect = input('Which stage do you want to list files from? ')
+    stage = getStage(stageSelect)
+    files = getStageFiles(stage.binaryData[0:0x800])
+    for file in files:
+        print(file)
