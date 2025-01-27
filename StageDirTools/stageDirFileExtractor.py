@@ -24,7 +24,6 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
     0xFF: "noFile"
 }
 
-
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
 
 filename = 'build/MGS/STAGE.DIR'
