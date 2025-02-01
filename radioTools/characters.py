@@ -1588,7 +1588,7 @@ graphicsData = {
 	"1abaa42ebab82ffff86abaa96aaaa92ffff82eaab82eaab82eaab81bffe47e82bd000000": "買",
 	"6aaea9bffffe1aaea42eaeb82ffff82eaeb82ffff81598042eda6c7aeaee21ffd9000000": "恵",
 	"003800003ffc003aa81abaa42ffff82c00382eaab82ffff81400142ceb2c64b34d000000": "点",
-	"0e2ffc1e6eed3b7bb93bbff86a6aa86e3aac0e3aac0e3ffc0e3aac0e2eb80e79ad000000": "?",
+	"0e2ffc1e6eed3b7bb93bbff86a6aa86e3aac0e3aac0e3ffc0e3aac0e2eb80e79ad000000": "慣",
 	"0038002ffff02eaab02ffff02eaab02eaab02ffff02c2db42c0be06ef2e9bea06c000000": "良",
 	"0e2aa80e3ffcbfbaac6e7aac0e7aac0fbffcbe3aa86e38040e380e6e3aae3d2ffd000000": "把",
 	"2cbffe2cbaaebfbffe6ebaa92ebffe2fbbadbcbbe96cb6e82cebfc6ceae9386ffe000000": "握",
@@ -2325,7 +2325,7 @@ graphicsData = {
     "3fcbb03adbb43afbba3febb92b8bb03b9fb93befba3b1bb47bcfb9beaeba60187d000000": "跳",
     "6aaea9bffffeb002ae1ffff4076dd0bffffe6e6db93ffffc0eaeb00eaeb00ffff0000000": "審",
     "283fe01e3aed25b8ee78b0bd1d6aa800bffc0a38380e2db42d0be078aef9247828000000": "没",
-    "1d6aa90bbffe220038782a781d3fb8003bb80a3bb80e3fb82d38387801b82400f4000000": "塞",
+    # "1d6aa90bbffe220038782a781d3fb8003bb80a3bb80e3fb82d38387801b82400f4000000": "塞",
     "bf8ba86a5ffcbffeb96aaffebfada86a6efc6a6eecbfaefcbabad8bfbaeaba59fd000000": "詭",
     "00d00002d1d00386f42ffffd1ae6d800e2c03ffffe2aeae902d2c01b82c00a02c0000000": "弁",
     "0e1aa80e2ff8bfecb06eacb00eaffe0feeb9be2cb06e6fb40eba7a6e2abe3d3fdd000000": "抵",
@@ -2370,7 +2370,7 @@ graphicsData = {
 	#"100740381fd01d78b401fabd006fe4096aa42dbff82c0e38780eb8200eb4000e00000000": "?",
 	#"1aaea96ffffebc1f907db8b92c9a98bcebaeacebae38eb6e78aa08b6baad222ff5000000": "?",
 	#"1791e02b92b4bffb687bbffe3bb5a43ffbfc3b76ec3ff2ec37b2fc3ff2d43aa2c0000000": "?",
-	#"6aaea9bffffe6aeba90aeba00bffe02aeba83ffffc6b59e93affac1aaea42ffff8000000": "?",
+	"6aaea9bffffe6aeba90aeba00bffe02aeba83ffffc6b59e93affac1aaea42ffff8000000": "塞",
 	#"0e0b141e2ea83b3fdc3baae96aafb96e7dad0e2b900e1ab40e2fa80eaaf90e7e90000000": "?",
 	#"24fffe78eaae28ebad00ebb868eae8bcebf82ceae82edae82f8090bbfffd20aaa8000000": "?",
 	#"1abaa42ffff819e1b4bfeffe7aebae2aeba82eaab82ffff82eaab82eaab82c01f4000000": "?",
@@ -2386,6 +2386,7 @@ graphicsData = {
 	#"2c3af82c3aae2c1aa8bfbbac6ebbfc2cbbac2cbbac2fbbfcbebaa9a46eb900796d000000": "?",
 	#"2ffff82eaab82eaab81aaaa42aaea83aadac3aadac1aaaa06aaaa96beaf92ffeb8000000": "?",
  	#"003800003800003ff8003aa40038001abaa42ffff82c00382c00382ffff82eaab8000000": "?",
+	"1b40e07bbffe2baea96bacb0bffcb00faefe2fedb97facb03b2cb01b3bfe0b1aa9000000": "粧",
 }
 
 revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))
