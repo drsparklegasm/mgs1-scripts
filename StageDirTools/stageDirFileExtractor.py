@@ -21,7 +21,7 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
     0x73: "sgt",
     0x77: "wvx",
     0x7A: "zmd",
-    0xFF: "noFile"
+    0xFF: "noFile" # End of the C family grouping
 }
 
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
