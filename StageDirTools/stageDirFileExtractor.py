@@ -26,7 +26,7 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
 
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
 
-filename = 'build/MGS/STAGE.DIR'
+filename = 'build/usa-d1/MGS/STAGE.DIR'
 stageData = open(filename, 'rb').read()
 debug = True
 
@@ -239,7 +239,7 @@ def exportStageFiles(stageName: str, file:str=None) -> None:
 
 if __name__ == "__main__":
 
-    exportFileData = None
+    exportFileData: bytes = None
 
     stageSelect = input('Which stage do you want to list files from? \n')
     stage = getStage(stageSelect)

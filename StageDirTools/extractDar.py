@@ -1,3 +1,6 @@
+"""
+Simple script that exports all .pcx images in a .dar archive.
+"""
 import struct
 import os
 
@@ -24,7 +27,13 @@ def parse_dar_file(file_path, output_dir):
 # Usage
 # parse_dar_file('/home/solidmixer/projects/mgs1-undub/extractedStage/s00a/0000.dar', '/home/solidmixer/projects/mgs1-undub/extractedStage/s00a/')
 # darFileName = input(f'What dar file should I extract? ')
+
 darFileName = 'extractedStage/s00a/s00a-02-0000.dar'
+
+# Get user input
+a = input(f'Filename?\n')
+if len(a) > 0:
+    darFileName = a
 
 darData = open(darFileName, 'rb').read()
 
