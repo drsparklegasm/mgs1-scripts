@@ -14,7 +14,7 @@ Either way... modified.
 import os
 
 version = 'usa'
-version = 'jpn'
+# version = 'jpn'
 
 filename = f"demoWorkingDir/originalDats/DEMO-{version}-d1.DAT"
 outputDir = f"demoWorkingDir/{version}/bins"

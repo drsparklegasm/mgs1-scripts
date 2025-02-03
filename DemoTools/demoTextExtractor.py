@@ -26,7 +26,7 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-version = "jpn"
+# version = "jpn"
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
@@ -65,7 +65,7 @@ if debug:
     print(f'Only doing demo-1.bin!')
     # bin_files = [f'demoWorkingDir/{version}/bins/demo-1.bin']
 
-def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]: 
+def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes, list]: 
     """
     This just grabs all the text from each sector of the text area.
     We just grab the hex and return it. We also return the custom 
@@ -76,11 +76,14 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
     startingPoint = struct.unpack("<H", textToAnalyze[18:20])[0]
     
     segments = []
+    # Coords = dict of Starting time, length to display
+    coords = []
     offset = startingPoint + 8
     # Search for the second pattern while looking for size pointers
     while offset < len(textToAnalyze):
         if debug:
             print(f'Offset: {offset}')
+        # If loop to determine if we hit the last one. 
         if textToAnalyze[offset] == 0x00: # This is the last segment, always the same length? # TODO CLEAN THIS UP
             lastEnd = textToAnalyze.find(bytes.fromhex('00'), offset + 16)
 
@@ -88,6 +91,10 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
             evenBytes = (4 - (len(subset) % 4))
             subset = textToAnalyze[offset: lastEnd + evenBytes]
             textSize = len(subset)
+            # Get timings
+            appearTime = struct.unpack("I", textToAnalyze[offset + 4: offset + 8])[0]
+            appearDuration = struct.unpack("I", textToAnalyze[offset + 8: offset + 12])[0]
+            coords.append(f'{appearTime},{appearDuration}')
 
             print(f'Final length = {textSize}') 
             segments.append(textToAnalyze[offset + 16: offset + textSize])
@@ -96,15 +103,18 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes]:
         else:
             # Extract the double byte value (little-endian) as a pointer to the size
             textSize = struct.unpack('<H', textToAnalyze[offset:offset + 2])[0]
+            appearTime = struct.unpack("I", textToAnalyze[offset + 4: offset + 8])[0]
+            appearDuration = struct.unpack("I", textToAnalyze[offset + 8: offset + 12])[0]
             dialogueBytes = textToAnalyze[offset + 16: offset + textSize]
 
         # Append the size pointer and its offset to the list
         segments.append(dialogueBytes)
+        coords.append(f'{appearTime},{appearDuration}')
 
         # Move to the next size pointer
         offset += textSize
 
-    return segments, graphics
+    return segments, graphics, coords
 
 def getTextAreaOffsets(demoData: bytes) -> list:
     """
@@ -205,15 +215,19 @@ if __name__ == "__main__":
         print(f'{os.path.basename(bin_file)}: {textOffsets}')
 
         texts = []
+        timings = [] # list of timings (start time, duration)
+        timingCount = 1
 
         for offset in textOffsets:
             subset = getTextAreaBytes(offset, demoData)
-            textHexes, graphicsBytes = getTextHexes(subset)
+            textHexes, graphicsBytes, coords = getTextHexes(subset)
             texts.extend(getDialogue(textHexes, graphicsBytes))
+            timings.extend(coords)
         
         basename = filename.split('.')[0]
-        demoScriptData[basename] = textToDict(texts)
+        demoScriptData[basename] = [textToDict(texts), textToDict(timings)]
         writeTextToFile(f'{outputDir}/{basename}.txt', texts)
+        # writeTextToFile(f'{outputDir}/{basename}-timings.txt', timings) 
         
     with open(outputJsonFile, 'w') as f:
         f.write(json.dumps(demoScriptData, ensure_ascii=False))
