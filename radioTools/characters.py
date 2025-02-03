@@ -1848,7 +1848,7 @@ graphicsData = {
 	"03b4d003a5e0bffafe6ba7eeb7bfee27a1ed1ba4bc2fbdb8bb9df82b87ee0b4248000000": "救",
 	"3ff82c2ba7ac0ba7ac0ffbac2d3bacbe7bac27f3ac01e3ac02d02c6f41ac2900f8000000": "列",
 	"6aaea9bffffe14e39029d3b87b9f9d061e002ffff82eaeb82ffff86aaeacbfffed000000": "蛮",
-	"002c00002c001aaea82ffffc2c2c2c2eaeac2ffffc2c2c2c2c2c2c2ffffc2eaaac000000": "巨", 
+	# "002c00002c001aaea82ffffc2c2c2c2eaeac2ffffc2c2c2c2c2c2c2ffffc2eaaac000000": "巨", # Added to demo kanji 
 	"6aa280bff2c002c7fe02cbad3aefac3afaec3ac1f83ac0f03ae6f87fffaeba0608000000": "政",
 	"2aaea93ffffe38502438b43839effe3beab93bea3839e7b874e138b0e1b820e0f4000000": "府",
 	"6b6ae97e7ffe0e3aaebf8ff86e6b842f6aec3fabb4be6af86e2bee0e2ee80e03d0000000": "稼",
@@ -1948,7 +1948,7 @@ graphicsData = {
 	"1791e02b92b4bffb687bbffe3bb5a43ffbfc3b76ec3ff2ec37b2fc3ff2d43aa2c0000000": "?",
 	"6b6afc7e6b800ebffebfaba86e7bac2f7ffc3fbbacbe6ba86e3ffc0e6ba90ebffe000000": "種",
 	"0e07800e0bd0bfadb86eb42d0ebff80faaa4bebffc6ebaac0eb02c6ebffc3dbaac000000": "拾",
-	"3faab82bbff90b7bb80e3bb80e7bb86fbba83e3bac0e3bac0e7bad2eb7ee2d2ba8000000": "縮",
+	"3faab82bbff90b7bb80e3bb80e7bb86fbba83e3bac0e3bac0e7bad2eb7ee2d2ba8000000": "孤", # 縮 old
 	"2cbffc2cbaac2cbffc2cbaac2cbaac2cbffc00000002cb0002cb096b8bae3e07fd000000": "児",
 	"b03ffeb02ba9b26ffcbbaeacbe2ffcb02eacb02ffcb2aeacbfeffc2aae7900392c000000": "頃",
 	"3fcff03aceb03aceb03fceb03aceb03aceb03fceb03aedb97aecbab6f8be239828000000": "肌",
@@ -2285,7 +2285,7 @@ graphicsData = {
 	"3fffe82aaae42b7ae82f7aed0b38b83fffed2bbad80a3aed1e3ac86c3aee2438b8000000": "標",
 	"0b0e000b1ffc3ffeac2b9bb80f8be02feebd7b6aa81b2ffc0b2c2c0b2ffc0b2eac000000": "格",
 	"1aaaa42eaab82ffff82eaae03bffe03baae8bbffee6baae40bffe06aaaa9bffffe000000": "昼",
-	"1aea902fffe02eaae02eaae02fffe02eaaa92eaaa92ffff862c638bfffb8baabb4000000": "鳥",
+	"1aea902fffe02eaae02eaae02fffe02eaaa92eaaa92ffff862c638bfffb8baabb4000000": "島",
 	"060aa82e0ffcb9802c2f802c1e8aac7edffc3fae002a8e047ade0eaaaeae5e5bfd000000": "紀",
 	"3fc0e03aeffe3aeeae3fd8093aeffe3fdae93ac0e03fc0e02a80e07ad6e02483d0000000": "貯",
 	"6aeba9bffffe0183983ffffe3aaba43bff883bbaed3badf87bb9e4b3fffa23a66d000000": "蔵",
@@ -2333,7 +2333,7 @@ graphicsData = {
     "29aba91ffffe14ace8b5eeed29aee801aaac0dbffc2dfaa92afffe7982ae7001f8000000": "岸",
     "242c183ffffc2aaaa8bffffe6eaaa92cfff82caba42aaba93bfffeb40b00200b00000000": "教", # Also correct for some reason
     #"3ffffc3abaac38382c38382c3abaac3ffffc38002c38002c38002c3800ac3800b8000000": "数",
-    "3ffffc3aaaa83800003ffff83aaab83800383ffff83aaaa43800003ffffe3aaaa9000000": "磁",
+    
     "002c003ffffe3aaaae242c090ffff80eaeb80eaeb80ffff80e2c380ffff80eaab8000000": "皮",
     "bfbffe6a6ae9bfe6c96aaaddbf9ae86a42c06abffebfaae9ba82c0bf82c0ba42c0000000": "価",
     "6a9340bfe78000ebfe00efadbfff6cbaabb8b002f0b091e0b0e2f8bfeb6e2a8908000000": "良", 
@@ -2386,7 +2386,25 @@ graphicsData = {
 	#"2c3af82c3aae2c1aa8bfbbac6ebbfc2cbbac2cbbac2fbbfcbebaa9a46eb900796d000000": "?",
 	#"2ffff82eaab82eaab81aaaa42aaea83aadac3aadac1aaaa06aaaa96beaf92ffeb8000000": "?",
  	#"003800003800003ff8003aa40038001abaa42ffff82c00382c00382ffff82eaab8000000": "?",
+    
+    # Demo additions
 	"1b40e07bbffe2baea96bacb0bffcb00faefe2fedb97facb03b2cb01b3bfe0b1aa9000000": "粧",
+    "3fc3802a8b9dbfeffd6aabb93feffe2aabe82aaffc3fceac3aceac3fcffc3a8eac000000": "諸",
+    "2803801e038025fffe78ebae1de38e00ebae0afffe0e93892d0380780380240380000000": "沖",
+    "003800003800003ff8003aa40038001abaa42ffff82c00382c00382ffff82eaab8000000": "占",
+    "0c3f383fba393abfbe3ebb607afa29bfbf3e3aaa003abffc7abaecb6baed27bffe000000": "艇",
+    "0ebeac3faef93a9e383badb97afffebfae383aae383afefc7aada8b6bfe92766bc000000": "艇",
+    "286eb91e6eb9256aa878bbac1dbbac006ba80abffc0e6ba92d6be978aee924b86c000000": "漢",
+    "3ffffc3aaaa83800003ffff83aaab83800383ffff83aaaa43800003ffffe3aaaa9000000": "巨",
+    "003800bffffe6abaa90038002ffff01baaf00782e002fb8000bf406febf92e41b8000000": "支",
+    "2c2aa42c3bb8bfbff8aebbb8aeaba4aebffcbfbbac2d7bac2ebffc6fe7aebac2fd000000": "蝿",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    # Template
+    # "": "", 
+    
 }
 
 revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))
