@@ -13,7 +13,7 @@ This is really heavily based on his awesome work.
 """
 
 import os, sys
-sys.path.append(os.path.abspath('../'))
+sys.path.append(os.path.abspath('./myScripts'))
 import re
 import glob
 import struct
