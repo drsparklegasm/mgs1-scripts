@@ -24,7 +24,7 @@ import json
 import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
-version = "jpn"
+# version = "jpn"
 
 # Toggles
 debug = True
@@ -53,7 +53,7 @@ skipFilesListD1 = [
     'demo-72',
 ]
 
-def injectSubtitles(originalBinary: bytes, newTexts: dict, startingNum: int = 1) -> tuple [bytes, int]:
+def injectSubtitles(originalBinary: bytes, newTexts: dict, startingNum: int = 1, timings: dict = None) -> tuple [bytes, int]:
     """
     Injects the new text to the original data, returns the bytes. 
     Also returns the index we were at when we finished. 
@@ -82,6 +82,9 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, startingNum: int = 1)
 
     i = startingNum
     while i <= len(newTexts):
+        start, duration = timings.get(f"{i}").split(",")
+        start = int(start)
+        duration = int(duration)
         if originalBinary[offset] == 0x00:
             # Find the length here (This is stupid!)
             origTextData = originalBinary[offset: offset + originalBinary.find(b'\x00', offset + 16)] # We can add the buffer later
@@ -91,7 +94,7 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, startingNum: int = 1)
 
             # Now create the new one.
             newText = encodeNewText(newTexts[str(i)])
-            newBytes = newBytes + origTextData[0:16] + newText
+            newBytes = newBytes + origTextData[0:4] + struct.pack("<I", start) + struct.pack("<I", duration) + origTextData[12:16] + newText
             i += 1
             offset += origTextLength
             break
@@ -102,15 +105,13 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, startingNum: int = 1)
             # New Text
             newText = encodeNewText(newTexts[str(i)])
             newLength = len(newText) + 16
-            newBytes += newLength.to_bytes() + origTextData[1:16] + newText
+            newBytes += newLength.to_bytes() + origTextData[1:4] + struct.pack("<I", start) + struct.pack("<I", duration) + origTextData[12:16] + newText
         
             i += 1
             offset += origTextLength
 
     return newBytes, i  
 
-
-    
 if debug:
     print(f'Only injecting Demo 25!')
     # bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
@@ -135,7 +136,8 @@ for file in bin_files:
     
     # Initialize the demo data and the dictionary we're using to replace it.
     origDemoData = open(file, 'rb').read()
-    demoDict: dict = injectTexts[basename]
+    demoDict: dict = injectTexts[basename][0]
+    timings: dict = injectTexts[basename][1]
 
     offsets = DTE.getTextAreaOffsets(origDemoData)
     nextStart = 1
@@ -143,7 +145,7 @@ for file in bin_files:
 
     for Num in range(len(offsets)):
         subset = DTE.getTextAreaBytes(offsets[Num], origDemoData)
-        newData, nextStart = injectSubtitles(subset, demoDict, nextStart)
+        newData, nextStart = injectSubtitles(subset, demoDict, nextStart, timings)
         newDemoData += newData 
         if Num < len(offsets) - 1:
             newDemoData += origDemoData[len(newDemoData): offsets[Num + 1]]
