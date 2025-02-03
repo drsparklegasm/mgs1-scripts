@@ -1,6 +1,8 @@
 """
 These are manual matches of the font data found in jpn disc 1 Radio.dat.
 Credit for matching all of the graphic characters goes to Green Goblin!
+
+All of the revX dicts are for re-encoding. It was easier than doing a find each time.
 """
 
 radioChar = { # 0x?0??
@@ -1309,7 +1311,7 @@ graphicsData = {
 	"0e03b80e6ba9bffffe6eaba80ebffc0ffbacbebffc6ebbac0ebffc6eb3ac3db278000000": "捕",
 	"246a4078bf80280380000380680bc0bc1fe02c2df02cb8b82ea024bbfffd20aaa8000000": "込",
 	"2c1aa92c2ffe2c938e6fe38ebe038e2c038e2c9b0e2eeb0e1fde0e002dae0018b8000000": "切",
-	"0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "抜", # "抜触", # Needs a check
+	# "0e0b000e2ba9bffffe6e8b000e8ffc0fceacbe2f686e3af40eb5f46eabad3d1618000000": "抜", # "抜触", # Needs a check
 	"2abaa83ffffc0abaa00abaa0bffffe6abba90bebb06afeb83fffe82b79e8293868000000": "?",
 	"2ad6b83fabe93aaba97aebb972ca382ffff82eaab82eaab82eaab81bffe47e82bd000000": "?",
 	"3ffffc2aaaa82ffff82eaab82ffff82eaea42ffffe2cbaa438fff8bad6b82183e0000000": "房",
@@ -1346,7 +1348,7 @@ graphicsData = {
 	"6aaaa9bffffe00b4003ffffc3aebac3affac3aebac3affac3aebac3ffffc3aaaac000000": "面",
 	"024aa9038ffe1b000e7e900e2de00e0bd00e07800e0b700e6eb80e3eacae0014bd000000": "幻",
 	"2802e91eaaed12fffeb6eac026aad802a9ee2aabfc2ea9b83bbdb6b7fbee71a59d000000": "滅",
-	"0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000": "俺", # "俺", # 滝 Waterfall ? Probably not correct
+	# "0a0b000efffe2dbef93efa79bdeba83cebb82cfff82cebb82cfff82cebae2c07fd000000": "俺", # "俺", # 滝 Waterfall ? Probably not correct
 	"6baffebffae929dbfcbfffac7aebfc3febac3abbfc3febacba7bfcbaeaa9278a59000000": "頭",
 	"6ee6e97aebfd7ab6acabb6f91aa2982ffff82eae902eae902eaea82aaaac77bbb8000000": "驚",
 	"0ffff00eaab00e00b00e00b00ffff00aeba002cb0002cb00078b096e0bae2807fd000000": "兄",
@@ -2398,6 +2400,19 @@ graphicsData = {
     "3ffffc3aaaa83800003ffff83aaab83800383ffff83aaaa43800003ffffe3aaaa9000000": "巨",
     "003800bffffe6abaa90038002ffff01baaf00782e002fb8000bf406febf92e41b8000000": "支",
     "2c2aa42c3bb8bfbff8aebbb8aeaba4aebffcbfbbac2d7bac2ebffc6fe7aebac2fd000000": "蝿",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
     "": "",
     "": "",
     "": "",
