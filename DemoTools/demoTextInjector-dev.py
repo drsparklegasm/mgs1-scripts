@@ -73,9 +73,9 @@ class subtitle:
 def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
     subsList = []
     for i in range(len(texts)):
-        start = timings.get(i).split(",")[0]
-        duration = timings.get(i).split(",")[1]
-        a = subtitle(texts.get(i), start, duration)
+        start = timings.get(str(i + 1)).split(",")[0]
+        duration = timings.get(str(i + 1)).split(",")[1]
+        a = subtitle(texts.get(str(i + 1)), start, duration)
         subsList.append(a)
     
     return subsList
@@ -174,6 +174,13 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, 
 
     return newBytes
 
+def getDemoDiagHeader(data: bytes) -> bytes:
+    """
+    Returns the header portion only for a given dialogue section.
+    """
+    headerLength = struct.unpack("H", data[14:16])[0] + 4
+    return data[:headerLength]
+
 if debug:
     print(f'Only injecting Demo 25!')
     # bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
@@ -199,28 +206,40 @@ if __name__ == "__main__":
         
         # Initialize the demo data and the dictionary we're using to replace it.
         origDemoData = open(file, 'rb').read()
-        origBlocks = len(origDemoData) // 0x800
+        origBlocks = len(origDemoData) // 0x800 # Use this later to check we hit the same length!
         demoDict: dict = injectTexts[basename][0]
-        timings: dict = injectTexts[basename][1]
+        demoTimings: dict = injectTexts[basename][1]
+        
+        subtitles = assembleTitles(demoDict, demoTimings)
 
         offsets = DTE.getTextAreaOffsets(origDemoData)
         # nextStart = 1 # index of subtitle to encode. No longer needed.
         newDemoData = origDemoData[0 : offsets[0]] # BEFORE the header
-
+        
         newSubsData = b''
         for Num in range(len(offsets)):
-            subset = DTE.getTextAreaBytes(offsets[Num], origDemoData)
-            limitFrame = struct.unpack("<I", subset[])
-            newData = injectSubtitles(subset, demoDict, limitFrame, timings)
-            """
-            TODO! Write new header here.
-            """
-            newSubsData += newData 
+            oldHeader = getDemoDiagHeader(origDemoData[offsets[Num]:])
+            frameStart = struct.unpack("I", oldHeader[4:8])
+            frameLimit = struct.unpack("I", oldHeader[8:12])
+            # Get only subtitles in this section.
+            subsForSection = []
+            for sub in subtitles:
+                if sub.startFrame in range(frameStart, frameLimit):
+                    subsForSection.append(sub)
+            newSubBlock = genSubBlock(subsForSection) # TODO: CODE THIS DEF
+            newLength = len(oldHeader) + len(newSubBlock)
+
+            newHeader = bytes.fromhex("03") + struct.pack("H", newLength) + bytes(1) + struct.pack("II", frameStart, frameLimit) + oldHeader[12:16] + struct.pack("I", len(oldHeader) + len(newSubBlock)) + oldHeader[20:]
+            newDemoData += newHeader + newSubBlock
+
+            # TODO: Still need to get length from old offset (including b'0x01042000') to next offset. 
+
+            """newSubsData += newData 
             if Num < len(offsets) - 1:
                 newSubsData += origDemoData[len(newSubsData): offsets[Num + 1]]
             else:
                 newSubsData += origDemoData[len(newSubsData): ]
-            print(newData.hex())
+            print(newData.hex())"""
 
         newFile = open(f'{outputDir}/{basename}.bin', 'wb')
         newFile.write(newDemoData)
