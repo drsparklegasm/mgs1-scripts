@@ -26,7 +26,7 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
@@ -63,7 +63,7 @@ bar.start()
 # DEBUG
 if debug:
     print(f'Only doing demo-1.bin!')
-    # bin_files = [f'demoWorkingDir/{version}/bins/demo-1.bin']
+    # bin_files = [f'demoWorkingDir/{version}/bins/demo-25.bin']
 
 def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes, list]: 
     """
@@ -73,20 +73,23 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes, list]:
     """
     global debug
     
-    startingPoint = struct.unpack("<H", textToAnalyze[18:20])[0]
+    #startingPoint = struct.unpack("<H", textToAnalyze[18:20])[0]
     
     segments = []
     # Coords = dict of Starting time, length to display
     coords = []
-    offset = startingPoint + 8
+    # graphics are only for japanese vers. generally. init here so that we can pass back something even if no graphics found. 
+    graphics = b'' 
+    offset = 0
+
     # Search for the second pattern while looking for size pointers
     while offset < len(textToAnalyze):
         if debug:
             print(f'Offset: {offset}')
         # If loop to determine if we hit the last one. 
         if textToAnalyze[offset] == 0x00: # This is the last segment, always the same length? # TODO CLEAN THIS UP
+            # All this nonsense finds the last segment since the length bytes are null.
             lastEnd = textToAnalyze.find(bytes.fromhex('00'), offset + 16)
-
             subset = textToAnalyze[offset: lastEnd]
             evenBytes = (4 - (len(subset) % 4))
             subset = textToAnalyze[offset: lastEnd + evenBytes]
@@ -98,7 +101,7 @@ def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes, list]:
 
             print(f'Final length = {textSize}') 
             segments.append(textToAnalyze[offset + 16: offset + textSize])
-            graphics = textToAnalyze[offset + textSize: ]
+            graphics = textToAnalyze[offset + textSize: -4]
             break
         else:
             # Extract the double byte value (little-endian) as a pointer to the size
@@ -121,22 +124,23 @@ def getTextAreaOffsets(demoData: bytes) -> list:
     This is awful, but it should to a certain degree find demo offset spots.
     If there's a better way to do this lmk, but it's not too inefficient. 
     """
-    patternA = b".\x00\x00." + b"...\x00" + b"..\x00\x00..\x00\x00\x10\x00.."
-    # ?? 00 00 ?? ?? ?? ?? 00 ?? ?? 00 00 ?? ?? 00 00 10 00 >> For IMHEX usage
-    patternB = bytes.fromhex("FF FF FF 7F 10 00")
+    patternA = b"\x03..." + b"...\x00" + b"....\x10\x00" # Figured out the universal pattern. 
+    # 03 ?? ?? ?? ?? ?? ?? 00 ?? ?? ?? ?? 10 00 14 00 >> For IMHEX usage
+    # patternB = bytes.fromhex("FF FF FF 7F 10 00") 
+    # This is actually the indication a dialogue area runs to end of demo (until frame 0x7FFFFF)
 
     matches = re.finditer(patternA, demoData, re.DOTALL)
     offsets = [match.start() for match in matches]
 
     finalMatches = []
     for offset in offsets:
-        lengthBytes = demoData[offset + 5: offset + 7]
-        length = struct.unpack('<H', lengthBytes)[0]
-        bytesToCheck = demoData[offset + 4 + length : offset + 8 + length]
+        # Extract size of the area
+        length = struct.unpack('<H', demoData[offset + 1: offset + 3])[0]
+        
+        # This is just an alignment check. Last 4 should always be this constant.
+        bytesToCheck = demoData[offset + length : offset + 4 + length] # 4 bytes at head are included.
         if bytesToCheck == bytes.fromhex("01 04 20 00"):
             finalMatches.append(offset)
-    if demoData.find(patternB) != -1:
-        finalMatches.append(demoData.find(patternB) - 12) # This pattern 12 bytes later than other matches
 
     return finalMatches
 
@@ -145,17 +149,21 @@ def getTextAreaBytes(offset, demoData):
     Returns the data from that offset found in the amount we expect 
     for processing. 
     """
-    length = struct.unpack('<H', demoData[offset + 5: offset + 7])[0]
-    subset = demoData[offset: offset + 4 + length]
+    length = struct.unpack('<H', demoData[offset + 1: offset + 3])[0]
+    exBuffer = struct.unpack('<H', demoData[offset + 14: offset + 16])[0] # Japanese has extra data here ?
+    subset = demoData[offset + 4 + exBuffer: offset + 4 + length] # Includes the tail bytes 0x[01 04 20 00]
 
     return subset
 
-def getDialogue(textHexes: list, graphicsData: bytes) -> list:
+def getDialogue(textHexes: list [bytes], graphicsData: bytes) -> list:
     global debug
     global filename
+    global version
 
     dialogue = []
     demoDict = RD.makeCallDictionary(filename, graphicsData)
+
+    # Loop for all text, offsets, etc.
     for dialogueHex in textHexes:
             text = RD.translateJapaneseHex(dialogueHex, demoDict)
             # text = text.encode(encoding='utf8', errors='ignore')
