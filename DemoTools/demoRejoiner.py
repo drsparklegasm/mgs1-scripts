@@ -1,4 +1,5 @@
-import os
+import os, sys
+sys.path.append(os.path.abspath('./myScripts'))
 import re
 import glob
 import struct
@@ -9,7 +10,7 @@ import json
 import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
-version = "jpn"
+# version = "jpn"
 
 # Toggles
 debug = True
