@@ -21,7 +21,7 @@ def findDemoOffsets():
         if checkbytes == opening:
             print(f'Offset found at offset {offset}!')
             offsets.append(offset)
-            offset += 2048 # All demo files are a multiple of 0x08000, SIGNIFICANTLY faster to do this than +8! Credit to Green Goblin
+            offset += 2048 # All demo files are aligned to 0x800, SIGNIFICANTLY faster to do this than +8! Credit to Green Goblin
         else:
             offset += 2048
 
