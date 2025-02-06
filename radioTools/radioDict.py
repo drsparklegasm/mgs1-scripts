@@ -1,8 +1,8 @@
 #!/bin/python
 
 import os, struct, re
-# import characters as characters
 import radioTools.characters as characters
+# import characters
 
 # GLOBAL STUFF
 os.makedirs('graphicsExport', exist_ok=True)
@@ -289,24 +289,29 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 This is testing for recompiling byte data. 
 """
 if __name__ == "__main__":
-	import xml.etree.ElementTree as ET
-	from xml.dom.minidom import parseString
-	import time
+	stuff = bytes.fromhex("804380611f171f18806e00")
+	print(translateJapaneseHex(stuff, None))
 
-	radioXMLFile = 'recompiledCallBins/RADIO-goblin.xml'
-	root = ET.parse(radioXMLFile)
 
-	for call in root.getroot():
-		print(call.get('offset'))
-		graphicData = call.get("graphicsBytes")
-		for subs in call.findall('.//SUBTITLE'):
-			newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
-			if newBytes.decode('utf8', errors='backslashreplace') != subs.get("text"):
-				print(str(newBytes))
-				print(f'Original: {subs.get("text")}')
-				print(newBytes.hex())
-				time.sleep(3)
-			if newDict == graphicData:
-				time.sleep(0)
-			else:
-				print(f'Call Dicts don\'t match!')
+# if __name__ == "__main__":
+# 	import xml.etree.ElementTree as ET
+# 	from xml.dom.minidom import parseString
+# 	import time
+
+# 	radioXMLFile = 'recompiledCallBins/RADIO-goblin.xml'
+# 	root = ET.parse(radioXMLFile)
+
+# 	for call in root.getroot():
+# 		print(call.get('offset'))
+# 		graphicData = call.get("graphicsBytes")
+# 		for subs in call.findall('.//SUBTITLE'):
+# 			newBytes, newDict = encodeJapaneseHex(subs.get("text"), graphicData)
+# 			if newBytes.decode('utf8', errors='backslashreplace') != subs.get("text"):
+# 				print(str(newBytes))
+# 				print(f'Original: {subs.get("text")}')
+# 				print(newBytes.hex())
+# 				time.sleep(3)
+# 			if newDict == graphicData:
+# 				time.sleep(0)
+# 			else:
+# 				print(f'Call Dicts don\'t match!')
