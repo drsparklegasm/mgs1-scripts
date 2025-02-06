@@ -430,9 +430,14 @@ def injectSaveBlocks(jsonData: dict):
         i = 0
         for elem in saveBlock:
             newLocation = newBlockDict.get(str(i))
+            # Green_Goblin! Swap these three lines for ones below...
             elem.set("contentA", newLocation)
             elem.set("contentB", newLocation)
             i += 1
+            # For upcoming change (needs testing)
+            # elem[0].set("contentA", newLocation)
+            # elem[1].set("contentB", newLocation)
+            # i += 1
 
 def injectCallNames(jsonData: dict):
     global root
