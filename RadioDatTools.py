@@ -827,6 +827,7 @@ def main(args=None):
                 offset = save.attrib.get('offset')
                 i = 0
                 for option in save:
+                    # saveOpts[i] = [option.get('contentA'), option.get('contentB')]
                     saveOpts[i] = option.get('contentB')
                     i += 1
                 saveText[int(offset)] = saveOpts
