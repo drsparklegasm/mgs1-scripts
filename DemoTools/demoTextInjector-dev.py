@@ -48,8 +48,8 @@ class subtitle:
 
     def __init__(self, dialogue, b, c) -> None:
         self.text = dialogue
-        self.startFrame = b
-        self.duration = c
+        self.startFrame = int(b)
+        self.duration = int(c)
 
         return
     
@@ -96,15 +96,21 @@ skipFilesListD1 = [
     'demo-72',
 ]
 
-def genSubBlock(newTexts: dict, frameLimit: int = 1, timings: dict = None) -> bytes:
+def genSubBlock(subs: list [subtitle] ) -> bytes:
     """
     Injects the new text to the original data, returns the bytes. 
     Also returns the index we were at when we finished. 
 
     """ 
+    newBlock = b''
+    for i in range(len(subs) -1):
+        length = struct.pack("I", len(bytes(subs[i])))
+        newBlock += length + bytes(subs[i])
     
+    # Add the last one
+    newBlock += bytes(4) + bytes(subs[-1])
     
-    pass
+    return newBlock
 
 def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, timings: dict = None) -> bytes:
     """
@@ -214,32 +220,39 @@ if __name__ == "__main__":
 
         offsets = DTE.getTextAreaOffsets(origDemoData)
         # nextStart = 1 # index of subtitle to encode. No longer needed.
-        newDemoData = origDemoData[0 : offsets[0]] # BEFORE the header
+        newDemoData = origDemoData[0 : offsets[0]] # UNTIL the header
         
         newSubsData = b''
         for Num in range(len(offsets)):
             oldHeader = getDemoDiagHeader(origDemoData[offsets[Num]:])
-            frameStart = struct.unpack("I", oldHeader[4:8])
-            frameLimit = struct.unpack("I", oldHeader[8:12])
+            oldLength = struct.unpack("H", oldHeader[1:3])[0]
+            frameStart = struct.unpack("I", oldHeader[4:8])[0]
+            frameLimit = struct.unpack("I", oldHeader[8:12])[0]
             # Get only subtitles in this section.
             subsForSection = []
             for sub in subtitles:
-                if sub.startFrame in range(frameStart, frameLimit):
+                if frameStart < sub.startFrame < frameLimit:
                     subsForSection.append(sub)
             newSubBlock = genSubBlock(subsForSection) # TODO: CODE THIS DEF
             newLength = len(oldHeader) + len(newSubBlock)
 
             newHeader = bytes.fromhex("03") + struct.pack("H", newLength) + bytes(1) + struct.pack("II", frameStart, frameLimit) + oldHeader[12:16] + struct.pack("I", len(oldHeader) + len(newSubBlock)) + oldHeader[20:]
             newDemoData += newHeader + newSubBlock
-
-            # TODO: Still need to get length from old offset (including b'0x01042000') to next offset. 
-
-            """newSubsData += newData 
+            # Add the rest of the data from this to the next offset OR until end of original demo. 
             if Num < len(offsets) - 1:
                 newSubsData += origDemoData[len(newSubsData): offsets[Num + 1]]
             else:
                 newSubsData += origDemoData[len(newSubsData): ]
-            print(newData.hex())"""
+            if debug:
+                print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
+        
+        # Buffer the demo to 0x800 block
+        newDemoData += bytes(len(newDemoData) % 0x800)
+        newBlocks = len(newDemoData) // 0x800
+        if debug:
+            print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
+        if newBlocks != origBlocks:
+            print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
 
         newFile = open(f'{outputDir}/{basename}.bin', 'wb')
         newFile.write(newDemoData)
