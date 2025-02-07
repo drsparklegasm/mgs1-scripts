@@ -36,10 +36,13 @@ with open(outputDemoFile, 'wb') as f:
             file = file.replace('bins', 'newBins') 
             basename = file.split("/")[-1].split(".")[0]
             print(f'Using new {basename}...')
+        else:
+            basename = file.split("/")[-1].split(".")[0]
+            print(f'Using old {basename}...')
         demoBytes = open(file, 'rb')
         newDemoBytes += demoBytes.read()
     
-    f.write(newDemoBytes)
+    f.write(newDemoBytes[:-1])
     f.close()
 
 print(f'{outputDemoFile} was written!')
