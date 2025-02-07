@@ -1,8 +1,9 @@
 import os, struct
 # import progressbar, time
 
-filename = "demoWorkingDir/originalDats/DEMO-jpn-d1.DAT"
-outputDir = "demoWorkingDir/jpn/bins"
+version = "usa"
+filename = f"build-src/{version}-d1/MGS/DEMO.DAT"
+outputDir = f"demoWorkingDir/{version}/bins"
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
