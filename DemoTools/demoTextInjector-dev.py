@@ -104,7 +104,7 @@ def genSubBlock(subs: list [subtitle] ) -> bytes:
     """ 
     newBlock = b''
     for i in range(len(subs) -1):
-        length = struct.pack("I", len(bytes(subs[i])))
+        length = struct.pack("I", len(bytes(subs[i])) + 4)
         newBlock += length + bytes(subs[i])
     
     # Add the last one
@@ -192,6 +192,9 @@ if debug:
     # bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
 
 if __name__ == "__main__":
+    """
+    Main logic is here.
+    """
     for file in bin_files:
         print(os.path.basename(file))
         filename = os.path.basename(file)
@@ -222,7 +225,6 @@ if __name__ == "__main__":
         # nextStart = 1 # index of subtitle to encode. No longer needed.
         newDemoData = origDemoData[0 : offsets[0]] # UNTIL the header
         
-        newSubsData = b''
         for Num in range(len(offsets)):
             oldHeader = getDemoDiagHeader(origDemoData[offsets[Num]:])
             oldLength = struct.unpack("H", oldHeader[1:3])[0]
@@ -231,26 +233,26 @@ if __name__ == "__main__":
             # Get only subtitles in this section.
             subsForSection = []
             for sub in subtitles:
-                if frameStart < sub.startFrame < frameLimit:
+                if frameStart <= sub.startFrame < frameLimit:
                     subsForSection.append(sub)
             newSubBlock = genSubBlock(subsForSection) # TODO: CODE THIS DEF
             newLength = len(oldHeader) + len(newSubBlock)
 
-            newHeader = bytes.fromhex("03") + struct.pack("H", newLength) + bytes(1) + struct.pack("II", frameStart, frameLimit) + oldHeader[12:16] + struct.pack("I", len(oldHeader) + len(newSubBlock)) + oldHeader[20:]
+            newHeader = bytes.fromhex("03") + struct.pack("H", newLength) + bytes(1) + struct.pack("II", frameStart, frameLimit) + oldHeader[12:16] + struct.pack("I", len(oldHeader) + len(newSubBlock) - 4) + oldHeader[20:]
             newDemoData += newHeader + newSubBlock
             # Add the rest of the data from this to the next offset OR until end of original demo. 
-            if Num < len(offsets) - 1:
-                newSubsData += origDemoData[len(newSubsData): offsets[Num + 1]]
+            if Num < len(offsets) - 1: # if it is NOT the last... 
+                newDemoData += origDemoData[offsets[Num] + oldLength: offsets[Num + 1]]
             else:
-                newSubsData += origDemoData[len(newSubsData): ]
-            if debug:
-                print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
+                newDemoData += origDemoData[offsets[Num] + oldLength: ]
+            # if debug:
+            #     print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
         
         # Buffer the demo to 0x800 block
         newDemoData += bytes(len(newDemoData) % 0x800)
         newBlocks = len(newDemoData) // 0x800
-        if debug:
-            print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
+        # if debug:
+        #     print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
         if newBlocks != origBlocks:
             print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
 
