@@ -63,7 +63,7 @@ class subtitle:
         Adds the buffer we need to be divisible by 4...
         Return the new bytes.
         """
-        subtitleBytes: bytes = struct.pack("III", self.start, self.duration, 0)
+        subtitleBytes: bytes = struct.pack("III", self.startFrame, self.duration, 0)
         subtitleBytes += RD.encodeJapaneseHex(self.text)[0]
         bufferNeeded = 4 - (len(subtitleBytes) % 4)
         subtitleBytes += bytes(bufferNeeded)
