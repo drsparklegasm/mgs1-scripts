@@ -189,13 +189,12 @@ def getDemoDiagHeader(data: bytes) -> bytes:
 
 # if debug:
 #     print(f'Only injecting Demo 25!')
-    # bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
+#     bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
 
 if __name__ == "__main__":
     """
     Main logic is here.
     """
-    bin_files = ["demoWorkingDir/usa/bins/demo-79.bin"]
     for file in bin_files:
         print(os.path.basename(file))
         filename = os.path.basename(file)
