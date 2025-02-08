@@ -61,8 +61,8 @@ barCount = 0
 bar.start()
 
 # DEBUG
-if debug:
-    print(f'Only doing demo-1.bin!')
+# if debug:
+#     print(f'Only doing demo-1.bin!')
     # bin_files = [f'demoWorkingDir/{version}/bins/demo-25.bin']
 
 def getTextHexes(textToAnalyze: bytes) -> tuple[list, bytes, list]: 
