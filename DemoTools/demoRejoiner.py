@@ -41,8 +41,8 @@ with open(outputDemoFile, 'wb') as f:
             print(f'Using old {basename}...')
         demoBytes = open(file, 'rb')
         newDemoBytes += demoBytes.read()
-    
-    f.write(newDemoBytes[:-1])
+        demoBytes.close()
+    f.write(newDemoBytes)
     f.close()
 
 print(f'{outputDemoFile} was written!')
