@@ -48,7 +48,7 @@ else:
 
 while offset < size:
     if originalData[offset] == compareData[offset]:
-        offset += 1
+        offset += 4
     elif originalData[offset : offset + 2] == bytes.fromhex("9016") and compareData[offset : offset + 2] == bytes.fromhex("d016"):
         print(f'Character mismatch! {originalData[offset : offset + 2]} {compareData[offset : offset + 2]} ')
         offset += 2
@@ -62,6 +62,6 @@ while offset < size:
         offset += 1
         if not args.allDiffs:
             break
-        
+    print(f"Checking offset = {offset}\r")
 
 

@@ -195,6 +195,7 @@ if __name__ == "__main__":
     """
     Main logic is here.
     """
+    bin_files = ["demoWorkingDir/usa/bins/demo-79.bin"]
     for file in bin_files:
         print(os.path.basename(file))
         filename = os.path.basename(file)
@@ -249,7 +250,8 @@ if __name__ == "__main__":
             #     print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
         
         # Buffer the demo to 0x800 block
-        newDemoData += bytes(len(newDemoData) % 0x800)
+        if len(newDemoData % 0x800) != 0:
+            newDemoData += bytes(len(newDemoData) % 0x800)
         newBlocks = len(newDemoData) // 0x800
         # if debug:
         #     print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
