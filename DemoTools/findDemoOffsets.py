@@ -1,7 +1,7 @@
 import os, struct
 # import progressbar, time
 
-version = "usa"
+version = "jpn"
 filename = f"build-src/{version}-d1/MGS/DEMO.DAT"
 outputDir = f"demoWorkingDir/{version}/bins"
 
@@ -37,7 +37,7 @@ def splitDemoFiles():
         if i < len(offsets) - 1:
             end = offsets[i + 1]
         else:
-            end = len(demoData) - 1
+            end = len(demoData) 
         f = open(f'{outputDir}/demo-{i + 1:02}.bin', 'wb')
         f.write(demoData[start:end])
         f.close()
