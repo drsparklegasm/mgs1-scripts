@@ -187,8 +187,8 @@ def getDemoDiagHeader(data: bytes) -> bytes:
     headerLength = struct.unpack("H", data[14:16])[0] + 4
     return data[:headerLength]
 
-if debug:
-    print(f'Only injecting Demo 25!')
+# if debug:
+#     print(f'Only injecting Demo 25!')
     # bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
 
 if __name__ == "__main__":
@@ -250,8 +250,13 @@ if __name__ == "__main__":
             #     print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
         
         # Buffer the demo to 0x800 block
-        if len(newDemoData % 0x800) != 0:
-            newDemoData += bytes(len(newDemoData) % 0x800)
+        if len(newDemoData) % 0x800 != 0:
+            if len(newDemoData) // 0x800 < len(origDemoData) // 0x800:
+                newDemoData += bytes(len(newDemoData) % 0x800)
+            else:
+                checkBytes = newDemoData[len(newDemoData) - len(origDemoData):]
+                if checkBytes == bytes(len(checkBytes)):
+                    newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]
         newBlocks = len(newDemoData) // 0x800
         # if debug:
         #     print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
