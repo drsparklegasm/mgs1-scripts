@@ -252,7 +252,7 @@ if __name__ == "__main__":
         print(file)
     fileToExport = input(f'Which file from stage {stageSelect} do you want to export? [ALL exports all files!]\n')
 
-    # os.makedirs(f"{outputFolder}", exist_ok=True)
+    # Ensure output directory exists
     os.makedirs(f"{outputFolder}{stageSelect}", exist_ok=True)
 
     for file in files:
