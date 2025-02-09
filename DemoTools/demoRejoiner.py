@@ -10,7 +10,7 @@ import json
 import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 
 # Toggles
 debug = True

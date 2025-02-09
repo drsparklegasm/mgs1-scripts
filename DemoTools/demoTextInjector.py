@@ -24,7 +24,7 @@ import json
 import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 
 # Toggles
 debug = True
@@ -33,7 +33,7 @@ debug = True
 # Directory configs
 inputDir = f'demoWorkingDir/{version}/bins'
 outputDir = f'demoWorkingDir/{version}/newBins'
-injectJson = f'demoWorkingDir/{version}/demoText-{version}.json'
+injectJson = f'demoWorkingDir/{version}/demoText-{version}-undub.json'
 os.makedirs(outputDir, exist_ok=True)
 
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
@@ -200,8 +200,8 @@ if __name__ == "__main__":
         filename = os.path.basename(file)
         basename = filename.split(".")[0]
 
-        if debug:
-            print(f'Processing {basename}')
+        # if debug:
+        #     print(f'Processing {basename}')
 
         if basename in skipFilesListD1:
             if debug:
@@ -248,24 +248,37 @@ if __name__ == "__main__":
             # if debug:
             #     print(newSubBlock.hex(sep=" ", bytes_per_sep=4))
         
-        # Buffer the demo to 0x800 block
+        """# Buffer the demo to 0x800 block
         if len(newDemoData) % 0x800 != 0:
             if len(newDemoData) // 0x800 < len(origDemoData) // 0x800:
                 newDemoData += bytes(len(newDemoData) % 0x800)
             else:
                 checkBytes = newDemoData[len(newDemoData) - len(origDemoData):]
                 if checkBytes == bytes(len(checkBytes)):
-                    newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]
+                    newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]"""
+        
+        # Adjust length to match original file.
+        if len(newDemoData) < len(origDemoData): # new demo shorter
+            newDemoData += bytes(len(origDemoData) - len(newDemoData)) 
+            if len(newDemoData) % 0x800 == 0:
+                print("Alignment correct!")
+        else:
+            checkBytes = newDemoData[len(newDemoData) - len(origDemoData):]
+            if checkBytes == bytes(len(checkBytes)):
+                newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]
+            else:
+                print(f'CRITICAL ERROR! New demo cannot be truncated to original length!')
+                exit()
+        
         newBlocks = len(newDemoData) // 0x800
-        # if debug:
-        #     print(f'New data is {newBlocks} blocks, old was {origBlocks} blocks.')
         if newBlocks != origBlocks:
+            print(f"{len(newDemoData)} / {len(origDemoData)}") 
             print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
 
+        # Finished work! Write the new file. 
         newFile = open(f'{outputDir}/{basename}.bin', 'wb')
         newFile.write(newDemoData)
         newFile.close()
-        # print(demoDict)
 
 
 
