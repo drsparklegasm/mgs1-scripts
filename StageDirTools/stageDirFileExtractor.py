@@ -26,8 +26,12 @@ extTable = { # From jayveer's REX utility: https://github.com/Jayveer/Rex/blob/m
 
 # First thing is to figure out a working Table of Contents, then we can work at making and splitting directories.
 
-filename = 'build/usa-d1/MGS/STAGE.DIR'
-stageData = open(filename, 'rb').read()
+filename = 'build-src/usa-d1/MGS/STAGE.DIR'
+filename = 'build-src/demo/MGS/STAGE.DIR' # Temporarily hijacking this
+outputFolder = "extractedStage/"
+outputFolder = "build-src/demo/extractedStage/"
+
+stageData = open(filename, 'rb').read() 
 debug = True
 
 """
@@ -142,8 +146,8 @@ def extractStageBins():
     Writes individual stage binaries to individual folders/files
     """
     for stage in allStages:
-        os.makedirs(f"extractedStage/{stage.name}")
-        with open(f'extractedStage/{stage.name}/{stage.name}.bin', 'wb') as f:
+        os.makedirs(f"{outputFolder}{stage.name}")
+        with open(f'{outputFolder}{stage.name}/{stage.name}.bin', 'wb') as f:
             f.write(stage.binaryData)
         print(f'Stage {stage.name} written!')
 
@@ -248,6 +252,9 @@ if __name__ == "__main__":
         print(file)
     fileToExport = input(f'Which file from stage {stageSelect} do you want to export? [ALL exports all files!]\n')
 
+    # os.makedirs(f"{outputFolder}", exist_ok=True)
+    os.makedirs(f"{outputFolder}{stageSelect}", exist_ok=True)
+
     for file in files:
         file.getFilename()
         if file.filename == fileToExport:
@@ -258,7 +265,7 @@ if __name__ == "__main__":
         i = 0
         for file in files:
             exportFileData = stage.binaryData[file.start: file.end]
-            with open(f'extractedStage/{stageSelect}/{stageSelect}-{i:02}-{file.filename}', 'wb') as f:
+            with open(f'{outputFolder}{stageSelect}/{stageSelect}-{i:02}-{file.filename}', 'wb') as f:
                 f.write(exportFileData)
             f.close()
             i += 1
@@ -266,7 +273,7 @@ if __name__ == "__main__":
         print(f'Export failed! {fileToExport} was not found in stage {stageSelect}! Exiting...')
         exit(2)
     else:
-        with open(f'extractedStage/{stageSelect}/{fileToExport}', 'wb') as f:
+        with open(f'{outputFolder}{stageSelect}/{fileToExport}', 'wb') as f:
             f.write(exportFileData)
         f.close()
     
