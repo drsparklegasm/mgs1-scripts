@@ -534,8 +534,8 @@ def main(args=None, radioXML=None):
             """
             Take the input json and inject the data. 
             """
-            jsonDataFile = args.input
-            xmlOutputFile = args.output
+            jsonDataFile: str = args.input
+            xmlOutputFile: str = args.output
             
             jsonData = json.load(open(jsonDataFile, 'r', encoding='utf8'))
             root = ET.parse(xmlOutputFile).getroot()
@@ -545,7 +545,7 @@ def main(args=None, radioXML=None):
             injectUserPrompts(jsonData)
             injectSaveBlocks(jsonData) # Not working for some reason. 
 
-            outputXml = open("recompiledCallBins/mergedXML.xml", 'wb')
+            outputXml = open(xmlOutputFile.replace(".xml", "-merged.xml"), 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
             outputXml.write(xmlbytes)
             outputXml.close()
