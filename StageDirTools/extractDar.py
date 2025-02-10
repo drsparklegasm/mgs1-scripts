@@ -63,7 +63,7 @@ if __name__ == "__main__":
         # Get the file
         nextFileSize = struct.unpack("<I", darData[offset + 4: offset + 8])[0]
         offset += 8
-        with open(f'{outputDir}/{i:02}-{fileName}.pcx', 'wb') as f:
+        with open(f'{outputDir}/{i:03}-{fileName}.pcx', 'wb') as f:
             f.write(darData[offset: offset + nextFileSize])
             f.close()
         # Print the "in between"
