@@ -1,6 +1,7 @@
 import struct
 import os
 import glob
+import argparse
 
 
 def extract_numeric_prefix(filename):
@@ -12,24 +13,37 @@ def extract_numeric_prefix(filename):
 def getHashHex(filename: str) -> str:
     return filename.split('-')[1].split('.')[0]
 
-inputDir = 'extractedDar'
-files = glob.glob(f'{inputDir}/*')
 
-# Sort the files using the custom key
-files.sort(key=extract_numeric_prefix)
+if __name__ == "__main__":
+    darFileName: str
+    inputDir: str
 
-darBytes = b''
+    parser = argparse.ArgumentParser(description=f'Creates a dar file from a directory with .pcx files. Ex: assembleDar.py path/to/pcxfiles/ [output.dar]')
+    parser.add_argument('input', type=str, help="Folder containing .pcx files to assemble into a DAR.")
+    parser.add_argument('filename', type=str, help="Output filename, ex: new-01.dar")
 
-for file in files:
-    # Get header bytes
-    fileHeader = getHashHex(file)
-    fileHeadBytes = bytes.fromhex(fileHeader)[::-1]
-    print(fileHeadBytes.hex())
-    with open(file, 'rb') as f:
-        data = f.read()
-        f.close()
-    darBytes += fileHeadBytes + struct.pack("I", len(data)) + data
+    args= parser.parse_args()
 
-with open('extractedDar/outputDar.dar', 'wb') as f:
-    f.write(darBytes)
-    f.close
+    inputDir = args.input
+    darFileName = args.filename
+
+    files = glob.glob(f'{inputDir}/*')
+
+    # Sort the files using the custom key
+    files.sort(key=extract_numeric_prefix)
+
+    darBytes = b''
+
+    for file in files:
+        # Get header bytes
+        fileHeader = getHashHex(os.path.basename(file))
+        fileHeadBytes = bytes.fromhex(fileHeader)[::-1]
+        print(fileHeadBytes.hex())
+        with open(file, 'rb') as f:
+            data = f.read()
+            f.close()
+        darBytes += fileHeadBytes + struct.pack("I", len(data)) + data
+
+    with open(darFileName, 'wb') as f:
+        f.write(darBytes)
+        f.close
