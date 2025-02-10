@@ -3,7 +3,6 @@ import os
 import glob
 import argparse
 
-
 def extract_numeric_prefix(filename):
     # Extract the numeric prefix before the first hyphen
     base_name = os.path.basename(filename)
