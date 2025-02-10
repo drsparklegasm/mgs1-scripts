@@ -3,6 +3,7 @@ Simple script that exports all .pcx images in a .dar archive.
 """
 import struct
 import os
+import argparse
 
 def parse_dar_file(file_path, output_dir):
     with open(file_path, 'rb') as f:
@@ -30,26 +31,41 @@ def parse_dar_file(file_path, output_dir):
 
 darFileName = 'extractedStage/s00a/s00a-02-0000.dar'
 
-# Get user input
-a = input(f'Filename?\n')
-if len(a) > 0:
-    darFileName = a
+if __name__ == "__main__":
+    darFileName: str
+    outputDir: str
 
-darData = open(darFileName, 'rb').read()
+    parser = argparse.ArgumentParser(description=f'Extracts textures in a .dar file. Ex: extractDar.py [example.dar] [output.dir]')
 
-offset = 0
-i = 1
+    parser.add_argument('filename', type=str, help="the Dar file to extract.")
+    parser.add_argument('outputDir', nargs="?", type=str, help="Output directory")
 
-while offset < len(darData):
-    # Filename 
-    fileName = darData[offset: offset + 4][::-1].hex()
-    print(f'{i:02}-{fileName} written!')
-    # Get the file
-    nextFileSize = struct.unpack("<I", darData[offset + 4: offset + 8])[0]
-    offset += 8
-    with open(f'extractedDar/{i:02}-{fileName}.pcx', 'wb') as f:
-        f.write(darData[offset: offset + nextFileSize])
-        f.close()
-    # Print the "in between"
-    offset += nextFileSize
-    i += 1
+    args = parser.parse_args()
+
+    darFileName = args.filename
+
+    darData = open(darFileName, 'rb').read()
+
+    if args.outputDir == None:
+        outputDir = f'{os.path.dirname(darFileName)}/{os.path.basename(darFileName).split(".")[0]}'
+        os.makedirs(outputDir, exist_ok=True)
+    else:
+        outputDir = args.outputDir
+        os.makedirs(outputDir, exist_ok=True)
+
+    offset = 0
+    i = 1
+
+    while offset < len(darData):
+        # Filename 
+        fileName = darData[offset: offset + 4][::-1].hex()
+        print(f'{i:02}-{fileName} written!')
+        # Get the file
+        nextFileSize = struct.unpack("<I", darData[offset + 4: offset + 8])[0]
+        offset += 8
+        with open(f'{outputDir}/{i:02}-{fileName}.pcx', 'wb') as f:
+            f.write(darData[offset: offset + nextFileSize])
+            f.close()
+        # Print the "in between"
+        offset += nextFileSize
+        i += 1
