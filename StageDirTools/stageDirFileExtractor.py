@@ -247,7 +247,7 @@ if __name__ == "__main__":
 
     stageSelect = input('Which stage do you want to list files from? \n')
     stage = getStage(stageSelect)
-    files = getStageFiles(stage.binaryData[0:0x800])
+    files: list [stageFile] = getStageFiles(stage.binaryData[0:0x800])
     for file in files:
         print(file)
     fileToExport = input(f'Which file from stage {stageSelect} do you want to export? [ALL exports all files!]\n')
