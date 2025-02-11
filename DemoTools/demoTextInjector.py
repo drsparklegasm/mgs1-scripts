@@ -73,9 +73,10 @@ class subtitle:
 def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
     subsList = []
     for i in range(len(texts)):
-        start = timings.get(str(i + 1)).split(",")[0]
-        duration = timings.get(str(i + 1)).split(",")[1]
-        a = subtitle(texts.get(str(i + 1)), start, duration)
+        index = "{:02}".format(i + 1)
+        start = timings.get(index).split(",")[0]
+        duration = timings.get(index).split(",")[1]
+        a = subtitle(texts.get(index), start, duration)
         subsList.append(a)
     
     return subsList
@@ -196,7 +197,7 @@ if __name__ == "__main__":
     Main logic is here.
     """
     for file in bin_files:
-        print(os.path.basename(file))
+        print(os.path.basename(f"{file}: "))
         filename = os.path.basename(file)
         basename = filename.split(".")[0]
 
@@ -258,7 +259,9 @@ if __name__ == "__main__":
                     newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]"""
         
         # Adjust length to match original file.
-        if len(newDemoData) < len(origDemoData): # new demo shorter
+        if len(newDemoData) == len(origDemoData):
+            print("Alignment correct!")
+        elif len(newDemoData) < len(origDemoData): # new demo shorter
             newDemoData += bytes(len(origDemoData) - len(newDemoData)) 
             if len(newDemoData) % 0x800 == 0:
                 print("Alignment correct!")

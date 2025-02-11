@@ -177,7 +177,7 @@ def textToDict(dialogue: list) -> dict:
     i = 1
     textDict = {}
     for text in dialogue:
-        textDict[i] = text
+        textDict[f'{i:02}'] = text
         i += 1
     
     return textDict
