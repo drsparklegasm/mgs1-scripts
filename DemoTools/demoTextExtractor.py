@@ -155,13 +155,17 @@ def getTextAreaBytes(offset, demoData):
 
     return subset
 
-def getDialogue(textHexes: list [bytes], graphicsData: bytes) -> list:
+def getDialogue(textHexes: list [bytes], graphicsData: bytes = None) -> list:
     global debug
     global filename
     global version
-
+    
     dialogue = []
-    demoDict = RD.makeCallDictionary(filename, graphicsData)
+
+    if graphicsData is not None and filename is not None:
+        demoDict = RD.makeCallDictionary(filename, graphicsData)
+    else:
+        demoDict = {}
 
     # Loop for all text, offsets, etc.
     for dialogueHex in textHexes:
