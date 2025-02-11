@@ -88,7 +88,7 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 			else:
 				data.write(bytes.fromhex("ffffffff"))
 
-def makeCallDictionary(offset: int, graphicsBytes: bytes):
+def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, may revert later
 	"""
 	Returns a DICT specific to the call where we sent the data. 
 	"""
