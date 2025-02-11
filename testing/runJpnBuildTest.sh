@@ -9,7 +9,7 @@
 
 # # Extracting and automating translation (disk 1)
 # /bin/python3 /home/solidmixer/projects/mgs1-undub/myScripts/RadioDatTools.py -jzx build-src/jpn-d1/MGS/RADIO.DAT radioWorkingDir/jpn-d1/RADIO 
-# /bin/python3 /home/solidmixer/projects/mgs1-undub/radioWorkingDir/dialogueSwap.py
+/bin/python3 /home/solidmixer/projects/mgs1-undub/radioWorkingDir/dialogueSwap.py
 
 # Inject graphics data (STAGE.DIR) for disk 1 ONLY for now
 wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/stageGraphicsWorking/jpn-d1/ -pack -o stageGraphicsWorking/out/STAGE-j1.DIR -img
