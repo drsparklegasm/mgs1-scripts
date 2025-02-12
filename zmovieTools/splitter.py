@@ -3,12 +3,12 @@ Adapted from Green Goblins scripts. Very similar to demo
 only alignments are 0x920
 """
 
-import os, struct, re, sys, glob
+import os, struct, re, sys, glob, json
 sys.path.append(os.path.abspath('./myScripts'))
 sys.path.append(os.path.abspath('.'))
 import DemoTools.demoTextExtractor as DTE
 
-version = "jpn"
+version = "usa"
 filename = f"build-src/{version}-d1/MGS/ZMOVIE.STR"
 outputDir = f"zMovieWorkingDir/{version}/bins"
 
@@ -72,8 +72,8 @@ if __name__ == "__main__":
             # For now we assume they are correct.
             for offset in offsets:
                 # offset = offsets[0]
-                length = struct.unpack("I", movieData[offset + 12 : offset + 16])[0]
-                subset = movieData[offset + 16: offset + length]
+                length = struct.unpack("I", movieData[offset + 12 : offset + 16])[0] # Length for text only here.
+                subset = movieData[offset + 16: offset + 0x7e0]
                 textHexes, graphicsBytes, coords = DTE.getTextHexes(subset)
                 texts.extend(DTE.getDialogue(textHexes, graphicsBytes))
                 timings.extend(coords)
@@ -81,4 +81,8 @@ if __name__ == "__main__":
             basename = filename.split('.')[0]
             zMovieScript[basename] = [DTE.textToDict(texts), DTE.textToDict(timings)]
             DTE.writeTextToFile(f'{outputDir}/{basename}.txt', texts)
-        
+
+        zMovieScript.update({basename: [DTE.textToDict(texts), DTE.textToDict(timings)]})
+
+    with open(f'{outputDir}/zMovie-out.json', 'w') as f:
+        json.dump(zMovieScript, f, ensure_ascii=False)
