@@ -2391,9 +2391,10 @@ graphicsData = {
     "": "",
     "": "",
     "": "",
-    "": "",
-    "": "",
-    "": "",
+    # VOX Fixes:
+    "2aaea82aaea82ffff86aaea96aaaa90ffff80eaab80eaab80ffff80e02b80e02f4000000": "蒼",
+    "3ffffc3abaac38382c38382c3abaac3ffffc38002c38002c38002c3800ac3800b8000000": "円",
+    "1e0a742b8ea076effe7fbeb92e6ffcbfceb86e8eb8aecffc3f4eb06fcffe7a8ea9000000": "錐",
     "": "",
     "": "",
     "": "",
