@@ -35,10 +35,10 @@ with open(outputvoxFile, 'wb') as f:
         if file.replace('bins', 'newBins') in newBinFiles:
             file = file.replace('bins', 'newBins') 
             basename = file.split("/")[-1].split(".")[0]
-            print(f'Using new {basename}...')
+            print(f'\rUsing new {basename}...')
         else:
             basename = file.split("/")[-1].split(".")[0]
-            print(f'Using old {basename}...')
+            print(f'\rUsing old {basename}...')
         voxBytes = open(file, 'rb')
         newvoxBytes += voxBytes.read()
         voxBytes.close()

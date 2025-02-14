@@ -149,9 +149,9 @@ def getvoxDiagHeader(data: bytes) -> bytes:
     headerLength = struct.unpack("H", data[14:16])[0] + 4
     return data[:headerLength]
 
-if debug:
-    print(f'Only injecting vox 29!')
-    bin_files = ['workingFiles/jpn-d1/vox/bins/vox-0029.bin']
+# if debug:
+#     print(f'Only injecting vox 29!')
+#     bin_files = ['workingFiles/jpn-d1/vox/bins/vox-0029.bin']
 
 if __name__ == "__main__":
     """
