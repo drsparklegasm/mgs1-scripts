@@ -26,12 +26,12 @@ voxScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-version = "jpn"
+# version = "jpn"
 disc = 1
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
-inputDir = f'voxWorkingDir/{version}-d{disc}/origVox'
+inputDir = f'voxWorkingDir/{version}-d{disc}/bins'
 outputDir = f'voxWorkingDir/{version}-d{disc}/texts'
 os.makedirs(outputDir, exist_ok=True)
 outputJsonFile = f"voxWorkingDir/{version}-d{disc}/voxText-{version}.json"

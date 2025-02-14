@@ -1,10 +1,10 @@
 import os
 
 version = 'usa'
-version = 'jpn'
+# version = 'jpn'
 disc = 1
 filename = f'build-src/{version}-d{disc}/MGS/VOX.DAT'
-outputDir = f'voxWorkingDir/{version}-d{disc}/origVox'
+outputDir = f'voxWorkingDir/{version}-d{disc}/bins'
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
