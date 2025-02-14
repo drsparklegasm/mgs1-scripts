@@ -1,10 +1,17 @@
+"""
+Pretty much follows the same rules as demo.dat for chunking
+
+"""
+
 import os
 
+# Config
 version = 'usa'
-# version = 'jpn'
+version = 'jpn'
 disc = 1
+
 filename = f'build-src/{version}-d{disc}/MGS/VOX.DAT'
-outputDir = f'workingFiles/{version}/d{disc}/vox/bins'
+outputDir = f'workingFiles/{version}-d{disc}/vox/bins'
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
@@ -21,7 +28,7 @@ def findDemoOffsets():
         checkbytes = demoData[offset:offset + 4]  # Check the first 4 bytes
         if checkbytes == opening:
             offsets.append(offset)
-            offset += 2048  # Continue using 2048 as the increment step for speed
+            offset += 2048  # Continue using 2048 or 0x800 as the increment step for speed
         else:
             offset += 2048
 
@@ -34,7 +41,7 @@ def splitDemoFiles():
             end = offsets[i + 1]
         else:
             end = len(demoData)  # Include the last byte
-        f = open(f'{outputDir}/{i + 1:03}.bin', 'wb')
+        f = open(f'{outputDir}/vox-{i + 1:04}.bin', 'wb')
         f.write(demoData[start:end])
         f.close()
         if debug:

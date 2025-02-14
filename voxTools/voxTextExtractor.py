@@ -26,19 +26,19 @@ voxScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 disc = 1
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
-inputDir = f'workingFiles/{version}/d{disc}/vox/bins'
-outputDir = f'workingFiles/{version}/d{disc}/vox/texts'
+inputDir = f'workingFiles/{version}-d{disc}/vox/bins'
+outputDir = f'workingFiles/{version}-d{disc}/vox/texts'
 os.makedirs(outputDir, exist_ok=True)
-outputJsonFile = f"workingFiles/{version}/d{disc}/vox/voxText-{version}.json"
+outputJsonFile = f"workingFiles/{version}-d{disc}/vox/voxText-{version}.json"
 
 # Grab all files in the directory and sort into order.
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
-bin_files.sort(key=lambda f: int(f.split('/')[-1].split('.')[0]))
+bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # flags
 debug = True
@@ -49,9 +49,9 @@ skipFilesListD1 = [
 ]
 
 # Set up progress bar
-bar.maxval = len(bin_files)
-barCount = 0
-bar.start()
+# bar.maxval = len(bin_files)
+# barCount = 0
+# bar.start()
 
 # DEBUG
 # if debug:
@@ -231,7 +231,7 @@ if __name__ == "__main__":
         
         basename = filename.split('.')[0]
         voxScriptData[basename] = [textToDict(texts), textToDict(timings)]
-        writeTextToFile(f'{outputDir}/{basename}.txt', texts)
+        writeTextToFile(f'{outputDir}/vox-{basename}.txt', texts)
         # writeTextToFile(f'{outputDir}/{basename}-timings.txt', timings) 
         
     with open(outputJsonFile, 'w') as f:
