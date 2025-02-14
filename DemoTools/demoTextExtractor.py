@@ -38,7 +38,7 @@ outputJsonFile = f"workingFiles/{version}-d{disc}/demo/demoText-{version}.json"
 
 # Grab all files in the directory and sort into order.
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
-bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
+bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # flags
 debug = True

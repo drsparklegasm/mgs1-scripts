@@ -34,7 +34,7 @@ debug = True
 # Directory configs
 inputDir = f'workingFiles/{version}-d{disc}/demo/bins'
 outputDir = f'workingFiles/{version}-d{disc}/demo/newBins'
-injectJson = f'workingFiles/{version}-d{disc}/demo/demoText-{version}-undub.json'
+injectJson = f'build-proprietary/demo/demoText-{version}-undub.json'
 os.makedirs(outputDir, exist_ok=True)
 
 # Collect files to use
