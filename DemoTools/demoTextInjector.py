@@ -22,6 +22,7 @@ import radioTools.radioDict as RD
 import json
 
 import DemoTools.demoTextExtractor as DTE
+from common.structs import subtitle
 
 version = "usa"
 version = "jpn"
@@ -30,19 +31,20 @@ disc = 1
 # Toggles
 debug = True
 
-
 # Directory configs
-inputDir = f'/workingFiles/{version}-d{disc}/demo/bins'
-outputDir = f'/workingFiles/{version}-d{disc}/demo/newBins'
-injectJson = f'/workingFiles/{version}-d{disc}/demo/demoText-{version}-undub.json'
+inputDir = f'workingFiles/{version}-d{disc}/demo/bins'
+outputDir = f'workingFiles/{version}-d{disc}/demo/newBins'
+injectJson = f'workingFiles/{version}-d{disc}/demo/demoText-{version}-undub.json'
 os.makedirs(outputDir, exist_ok=True)
 
+# Collect files to use
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
-bin_files.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
+bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
+# Collect source json to inject
 injectTexts = json.load(open(injectJson, 'r'))
 
-class subtitle:
+"""class subtitle:
     text: str
     startFrame: int
     duration: int
@@ -59,17 +61,17 @@ class subtitle:
         return a
     
     def __bytes__(self) -> bytes:
-        """
-        Simple. Encodes the dialogue as bytes. 
-        Adds the buffer we need to be divisible by 4...
-        Return the new bytes.
-        """
+        
+        # Simple. Encodes the dialogue as bytes. 
+        # Adds the buffer we need to be divisible by 4...
+        # Return the new bytes.
+        
         subtitleBytes: bytes = struct.pack("III", self.startFrame, self.duration, 0)
         subtitleBytes += RD.encodeJapaneseHex(self.text)[0]
         bufferNeeded = 4 - (len(subtitleBytes) % 4)
         subtitleBytes += bytes(bufferNeeded)
         
-        return subtitleBytes
+        return subtitleBytes"""
 
 def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
     subsList = []

@@ -11,22 +11,23 @@ import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
 version = "jpn"
+disc = 1
 
 # Toggles
 debug = True
 
 
 # Directory configs
-inputDir = f'demoWorkingDir/{version}/bins'
-outputDir = f'demoWorkingDir/{version}/newBins'
-outputDemoFile = f'demoWorkingDir/{version}/new-DEMO.DAT'
+inputDir = f'workingFiles/{version}-d{disc}/demo/bins'
+outputDir = f'workingFiles/{version}-d{disc}/demo/newBins'
+outputDemoFile = f'workingFiles/{version}-d{disc}/demo/new-DEMO.DAT'
 os.makedirs(outputDir, exist_ok=True)
 
 origBinFiles = glob.glob(os.path.join(inputDir, '*.bin'))
-origBinFiles.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
+origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 newBinFiles = glob.glob(os.path.join(outputDir, '*.bin'))
-origBinFiles.sort(key=lambda f: int(f.split('-')[1].split('.')[0]))
+origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 newDemoBytes = b''
 
@@ -48,4 +49,3 @@ with open(outputDemoFile, 'wb') as f:
 print(f'{outputDemoFile} was written!')
 
             
-
