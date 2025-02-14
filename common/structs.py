@@ -14,20 +14,26 @@ class subtitle:
     startFrame: int
     duration: int
 
-    def __init__(self, dialogue, b, c) -> None:
-        self.text = dialogue
-        self.startFrame = int(b)
-        self.duration = int(c)
+    def __init__(self, dialogue_or_bytes, b = None, c = None) -> None:
+        if type(dialogue_or_bytes) == bytes:
+            length, start, duration = struct.unpack("III", rawBytes[0:12])
+            self.text = dialogue_or_bytes[16:].strip(bytes.fromhex("00"))
+            self.startFrame = int(start)
+            self.duration = int(duration)
+        elif type(dialogue_or_bytes) == str:
+            self.text = dialogue_or_bytes
+            self.startFrame = int(b)
+            self.duration = int(c)
 
         return
     
-    def __init__(self, rawBytes: bytes) -> None:
-        length, start, duration = struct.unpack("III", rawBytes[0:12])
-        self.text = rawBytes[16:].strip(bytes.fromhex("00"))
-        self.startFrame = int(start)
-        self.duration = int(duration)
+    # def __init__(self, rawBytes: bytes) -> None:
+    #     length, start, duration = struct.unpack("III", rawBytes[0:12])
+    #     self.text = rawBytes[16:].strip(bytes.fromhex("00"))
+    #     self.startFrame = int(start)
+    #     self.duration = int(duration)
 
-        return
+    #     return
     
     def __str__(self) -> str:
         a = f'Subtitle contents: Start: {self.startFrame} Duration: {self.duration} Text: {self.text}'
