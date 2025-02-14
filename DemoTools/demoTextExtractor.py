@@ -27,13 +27,14 @@ bar = progressbar.ProgressBar()
 
 version = "usa"
 version = "jpn"
+disc = 1
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
-inputDir = f'demoWorkingDir/{version}/bins'
-outputDir = f'demoWorkingDir/{version}/texts'
+inputDir = f'/workingFiles/{version}-d{disc}/demo/bins'
+outputDir = f'/workingFiles/{version}-d{disc}/demo/texts'
 os.makedirs(outputDir, exist_ok=True)
-outputJsonFile = f"demoWorkingDir/{version}/demoText-{version}.json"
+outputJsonFile = f"/workingFiles/{version}-d{disc}/demo/demoText-{version}.json"
 
 # Grab all files in the directory and sort into order.
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))

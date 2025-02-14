@@ -4,7 +4,7 @@ version = 'usa'
 # version = 'jpn'
 disc = 1
 filename = f'build-src/{version}-d{disc}/MGS/VOX.DAT'
-outputDir = f'voxWorkingDir/{version}-d{disc}/bins'
+outputDir = f'workingFiles/{version}/d{disc}/vox/bins'
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()

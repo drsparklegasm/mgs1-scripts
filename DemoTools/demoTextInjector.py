@@ -25,15 +25,16 @@ import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
 version = "jpn"
+disc = 1
 
 # Toggles
 debug = True
 
 
 # Directory configs
-inputDir = f'demoWorkingDir/{version}/bins'
-outputDir = f'demoWorkingDir/{version}/newBins'
-injectJson = f'demoWorkingDir/{version}/demoText-{version}-undub.json'
+inputDir = f'/workingFiles/{version}-d{disc}/demo/bins'
+outputDir = f'/workingFiles/{version}-d{disc}/demo/newBins'
+injectJson = f'/workingFiles/{version}-d{disc}/demo/demoText-{version}-undub.json'
 os.makedirs(outputDir, exist_ok=True)
 
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))

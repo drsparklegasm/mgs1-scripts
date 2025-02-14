@@ -31,10 +31,10 @@ disc = 1
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
-inputDir = f'voxWorkingDir/{version}-d{disc}/bins'
-outputDir = f'voxWorkingDir/{version}-d{disc}/texts'
+inputDir = f'workingFiles/{version}/d{disc}/vox/bins'
+outputDir = f'workingFiles/{version}/d{disc}/vox/texts'
 os.makedirs(outputDir, exist_ok=True)
-outputJsonFile = f"voxWorkingDir/{version}-d{disc}/voxText-{version}.json"
+outputJsonFile = f"workingFiles/{version}/d{disc}/vox/voxText-{version}.json"
 
 # Grab all files in the directory and sort into order.
 bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
