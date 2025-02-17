@@ -1,6 +1,21 @@
 #!/bin/python
 
-import os, struct, re
+""" Doktor De Sparkle's JPN Script decoder tool!
+
+  This is the culmination of a massive effort by myself and Green_Goblin
+  to create a text extraction tool for Metal Gear Solid (JPN) for the 
+  Playstation. 
+
+  Characters are still in the works, but this should translate the binary
+  character data found in any file to normal Shift-JIS text.
+
+  Running it as is runs a loop that will translate what is needed. 
+  Use it as a library to translate things in code.
+
+"""
+
+import os, struct, re, sys
+sys.path.append(os.path.abspath('./myScripts'))
 import radioTools.characters as characters
 # import characters
 
@@ -126,7 +141,7 @@ def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, m
 
 	return callDictionary
 
-def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] ) -> str: # Needs fixins, maybe move to separate file?
+def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) -> str: # Needs fixins, maybe move to separate file?
 	i = 0
 	messageString = ''
 	customCharacter = False
@@ -289,8 +304,18 @@ TESTING AREA! Anything below this is meant for testing functionality or debug.
 This is testing for recompiling byte data. 
 """
 if __name__ == "__main__":
-	stuff = bytes.fromhex("804380611f171f18806e00")
-	print(translateJapaneseHex(stuff, None))
+	print(f'METAL GEAR SOLID (PSX) JAPANESE TEXT DECRYPTION!\n')
+	while True:
+		from deep_translator import GoogleTranslator
+		print(f'Please give hex to translate: \n')
+		stuff = bytes.fromhex(input("> "))
+		result = translateJapaneseHex(stuff, None)
+		print(f'Japanese: {result}')
+		print(f'English: {GoogleTranslator(source='ja', dest='en').translate(result)}')
+
+	
+	# stuff = bytes.fromhex("B0 14 90 B0 90 B1 D0 15 80 7C 82 1D 82 4A C2 23 82 29 C0 7F 82 19 82 2D D0 06 82 0F 90 1F 90 49 81 2E 90 B0 90 B1 D0 03 90 B2 81 04 90 B3 81 0E 81 2B 81 2F 90 B4 90 B5 81 17 81 3E 81 17 C1 47 81 06 D0 03")
+	# print(translateJapaneseHex(stuff, None))
 
 
 # if __name__ == "__main__":
