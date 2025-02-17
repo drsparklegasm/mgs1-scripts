@@ -200,7 +200,7 @@ if __name__ == "__main__":
     Main logic is here.
     """
     for file in bin_files:
-        print(os.path.basename(f"{file}: "))
+        print(os.path.basename(f"{file}: "), end="")
         filename = os.path.basename(file)
         basename = filename.split(".")[0]
 
@@ -209,12 +209,12 @@ if __name__ == "__main__":
 
         if basename in skipFilesListD1:
             if debug:
-                print(f'{basename} in skip list. Continuing...')
+                print(f'{basename} in skip list. Continuing...         ')
             continue
 
         # if injectTexts[basename] is None:
         if basename not in injectTexts:
-            print(f'{basename} was not in the json. Skipping...')
+            print(f'{basename} was not in the json. Skipping...\r', end="")
             continue
         
         # Initialize the demo data and the dictionary we're using to replace it.
@@ -285,14 +285,5 @@ if __name__ == "__main__":
         newFile = open(f'{outputDir}/{basename}.bin', 'wb')
         newFile.write(newDemoData)
         newFile.close()
-
-
-
-
-    """
-    # not really needed just for reference.
-    for key in injectTexts:
-        print(key)
-        demoDict: dict = injectTexts[key]
-        
-    """
+    print(f'New Demo Files have been injected!')
+    exit(0)

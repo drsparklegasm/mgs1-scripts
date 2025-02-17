@@ -158,13 +158,13 @@ if __name__ == "__main__":
     Main logic is here.
     """
     for file in bin_files:
-        print(os.path.basename(f"{file}: "))
+        print(os.path.basename(f"{file}: "), end="")
         filename = os.path.basename(file)
         basename = filename.split(".")[0]
 
         # if injectTexts[basename] is None:
         if basename not in injectTexts:
-            print(f'{basename} was not in the json. Skipping...')
+            print(f'{basename} was not in the json. Skipping...\r', end="")
             continue
         
         # Initialize the vox data and the dictionary we're using to replace it.
@@ -224,7 +224,7 @@ if __name__ == "__main__":
                 newvoxData = newvoxData[:len(newvoxData) - len(checkBytes)]
             else:
                 print(f'CRITICAL ERROR! New vox cannot be truncated to original length!')
-                exit()
+                exit(2)
         
         newBlocks = len(newvoxData) // 0x800
         if newBlocks != origBlocks:

@@ -36,10 +36,10 @@ with open(outputDemoFile, 'wb') as f:
         if file.replace('bins', 'newBins') in newBinFiles:
             file = file.replace('bins', 'newBins') 
             basename = file.split("/")[-1].split(".")[0]
-            print(f'Using new {basename}...')
+            print(f'{basename}: Using new version of the demo...')
         else:
             basename = file.split("/")[-1].split(".")[0]
-            print(f'Using old {basename}...')
+            print(f'{basename}: Using old file...\r', end="")
         demoBytes = open(file, 'rb')
         newDemoBytes += demoBytes.read()
         demoBytes.close()

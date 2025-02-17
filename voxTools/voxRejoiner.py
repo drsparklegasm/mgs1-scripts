@@ -17,6 +17,7 @@ disc = 1
 debug = True
 
 # Directory configs
+originalVox = f'build-src/{version}-d{disc}/MGS/VOX.DAT'
 inputDir = f'workingFiles/{version}-d{disc}/vox/bins'
 outputDir = f'workingFiles/{version}-d{disc}/vox/newBins'
 outputvoxFile = f'workingFiles/{version}-d{disc}/vox/new-VOX.DAT'
@@ -28,17 +29,27 @@ origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 newBinFiles = glob.glob(os.path.join(outputDir, '*.bin'))
 origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
+print(f'Building New VOX File...')
 newvoxBytes = b''
 
+count = 0
 with open(outputvoxFile, 'wb') as f:
     for file in origBinFiles:
-        if file.replace('bins', 'newBins') in newBinFiles:
+        if count == len(newBinFiles):
+            print(f'\nAll new files injected. Using the remainder of original file...')
+            with open(originalVox, 'rb') as originalVox:
+                originalVox.seek(len(newvoxBytes))
+                newvoxBytes += originalVox.read()
+                break
+        elif file.replace('bins', 'newBins') in newBinFiles:
             file = file.replace('bins', 'newBins') 
             basename = file.split("/")[-1].split(".")[0]
-            print(f'\rUsing new {basename}...')
+            print(f'{basename}: Using new {basename}...')
+            count += 1
         else:
             basename = file.split("/")[-1].split(".")[0]
-            print(f'\rUsing old {basename}...')
+            print(f'{basename}: Using old version...\r', end="")
+            count += 1
         voxBytes = open(file, 'rb')
         newvoxBytes += voxBytes.read()
         voxBytes.close()
