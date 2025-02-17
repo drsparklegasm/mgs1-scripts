@@ -51,7 +51,7 @@ if [ "$SKIP_GRAPHICS" = false ]; then
     echo "Injecting graphics data..."
     # Inject graphics data (STAGE.DIR) for disk 1 ONLY for now
     echo "Inject D1 with ninja..."
-    wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/ -pack -o /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/STAGE-j1.DIR -img  >/dev/null
+    wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/ -pack -o /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/STAGE-j1.DIR -img  1>/dev/null
     # Disk 2 temp disable
     # echo "Inject D2 with ninja..."
     # wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d2/stage/ -pack -o stageGraphicsWorking/out/STAGE-j2.DIR -img >/dev/null
@@ -105,5 +105,5 @@ sleep 2
 
 mkpsxiso build/jpn-d1/rebuild.xml -o mgsJpnMod-d1.bin -c mgsJpnMod-d1.cue -y
 # mkpsxiso build/jpn-d2/rebuild.xml -o mgsJpnMod-d2.bin -c mgsJpnMod-d2.cue -y
-flatpak run org.duckstation.DuckStation mgsJpnMod-d1.cue
+flatpak run org.duckstation.DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 
 
