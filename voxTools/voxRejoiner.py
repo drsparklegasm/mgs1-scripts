@@ -49,7 +49,6 @@ with open(outputvoxFile, 'wb') as f:
         else:
             basename = file.split("/")[-1].split(".")[0]
             print(f'{basename}: Using old version...\r', end="")
-            count += 1
         voxBytes = open(file, 'rb')
         newvoxBytes += voxBytes.read()
         voxBytes.close()

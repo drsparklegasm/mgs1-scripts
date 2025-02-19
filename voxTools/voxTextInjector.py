@@ -235,6 +235,7 @@ if __name__ == "__main__":
         newFile = open(f'{outputDir}/{basename}.bin', 'wb')
         newFile.write(newvoxData)
         newFile.close()
+        print(f'VOX Data successfully Output to new files!')
 
 
 
