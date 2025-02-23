@@ -39,6 +39,7 @@ customGraphicsData = []
 
 debugOutput = False
 splitCalls = False
+outputDir = ""
 exportGraphics = False
 
 translateToggle = False
@@ -74,12 +75,14 @@ def setOutputFile(filename: str) -> bool:
 def splitCall(offset: int, length: int) -> None:
     global radioData
     global fileSize
+    global outputDir
+
     end = offset + length
     if end > fileSize:
         splitCall = radioData[offset:fileSize]
     else:
         splitCall = radioData[offset:end]
-    filename = 'extractedCallBins/' + str(offset) + '.bin'
+    filename = outputDir + str(offset) + '.bin'
     f = open(filename, 'wb')
     f.write(splitCall)
     f.close()
@@ -229,7 +232,8 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         "unknownVal2": unk1.hex(),
         "unknownVal3": unk2.hex(),
         "content": line.hex(),
-        "graphicsBytes": graphicsData.hex()
+        "graphicsBytes": graphicsData.hex(),
+        "modified": 'False'
         })
     
     checkElement(length)
@@ -736,6 +740,9 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         print(f'File was parsed successfully! Written to {outputFilename}')
 
 def main(args=None):
+    global splitCalls
+    global outputDir
+
     if args is None:
         args = parser.parse_args()
 
@@ -756,7 +763,8 @@ def main(args=None):
     
     if args.split:
         splitCalls = True
-        os.makedirs('extractedCallBins', exist_ok=True)
+        outputDir = outputFilename[:outputFilename.rfind("/") + 1]
+        os.makedirs(outputDir, exist_ok=True)
     
     if args.graphics:
         exportGraphics = True
