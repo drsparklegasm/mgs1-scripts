@@ -416,6 +416,7 @@ def injectSubs(jsonData: dict):
         if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
             continue
         newCallDialogue: dict = jsonData["calls"][call.get('offset')]
+        call.set('modified', 'True') #  New feature to leave unmodified calls alone
         for subelem in call.findall(".//SUBTITLE"):
             offset = subelem.get('offset')
             subelem.set('text', newCallDialogue.get(offset))
