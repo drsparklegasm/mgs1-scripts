@@ -81,7 +81,7 @@ sleep 2
 if [ "$SKIP_RADIO" = false ]; then
     # This area re-compiles a RADIO file for jpn
     # use Programatic replacement
-    python3 /home/solidmixer/projects/mgs1-undub/build-proprietary/radio/dialogueSwap.py
+    python3 build-proprietary/radio/dialogueSwap.py
     python3 myScripts/xmlModifierTools.py inject workingFiles/jpn-d1/radio/injected-Iseeva.json workingFiles/jpn-d1/radio/RADIO.xml 
     # python3 myScripts/RadioDatRecompiler.py -p radioWorkingDir/jpn-d1/RADIO-merged.xml radioWorkingDir/jpn-d1/new-RADIO.DAT -s build-src/jpn-d1/MGS/STAGE.DIR -S radioWorkingDir/jpn-d1/new-STAGE.DIR
     python3 myScripts/RadioDatRecompiler.py -p workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR >/dev/null
@@ -90,14 +90,14 @@ sleep 2
 
 echo "Moving files into position"
 # Move all files into the build folder.
-rm build/jpn-d1/MGS/RADIO.DAT
-cp workingFiles/jpn-d1/radio/new-RADIO.DAT build/jpn-d1/MGS/RADIO.DAT -v
-rm build/jpn-d1/MGS/STAGE.DIR
-cp workingFiles/jpn-d1/stage/new-STAGE.DIR build/jpn-d1/MGS/STAGE.DIR -v
-rm build/jpn-d1/MGS/DEMO.DAT
-cp workingFiles/jpn-d1/demo/new-DEMO.DAT build/jpn-d1/MGS/DEMO.DAT -v
-rm build/jpn-d1/MGS/VOX.DAT
-cp workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT -v
+# rm build/jpn-d1/MGS/RADIO.DAT
+cp -v workingFiles/jpn-d1/radio/new-RADIO.DAT build/jpn-d1/MGS/RADIO.DAT 
+# rm build/jpn-d1/MGS/STAGE.DIR
+cp -v workingFiles/jpn-d1/stage/new-STAGE.DIR build/jpn-d1/MGS/STAGE.DIR
+# rm build/jpn-d1/MGS/DEMO.DAT
+cp -v workingFiles/jpn-d1/demo/new-DEMO.DAT build/jpn-d1/MGS/DEMO.DAT
+# rm build/jpn-d1/MGS/VOX.DAT
+cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
 # 
 
 echo "READY TO BUILD ISO!"
