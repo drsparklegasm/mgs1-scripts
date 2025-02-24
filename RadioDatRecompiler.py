@@ -319,11 +319,19 @@ def main(args=None):
         # We put the call together, starting with the call header. 
         attrs = call.attrib
         outputContent += bytes.fromhex(attrs.get("content"))
+        
+        # Experimental change! This *should* make modified calls inject, while unmodified ones 
+        if attrs.get('modified') == "true":
+            subUseOriginalHex = True
+            xmlFix.subUseOriginalHex = True
+        else:
+            subUseOriginalHex = False
+            xmlFix.subUseOriginalHex = False
 
         for subelem in call:
             outputContent += handleElement(subelem)
         outputContent += b'\x00'
-        if attrs.get('graphicsBytes') is not None:
+        if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True: # 2nd change, inject graphics ONLY if using original hex.
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
         # print(content)
     
