@@ -445,7 +445,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                         'lengthA' : str(lengthA),
                         'contentA' : str(translateJapaneseHex(contentA)),
                         'lengthB' : str(lengthB), 
-                        'contentB' : bytes.decode(contentB[0:-1], encoding='shift-jis', errors='replace') # We could omit this, but the error checkign is good.
+                        'contentB' : bytes.decode(contentB[0:-1], encoding='shift-jis', errors='replace') # We could omit this, but the error checking is good.
                     })
                 elif line[parser] == 0:
                     parser += 1
