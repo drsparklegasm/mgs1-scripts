@@ -1362,7 +1362,7 @@ graphicsData = {
 	"1d03800bbffe226ea9782c281dbffe006a880a3bb80e3bb82d7bb879f3ba2493ad000000": "流",
 	"2baae83ffffc0baae00baae00bffe06baae9bffffe6b59e93bffec2aaea83ffffc000000": "基", 
 	"2aaea93ffffe3aaa503abfe93bb5fd3bfffd3abad83bfffe76bae9b2f6ee2291fd000000": "廃",
-	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "菓",
+	"6aaea9bffffe075ab03ffab86eaeb96eaeb90ffff02aaea83ffffc6beee9792cad000000": "棄", # "菓",  285518
 	"002c00002c003ffffc3aaeac382c2c382c2c3ffffc3aaeac242c18002c00002c00000000": "中",
 	"002c003ffffc2aaea82ffff81aaea4bffffe6aeea91bdbb8bec2e02aecb90be828000000": "表",
 	"0b02c00b02c03fe2c02aeae802dffc1b82c0bfa2c02b12c00b02c00b1ae90b2ffe000000": "社",
@@ -1376,7 +1376,6 @@ graphicsData = {
 	"2aaaa83ffffc00e02c06c02c7e42f81401a00ffff80eaab80e00380ffff80eaab8000000": "召",
 	"0b07400ffffc2eaea4beaea41ffff80eaea80aaea83ffffc2bffe86fadb9282c19000000": "集",
 	"0e6aa90ebffe3f9e692e5bbe2fbb9e3febedbeabb82ebbbc0e1fee0e6fa90ebffe000000": "極",
-	# "2aaea82aaaa82ffff82eaeb82eaeb81aaea42ffff86aaea96befb9baebf40be4bd000000": "品",
 	"002c00bffffebabaae6aeba93aeeac2bfae418ae802c2c382c2c382ffff82eaab8000000": "密",
 	"bfe2d0bb9bb4bfed2dbb9ff8bfcae4bb9ffcbfeeec59affcaea2d0aeabb453ed28000000": "験",
 	"bfbffcbbbaacb77ffcba3aacba3aacb77ffcb3bac8b7b9fdbb78b4b57fadb0ba58000000": "限",
@@ -1520,7 +1519,7 @@ graphicsData = {
 	"00280000be0006d7906faaf92bffe81aaaa02ffff00038b00039b00038e0003800000000": "令",
 	"3fa8283b9db43bbffc3fbaac3bb82c3bbffc3faee87b9ee0b3ace977f8ee27a0bd000000": "脱",
 	"2ee9ac7aeaecbffeec2aeaec3aecac3ae8b82aaea83ffffc1bd7a8bae9f90fe82d000000": "製",
-	# "0ffff00eaab00e00b00ffff00aaaa06a96a9bfebfeb0eb0eb0eb0ebfebfeba9bae000000": "品",
+	"0ffff00eaab00e00b00ffff00aaaa06a96a9bfebfeb0eb0eb0eb0ebfebfeba9bae000000": "品", # In dispute... 2280299
 	"02ea401bff807eafa42ffff82eaab82eaab82ffff82eaab82ffff86f82f93e41bc000000": "負",
 	"3faba83babb83babb83ffffe3baeb93bfbae3faba87baff8b38b3877aeb82758b4000000": "勝",
 	"3feaa82a9ffcbff02c6aa02c3feaac2a9ffc2a9e003fee043aee0e3feeae3a9bfd000000": "記",
@@ -2382,7 +2381,8 @@ graphicsData = {
     "3faab82bafe80b02c02e6ee83faefc17aec03baec02fbffc1feaa87efffd242aa8000000": "延",
 	"6b5e007e4b600e0638bf8bb46e6bb82fbbed3febc9be5b946e2f2c0ebfac0e67f8000000": "秘",
     "0000003ffffc3aaaac38002c38002c38002c38002c38002c3aaaac3ffffc38002c000000": "口",
-    "": "",
+    "3ffffc2aaaa82ffff82eaab82ffff82eaea42eaea82ffffc382f80bafaf927906c000000": "戻",
+	"2aaea82aaaa82ffff82eaeb82eaeb81aaea42ffff86aaea96befb9baebf40be4bd000000": "裏", # 346034
     "": "",
     "": "",
     "": "",
