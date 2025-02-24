@@ -84,7 +84,7 @@ if [ "$SKIP_RADIO" = false ]; then
     python3 build-proprietary/radio/dialogueSwap.py
     python3 myScripts/xmlModifierTools.py inject workingFiles/jpn-d1/radio/injected-Iseeva.json workingFiles/jpn-d1/radio/RADIO.xml 
     # python3 myScripts/RadioDatRecompiler.py -p radioWorkingDir/jpn-d1/RADIO-merged.xml radioWorkingDir/jpn-d1/new-RADIO.DAT -s build-src/jpn-d1/MGS/STAGE.DIR -S radioWorkingDir/jpn-d1/new-STAGE.DIR
-    python3 myScripts/RadioDatRecompiler.py -p workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR >/dev/null
+    python3 myScripts/RadioDatRecompiler.py -p workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR 
 fi
 sleep 2
 

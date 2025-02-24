@@ -625,6 +625,13 @@ def init(xmlInputFile: str) -> ET.Element:
     fixPromptLengths()
     fixSaveBlockLengths()
     
+    if offsetFailed == True:
+        
+        print(f'ERRORS IN RECOMPILE!!! The following calls are too long. They may not work properly:')
+        for call in failedOffsets:
+            print(call)
+        print(f'Because of these calls, the RADIO.DAT file may cause a crash! Please review these offsets before continuing.')
+    
     return root
 
 if __name__ == "__main__":
