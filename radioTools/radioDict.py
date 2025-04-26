@@ -15,8 +15,8 @@
 """
 
 import os, struct, re, sys
-sys.path.append(os.path.abspath('./myScripts'))
-import radioTools.characters as characters
+sys.path.append(os.path.abspath('.'))
+from . import characters
 # import characters
 
 # GLOBAL STUFF
