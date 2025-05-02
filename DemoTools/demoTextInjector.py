@@ -38,7 +38,7 @@ injectJson = f'build-proprietary/demo/demoText-{version}-undub.json'
 os.makedirs(outputDir, exist_ok=True)
 
 # Collect files to use
-bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
+bin_files = glob.glob(os.path.join(inputDir, '*.dmo'))
 bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # Collect source json to inject
@@ -193,7 +193,7 @@ def getDemoDiagHeader(data: bytes) -> bytes:
 
 # if debug:
 #     print(f'Only injecting Demo 25!')
-#     bin_files = ['demoWorkingDir/usa/bins/demo-25.bin']
+#     bin_files = ['demoWorkingDir/usa/bins/demo-25.dmo']
 
 if __name__ == "__main__":
     """
@@ -282,7 +282,7 @@ if __name__ == "__main__":
             print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
 
         # Finished work! Write the new file. 
-        newFile = open(f'{outputDir}/{basename}.bin', 'wb')
+        newFile = open(f'{outputDir}/{basename}.dmo', 'wb')
         newFile.write(newDemoData)
         newFile.close()
     print(f'New Demo Files have been injected!')

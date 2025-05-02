@@ -184,6 +184,14 @@ class header():
         self.content = data[4:self.length].hex()
         self.number = struct.unpack("<I", self.content)[0]
         return
+    
+    def __toElem__(self):
+        """Convert the object into an XML Element."""
+        elem = ET.Element("header")
+        for attr, value in self.__dict__.items():
+            elem.set(attr, str(value))
+
+        return elem
 
 class demoParser():
     """Class to parse demo files."""
