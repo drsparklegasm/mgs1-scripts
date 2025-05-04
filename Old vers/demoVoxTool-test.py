@@ -9,6 +9,12 @@ import json
 from xml.etree import ElementTree as ET
 import radioTools.radioDict as RD
 
+sampleRates = {
+    0x08: 22050,
+    0x0C: 32000, 
+    0xF0: 44100
+}
+
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
     Expects only the subtitle data. If it's the final in a chunk, need to find length
@@ -160,6 +166,9 @@ class audioChunk():
 
         return elem
     
+    def __str__(self):
+        return f"Audio Chunk: {self.magic} Length: {self.length}"
+    
 class demoChunk():
     """Class to represent demo chunk (animation data) found in a .dmo file."""
     magic: bytes
@@ -171,8 +180,18 @@ class demoChunk():
         self.length = struct.unpack("<H", data[1:3])[0]
         self.content = data[4:self.length].hex()
         return
+    
+    def __toElem__(self):
+        """Convert the object into an XML Element."""
+        elem = ET.Element("demoChunk")
+        for attr, value in self.__dict__.items():
+            elem.set(attr, str(value))
 
-class header():
+        return elem
+    def __str__(self):
+        return f"Demo Chunk: {self.magic} Length: {self.length} Content Length: {len(self.content)}"
+
+class fileHeader():
     """Class to represent the header of the demo file."""
     magic: bytes
     length: int
@@ -181,7 +200,7 @@ class header():
     def __init__(self, data: bytes):
         self.magic = data[0]
         self.length = struct.unpack("<H", data[1:3])[0]
-        self.content = data[4:self.length].hex()
+        self.content = data[4:self.length]
         self.number = struct.unpack("<I", self.content)[0]
         return
     
@@ -192,6 +211,38 @@ class header():
             elem.set(attr, str(value))
 
         return elem
+    
+    def __str__(self):
+        return f"File Header: {self.magic} Length: {self.length} Number: {self.number} Content Length: {len(self.content.hex())}"
+
+class audioHeader():
+    """Class to represent the header of the demo file."""
+    magic: bytes
+    length: int
+    content: bytes
+    dataLength: int
+    sampleRate: int
+    channels: int
+
+    def __init__(self, data: bytes):
+        self.magic = data[0]
+        self.length = struct.unpack("<H", data[1:3])[0]
+        self.content = data[4:self.length]
+        self.dataLength = struct.unpack("<I", self.content[4:8])[0]
+        self.sampleRate = sampleRates.get(data[10], 0)
+        self.channels = data[12]
+        return
+    
+    def __toElem__(self):
+        """Convert the object into an XML Element."""
+        elem = ET.Element("header")
+        for attr, value in self.__dict__.items():
+            elem.set(attr, str(value))
+
+        return elem
+    
+    def __str__(self):
+        return f"Audio Header: {self.magic} Length: {self.length} Sample Rate: {self.sampleRate} Channels: {self.channels} Content: {self.content.hex()}"
 
 class demoParser():
     """Class to parse demo files."""
@@ -201,7 +252,9 @@ class demoParser():
     kanji: dict
 
 def parseDemoData(demoData: bytes):
-    """Parse the demo data and return a list of dialogue lines."""
+    """
+    Parse the demo data and return a list of dialogue lines.
+    This really just does the list, we'll write another function for the XML."""
     items = []
     offset = 0
     while offset < len(demoData):
@@ -209,26 +262,69 @@ def parseDemoData(demoData: bytes):
         length = struct.unpack("<H", demoData[offset + 1: offset + 3])[0]
 
         match chunkType:
-            case 0xf0:
+            case 0xf0: # End chunk
                 """End of file data"""
                 break
-            case 0x01:
-                # This is an audio block
+            case 0x01: # This is an audio chunk
                 items.append(audioChunk(demoData[offset:offset + length]))
+            case 0x02:
+                # This is an audio header info block
+                items.append(audioHeader(demoData[offset:offset + length]))
             case 0x03:
                 # This is a subtitle block
                 items.append(captionChunk(demoData[offset:offset + length]))
+            case 0x04:
+                # This is a second language chunk, not sure what it does. Revisit when doing MGS Integral
+                items.append(fileHeader(demoData[offset:offset + length]))
             case 0x05:
                 # This is a demo/animation block
-                items.append(audioChunk(demoData[offset:offset + length]))
+                items.append(demoChunk(demoData[offset:offset + length]))
+            case 0x10:
+                # This is a demo/animation block
+                items.append(fileHeader(demoData[offset:offset + length]))
             case _:
-                items.append(f"Unknown Type: {type} Length: {length}")
+                items.append(f"Unknown Type: {chunkType} Length: {length}")
         # Prepare for next loop
         offset += length
-
     return items
 
-demoFilename = "workingFiles/usa-d1/demo/newBins/demo-01.bin"
+def outputVagFile(items: list, filename: str):
+    """Output the VAG file."""
+    header: audioHeader
+    data: bytes = b""
+    with open(filename, "wb") as f:
+        for item in items:
+            if isinstance(item, audioChunk):
+                data += item.content
+            elif isinstance(item, audioHeader):
+                header = item
+            else:
+                continue
+
+        # Write the header. VAGp for mono, VAGi for stereo interleaved
+        if header.channels == 1:
+            headerBytes: bytes = b"VAGp"
+        elif header.channels == 2:   
+            headerBytes: bytes = b"VAGi"
+        else:
+            print(f"Unknown channel type: {header.channels}. Defaulting to mono.")
+            headerBytes: bytes = b"VAGp"
+            return
+        headerBytes += bytes.fromhex("00000003") # Version 3, static assignment for now
+        headerBytes += bytes(4)
+        headerBytes += struct.pack(">I", header.dataLength + 64) # Data size
+        headerBytes += struct.pack(">I", header.sampleRate) # Sample rate
+        headerBytes += bytes(12)
+        headerBytes += bytes(filename[:16], encoding="utf-8") # Filename 
+        headerBytes += bytes(16-len(filename.split(".", -1)[:16])) # Filename
+        headerBytes += bytes(64-len(headerBytes)) # Padding
+
+        f.write(headerBytes)
+        f.write(data)
+        print(f"Outputted {filename} with {len(data)} bytes of data.")
+        return
+
+demoFilename = "workingFiles/jpn-d1/demo/bins/demo-01.bin"
 with open(demoFilename, "rb") as f:
     demoData = f.read()
     demoItems = parseDemoData(demoData)
@@ -236,6 +332,14 @@ with open(demoFilename, "rb") as f:
     for item in demoItems:
         print(item)
 
+with open("demo.txt", "w") as f:
+    for item in demoItems:
+        f.write(str(item))
+        f.write("\n")
+
+outputVagFile(demoItems, "workingFiles/vag-examples/demo.vag")
+
+        
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
