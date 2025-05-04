@@ -324,7 +324,7 @@ def outputVagFile(items: list, filename: str):
         print(f"Outputted {filename} with {len(data)} bytes of data.")
         return
 
-demoFilename = "workingFiles/jpn-d1/demo/bins/demo-01.bin"
+demoFilename = "workingFiles/usa-d1/vox/bins/vox-0029.bin"
 with open(demoFilename, "rb") as f:
     demoData = f.read()
     demoItems = parseDemoData(demoData)
