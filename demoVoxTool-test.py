@@ -228,7 +228,7 @@ class audioHeader():
         self.magic = data[0]
         self.length = struct.unpack("<H", data[1:3])[0]
         self.content = data[4:self.length]
-        self.dataLength = struct.unpack("<I", self.content[4:8])[0]
+        self.dataLength = struct.unpack(">I", self.content[0:4])[0] # This particular value is big endian. Why? Who fucking knows. 
         self.sampleRate = sampleRates.get(data[10], 0)
         self.channels = data[12]
         return
@@ -312,11 +312,11 @@ def outputVagFile(items: list, filename: str):
             return
         headerBytes += bytes.fromhex("00000003") # Version 3, static assignment for now
         headerBytes += bytes(4)
-        headerBytes += struct.pack(">I", header.dataLength + 64) # Data size
+        headerBytes += struct.pack(">I", header.dataLength) # Data size
         headerBytes += struct.pack(">I", header.sampleRate) # Sample rate
         headerBytes += bytes(12)
-        headerBytes += bytes(filename[:16], encoding="utf-8") # Filename 
-        headerBytes += bytes(16-len(filename.split(".", -1)[:16])) # Filename
+        headerBytes += bytes(filename.split("/")[-1][:16], encoding="utf-8") # Filename 
+        headerBytes += bytes(16-len(filename.split("/")[-1][:16])) # Filename
         headerBytes += bytes(64-len(headerBytes)) # Padding
 
         f.write(headerBytes)
@@ -324,23 +324,24 @@ def outputVagFile(items: list, filename: str):
         print(f"Outputted {filename} with {len(data)} bytes of data.")
         return
 
-demoFilename = "workingFiles/usa-d1/vox/bins/vox-0029.bin"
-with open(demoFilename, "rb") as f:
-    demoData = f.read()
-    demoItems = parseDemoData(demoData)
-    print("Demo Items:")
-    for item in demoItems:
-        print(item)
-
-with open("demo.txt", "w") as f:
-    for item in demoItems:
-        f.write(str(item))
-        f.write("\n")
-
-outputVagFile(demoItems, "workingFiles/vag-examples/demo.vag")
-
         
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
 
+    # Main loop to read and parse the demo/vox file
+    demoFilename = "workingFiles/usa-d1/vox/bins/vox-0044.bin"
+    with open(demoFilename, "rb") as f:
+        demoData = f.read()
+        demoItems = parseDemoData(demoData)
+        print("Demo Items:")
+        for item in demoItems:
+            print(item)
+    # Output the demo items to a text file for reference
+    with open("workingFiles/vag-examples/demo.txt", "w") as f:
+        for item in demoItems:
+            f.write(str(item))
+            f.write("\n")
+
+    newFileName = demoFilename.split("/")[-1].split(".")[0] + ".vag"
+    outputVagFile(demoItems, f"workingFiles/vag-examples/{newFileName}")
