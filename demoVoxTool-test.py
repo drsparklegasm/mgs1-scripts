@@ -37,6 +37,17 @@ class dialogueLine():
         self.text= RD.translateJapaneseHex(data[16:], characterDict) 
         return
     
+    def toElement(self):
+        """Convert the object into an XML Element."""
+        elem = ET.Element("subtitle")
+        for attr, value in self.__dict__.items():
+            if attr == "kanjiDict":
+                continue
+            else:
+                elem.set(attr, str(value))
+
+        return elem
+    
 class captionChunk():
     """Class to represent a caption chunk (dialogue data) found in a .dmo file."""
     magic: bytes
@@ -69,7 +80,7 @@ class captionChunk():
                 self.kanjiDict = {}
             # Now that we have a dict, we can parse the subtitles.
             subsData = data[self.headerLength + 4:self.dialogueLength + 4]
-            self.parseSubtitles(subsData)
+            self.parseSubtitles(subsData) # Parse the subtitles from the data
         elif element is not None and data is None:
             # Initialize from XML Element
             self.magic = int(element.get("magic"))
@@ -102,7 +113,7 @@ class captionChunk():
         
         return
     
-    def parseSubtitles(self, data: bytes) -> list[dialogueLine]:
+    def parseSubtitles(self, data: bytes) -> None: # Internal operation
         """Returns a list of the dialogue lines in the chunk."""
         offset = 0
         while offset < len(data):
@@ -114,8 +125,11 @@ class captionChunk():
             offset += subLength
         return
     
-    def __toElem__(self):
-        """Convert the object into an XML Element."""
+    def toElement(self) -> ET.Element:
+        """
+        Convert the object into an XML Element.
+        Automatically grabs the subtitles from the object.
+        """
         elem = ET.Element("captionChunk")
         for attr, value in self.__dict__.items():
             if attr == "subtitles":
@@ -134,6 +148,9 @@ class captionChunk():
                     item_elem.text = str(value)
             else:
                 elem.set(attr, str(value))
+        
+        for sub in self.subtitles:
+            sub_elem = ET.SubElement(elem, sub.toElement())
 
         return elem
     
@@ -158,7 +175,7 @@ class audioChunk():
         self.content = data[4:self.length]
         return
     
-    def __toElem__(self):
+    def toElement(self):
         """Convert the object into an XML Element."""
         elem = ET.Element("audioChunk")
         for attr, value in self.__dict__.items():
@@ -181,7 +198,7 @@ class demoChunk():
         self.content = data[4:self.length].hex()
         return
     
-    def __toElem__(self):
+    def toElement(self):
         """Convert the object into an XML Element."""
         elem = ET.Element("demoChunk")
         for attr, value in self.__dict__.items():
@@ -204,7 +221,7 @@ class fileHeader():
         self.number = struct.unpack("<I", self.content)[0]
         return
     
-    def __toElem__(self):
+    def toElement(self):
         """Convert the object into an XML Element."""
         elem = ET.Element("header")
         for attr, value in self.__dict__.items():
@@ -233,7 +250,7 @@ class audioHeader():
         self.channels = data[12]
         return
     
-    def __toElem__(self):
+    def toElement(self):
         """Convert the object into an XML Element."""
         elem = ET.Element("header")
         for attr, value in self.__dict__.items():
@@ -288,6 +305,43 @@ def parseDemoData(demoData: bytes):
         offset += length
     return items
 
+def createXMLDemoData(demoData: bytes):
+    """
+    Parse the demo data and return a list of dialogue lines.
+    This really just does the list, we'll write another function for the XML."""
+    root = ET.Element("demoData")
+    offset = 0
+    while offset < len(demoData):
+        chunkType = demoData[offset]
+        length = struct.unpack("<H", demoData[offset + 1: offset + 3])[0]
+
+        match chunkType:
+            case 0xf0: # End chunk
+                """End of file data"""
+                break
+            case 0x01: # This is an audio chunk
+                ET.SubElement(root, audioChunk(demoData[offset:offset + length]).toElement())
+            case 0x02:
+                # This is an audio header info block
+                ET.SubElement(root, audioHeader(demoData[offset:offset + length]))
+            case 0x03:
+                # This is a subtitle block
+                ET.SubElement(root, captionChunk(demoData[offset:offset + length]))
+            case 0x04:
+                # This is a second language chunk, not sure what it does. Revisit when doing MGS Integral
+                ET.SubElement(root, fileHeader(demoData[offset:offset + length]))
+            case 0x05:
+                # This is a demo/animation block
+                ET.SubElement(root, demoChunk(demoData[offset:offset + length]))
+            case 0x10:
+                # This is a demo/animation block
+                ET.SubElement(root, fileHeader(demoData[offset:offset + length]))
+            case _:
+                ET.SubElement(root, "unknownChunk", {"type": str(chunkType), "length": str(length)})
+        # Prepare for next loop
+        offset += length
+    return root
+
 def outputVagFile(items: list, filename: str):
     """Output the VAG file."""
     header: audioHeader
@@ -324,7 +378,6 @@ def outputVagFile(items: list, filename: str):
         print(f"Outputted {filename} with {len(data)} bytes of data.")
         return
 
-        
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
