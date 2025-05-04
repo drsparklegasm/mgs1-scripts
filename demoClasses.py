@@ -9,11 +9,46 @@ import json
 from xml.etree import ElementTree as ET
 import radioTools.radioDict as RD
 
-sampleRates = {
+# For Vag Outputs
+SAMPLE_RATES = {
     0x08: 22050,
     0x0C: 32000, 
     0xF0: 44100
 }
+
+class demo():
+    """
+    The demo class is a full polygon demo file. DEMO.DAT is filled with these.
+    
+    """
+    
+    offset:int
+    lengthInBlocks: int # size / 0x800
+    structure: ET.Element # Try to make this match the XML output to a file.
+    modified: bool = False
+    
+    def __init__(self, demoStartOffset: int = None, demoData: bytes = None, demoElement: ET.Element = None):
+        """
+        We can initialize either from an XML element, or from offset + demoData (raw byte data)
+        """
+        self.modified = False
+        if demoElement == None and demoStartOffset is not None and demoData is not None:
+            # This one is for initializing from Binary
+            self.offset = demoStartOffset
+            self.structure = ET.Element("Demo", {
+                "offset": self.offset,
+                "modified": False,
+                "lengthInBlocks": len(demoData) / 0x800
+            })
+            createXMLDemoData(self.structure, demoData)
+        elif demoElement is not None:
+            self.structure = demoElement
+            self.modified = demoElement.get("modified")
+            self.offset = demoElement.get("offset")
+        else:
+            print("Error! Failed to parse demo!")
+            
+        pass
 
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
@@ -261,6 +296,7 @@ class audioHeader():
     def __str__(self):
         return f"Audio Header: {self.magic} Length: {self.length} Sample Rate: {self.sampleRate} Channels: {self.channels} Content: {self.content.hex()}"
 
+# Is this going to be the demo class?
 class demoParser():
     """Class to parse demo files."""
     demoData: bytes
@@ -305,11 +341,11 @@ def parseDemoData(demoData: bytes):
         offset += length
     return items
 
-def createXMLDemoData(demoData: bytes):
+def createXMLDemoData(root: ET.Element, demoData: bytes):
     """
     Parse the demo data and return a list of dialogue lines.
     This really just does the list, we'll write another function for the XML."""
-    root = ET.Element("demoData")
+    # root = ET.Element("demoData")
     offset = 0
     while offset < len(demoData):
         chunkType = demoData[offset]
