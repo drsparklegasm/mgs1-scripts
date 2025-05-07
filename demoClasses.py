@@ -281,7 +281,7 @@ class audioHeader():
         self.length = struct.unpack("<H", data[1:3])[0]
         self.content = data[4:self.length]
         self.dataLength = struct.unpack(">I", self.content[0:4])[0] # This particular value is big endian. Why? Who fucking knows. 
-        self.sampleRate = sampleRates.get(data[10], 0)
+        self.sampleRate = SAMPLE_RATES.get(data[10], 0)
         self.channels = data[12]
         return
     
@@ -434,3 +434,4 @@ if __name__ == "__main__":
 
     newFileName = demoFilename.split("/")[-1].split(".")[0] + ".vag"
     outputVagFile(demoItems, f"workingFiles/vag-examples/{newFileName}")
+
