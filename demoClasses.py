@@ -22,10 +22,11 @@ class demo():
     
     """
     
-    offset:int
+    offset: int
     lengthInBlocks: int # size / 0x800
-    structure: ET.Element # Try to make this match the XML output to a file.
+    structure: ET.Element  # Try to make this match the XML output to a file.
     modified: bool = False
+    segments: list = [] # This is a list of segments in the demo. Use this for the structures. 
     
     def __init__(self, demoStartOffset: int = None, demoData: bytes = None, demoElement: ET.Element = None):
         """
@@ -36,12 +37,13 @@ class demo():
             # This one is for initializing from Binary
             self.offset = demoStartOffset
             self.structure = ET.Element("Demo", {
-                "offset": self.offset,
-                "modified": False,
-                "lengthInBlocks": len(demoData) / 0x800
+                "offset": str(self.offset),
+                "modified": str(self.modified),
+                "lengthInBlocks": str(len(demoData) // 0x800)
             })
-            createXMLDemoData(self.structure, demoData)
-        elif demoElement is not None:
+            # This is a massive waste of space. 
+            createXMLDemoData(self.structure, demoData) 
+        elif demoElement is not None: # TODO: THIS IS UNFINISHED!
             self.structure = demoElement
             self.modified = demoElement.get("modified")
             self.offset = demoElement.get("offset")
@@ -69,23 +71,28 @@ class dialogueLine():
         if self.length == 0:
             self.final = True
             self.length = len(data)
+        else:
+            self.final = False
         self.text= RD.translateJapaneseHex(data[16:], characterDict) 
         return
     
     def toElement(self):
         """Convert the object into an XML Element."""
-        elem = ET.Element("subtitle")
-        for attr, value in self.__dict__.items():
-            if attr == "kanjiDict":
-                continue
-            else:
-                elem.set(attr, str(value))
-
+        dialogue = self.text.replace("\x00", "")
+        elem = ET.Element("subtitle", {
+                "length": str(self.length),
+                "startFrame": str(self.startFrame),
+                "displayFrames": str(self.displayFrames),
+                "buffer": self.buffer.hex(),
+                "text": str(dialogue),
+                "final": str(self.final)
+            }
+        )
         return elem
     
 class captionChunk():
     """Class to represent a caption chunk (dialogue data) found in a .dmo file."""
-    magic: bytes
+    magic: int
     length: int
     startFrame: int
     endFrame: int
@@ -166,26 +173,23 @@ class captionChunk():
         Automatically grabs the subtitles from the object.
         """
         elem = ET.Element("captionChunk")
-        for attr, value in self.__dict__.items():
-            if attr == "subtitles":
-                subtitles_elem = ET.SubElement(elem, "subtitles")
-                for subtitle in self.subtitles:
-                    sub_elem = ET.SubElement(subtitles_elem, "dialogueLine")
-                    sub_elem.set("length", str(subtitle.length))
-                    sub_elem.set("startFrame", str(subtitle.startFrame))
-                    sub_elem.set("displayFrames", str(subtitle.displayFrames))
-                    sub_elem.set("text", subtitle.text)
-            elif attr == "kanjiDict":
-                # Assuming kanjiDict is a dictionary of strings
-                kanjiDict_elem = ET.SubElement(elem, "kanjiDict")
-                for key, value in self.kanjiDict.items():
-                    item_elem = ET.SubElement(kanjiDict_elem, "item", key=key)
-                    item_elem.text = str(value)
-            else:
-                elem.set(attr, str(value))
-        
+        # My method:
+        elem.set("magic", str(self.magic))
+        elem.set("length", str(self.length))
+        elem.set("startFrame", str(self.startFrame))
+        elem.set("endFrame", str(self.endFrame))
+        elem.set("unknown", self.unknown.hex())
+        elem.set("headerLength", str(self.headerLength))
+        elem.set("dialogueLength", str(self.dialogueLength))
+        elem.set("unknownChunk", self.unknownChunk.hex())
+        # Add subtitles
         for sub in self.subtitles:
-            sub_elem = ET.SubElement(elem, sub.toElement())
+            elem.append(sub.toElement())
+        # Add kanjiDict
+        kanjiDict_elem = ET.SubElement(elem, "kanjiDict")
+        for key, value in self.kanjiDict.items():
+            item_elem = ET.SubElement(kanjiDict_elem, "item", key=key)
+            item_elem.text = str(value)
 
         return elem
     
@@ -200,7 +204,7 @@ class captionChunk():
         return
 
 class audioChunk():
-    magic: bytes
+    magic: int
     length: int
     content: bytes
     
@@ -211,33 +215,38 @@ class audioChunk():
         return
     
     def toElement(self):
-        """Convert the object into an XML Element."""
-        elem = ET.Element("audioChunk")
-        for attr, value in self.__dict__.items():
-            elem.set(attr, str(value))
-
+        elem = ET.Element("audioChunk", {
+            "magic": str(self.magic),
+            "length": str(self.length),
+            "content": self.content.hex()
+        })
         return elem
+
     
     def __str__(self):
         return f"Audio Chunk: {self.magic} Length: {self.length}"
     
 class demoChunk():
     """Class to represent demo chunk (animation data) found in a .dmo file."""
-    magic: bytes
+    magic: int
     length: int
     content: bytes
 
     def __init__(self, data: bytes):
         self.magic = data[0]
         self.length = struct.unpack("<H", data[1:3])[0]
-        self.content = data[4:self.length].hex()
+        self.content = data[4:self.length]
         return
     
     def toElement(self):
         """Convert the object into an XML Element."""
-        elem = ET.Element("demoChunk")
-        for attr, value in self.__dict__.items():
-            elem.set(attr, str(value))
+        elem = ET.Element("demoChunk", {
+            "magic": str(self.magic),
+            "length": str(self.length),
+            "content": self.content.hex()
+            }
+        )
+        
 
         return elem
     def __str__(self):
@@ -245,7 +254,7 @@ class demoChunk():
 
 class fileHeader():
     """Class to represent the header of the demo file."""
-    magic: bytes
+    magic: int
     length: int
     content: bytes
 
@@ -258,10 +267,13 @@ class fileHeader():
     
     def toElement(self):
         """Convert the object into an XML Element."""
-        elem = ET.Element("header")
-        for attr, value in self.__dict__.items():
-            elem.set(attr, str(value))
-
+        elem = ET.Element("fileHeader", {
+            "magic": str(self.magic),
+            "length": str(self.length),
+            "number": str(self.number),
+            "content": self.content.hex()
+            }
+        )
         return elem
     
     def __str__(self):
@@ -269,7 +281,7 @@ class fileHeader():
 
 class audioHeader():
     """Class to represent the header of the demo file."""
-    magic: bytes
+    magic: int
     length: int
     content: bytes
     dataLength: int
@@ -287,10 +299,15 @@ class audioHeader():
     
     def toElement(self):
         """Convert the object into an XML Element."""
-        elem = ET.Element("header")
-        for attr, value in self.__dict__.items():
-            elem.set(attr, str(value))
-
+        elem = ET.Element("audioHeader", {
+            "magic": str(self.magic),
+            "length": str(self.length),
+            "dataLength": str(self.dataLength),
+            "sampleRate": str(self.sampleRate),
+            "channels": str(self.channels),
+            "content": self.content.hex()
+            }
+        )
         return elem
     
     def __str__(self):
@@ -354,26 +371,33 @@ def createXMLDemoData(root: ET.Element, demoData: bytes):
         match chunkType:
             case 0xf0: # End chunk
                 """End of file data"""
+                root.append(ET.Element("endChunk", {
+                    "type": str(chunkType), 
+                    "length": str(length), 
+                    "content": demoData[offset:offset + length].hex()
+                    }
+                ))
                 break
             case 0x01: # This is an audio chunk
-                ET.SubElement(root, audioChunk(demoData[offset:offset + length]).toElement())
+                root.append(audioChunk(demoData[offset:offset + length]).toElement())
             case 0x02:
                 # This is an audio header info block
-                ET.SubElement(root, audioHeader(demoData[offset:offset + length]))
+                root.append(audioHeader(demoData[offset:offset + length]).toElement())
             case 0x03:
                 # This is a subtitle block
-                ET.SubElement(root, captionChunk(demoData[offset:offset + length]))
+                root.append(captionChunk(demoData[offset:offset + length]).toElement())
             case 0x04:
                 # This is a second language chunk, not sure what it does. Revisit when doing MGS Integral
-                ET.SubElement(root, fileHeader(demoData[offset:offset + length]))
+                root.append(fileHeader(demoData[offset:offset + length]).toElement())
             case 0x05:
                 # This is a demo/animation block
-                ET.SubElement(root, demoChunk(demoData[offset:offset + length]))
+                root.append(demoChunk(demoData[offset:offset + length]).toElement())
             case 0x10:
                 # This is a demo/animation block
-                ET.SubElement(root, fileHeader(demoData[offset:offset + length]))
+                root.append(fileHeader(demoData[offset:offset + length]).toElement())
             case _:
-                ET.SubElement(root, "unknownChunk", {"type": str(chunkType), "length": str(length)})
+                root.append("unknownChunk", {"type": str(chunkType), "length": str(length)})
+                print(f"Unknown Type at offset {offset}: {chunkType} Length: {length}")
         # Prepare for next loop
         offset += length
     return root
