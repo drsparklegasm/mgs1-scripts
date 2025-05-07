@@ -41,7 +41,7 @@ def splitDemoFiles():
             end = offsets[i + 1]
         else:
             end = len(demoData)  # Include the last byte
-        f = open(f'{outputDir}/vox-{i + 1:04}.bin', 'wb')
+        f = open(f'{outputDir}/vox-{i + 1:04}.vox', 'wb')
         f.write(demoData[start:end])
         f.close()
         if debug:

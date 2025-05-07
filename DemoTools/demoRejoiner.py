@@ -23,10 +23,10 @@ outputDir = f'workingFiles/{version}-d{disc}/demo/newBins'
 outputDemoFile = f'workingFiles/{version}-d{disc}/demo/new-DEMO.DAT'
 os.makedirs(outputDir, exist_ok=True)
 
-origBinFiles = glob.glob(os.path.join(inputDir, '*.bin'))
+origBinFiles = glob.glob(os.path.join(inputDir, '*.dmo'))
 origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
-newBinFiles = glob.glob(os.path.join(outputDir, '*.bin'))
+newBinFiles = glob.glob(os.path.join(outputDir, '*.dmo'))
 origBinFiles.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 newDemoBytes = b''
