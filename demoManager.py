@@ -13,8 +13,8 @@ sys.path.insert(0, submodule_path) # Insert at the beginning to prioritize
 
 
 import DemoTools.demoClasses as demoCtrl
-# import tools.myscripts.radioTools.radioDict as RD
-# import tools.myscripts.radioTools.characters
+# import tools.myscripts.translation.radioDict as RD
+# import tools.myscripts.translation.characters
 
 
 # 

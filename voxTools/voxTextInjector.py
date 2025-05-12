@@ -18,7 +18,7 @@ import re
 import glob
 import struct
 import progressbar
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 import json
 
 import voxTools.voxTextExtractor as DTE # Leave for referential

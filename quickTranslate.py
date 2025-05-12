@@ -1,4 +1,4 @@
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 
 text = ""
 textToPrint = RD.translateJapaneseHex(bytes.fromhex(text), callDict = {} )
