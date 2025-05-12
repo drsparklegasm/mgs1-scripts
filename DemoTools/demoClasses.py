@@ -7,7 +7,7 @@ for the entire demo/vox file.
 import os, sys, struct, re
 import json
 from xml.etree import ElementTree as ET
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 
 # For Vag Outputs
 SAMPLE_RATES = {

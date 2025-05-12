@@ -17,7 +17,7 @@ This is the main script. See bottom for command arguments and how we parse the c
 
 import os, struct
 from datetime import datetime
-import radioTools.radioDict as radioDict
+import translation.radioDict as radioDict
 import argparse
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString

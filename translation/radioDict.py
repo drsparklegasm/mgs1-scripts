@@ -16,7 +16,7 @@
 
 import os, struct, re, sys
 sys.path.append(os.path.abspath('./myScripts'))
-import radioTools.characters as characters
+import translation.characters as characters
 # import characters
 
 # Disabling graphics output for now
