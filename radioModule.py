@@ -9,10 +9,17 @@ class radioDataEditor():
     workingVox: ET.Element
 
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self) -> None:
         """
         Initialize the class. Load the radio data as persistent for reading/editing.
         """
+        self.radioXMLData = None
+        self.calls = []
+        self.workingCall = None
+        self.workingVox = None
+        pass
+
+    def loadRadioXmlFile(self, filename: str) -> None:
         try:
             self.radioXMLData = ET.parse(filename).getroot()
             self.calls = self.radioXMLData.findall("Call")
