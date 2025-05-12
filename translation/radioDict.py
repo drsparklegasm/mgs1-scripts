@@ -15,7 +15,7 @@
 """
 
 import os, struct, re, sys
-sys.path.append(os.path.abspath('./myScripts'))
+# sys.path.append(os.path.abspath('./myScripts'))
 import translation.characters as characters
 # import characters
 
