@@ -70,7 +70,7 @@ class radioDataEditor():
             print(f'Error: {e}')
         return call
 
-    def getVoxOffsets(self):
+    def getVoxOffsets(self) -> list[str]:
         """
         Returns a list of Vox elements in the call. 
         """
@@ -83,7 +83,7 @@ class radioDataEditor():
             print(f'Error: {e}')
         return voxList
 
-    def getSubs(self) -> list:
+    def getSubs(self) -> list[str]:
         """
         Returns a list of Subtitles elements in the VOX element. 
         """
