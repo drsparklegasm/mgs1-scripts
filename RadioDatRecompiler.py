@@ -25,7 +25,7 @@ import os, struct
 import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 import xmlModifierTools as xmlFix
 
 # Debugging for testing calls recompile with correct info

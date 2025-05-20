@@ -19,7 +19,7 @@ import json
 import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 from multiprocessing import Pool
-from radioTools import radioDict as RD
+from translation import radioDict as RD
 # import jsonTools
 
 import progressbar

@@ -10,7 +10,7 @@ Will add a re-injector later. For safety, will not excceed original length -1
 
 import os, struct, re, sys, json
 sys.path.append(os.path.abspath('./myScripts'))
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 
 execFilename = "/home/solidmixer/projects/mgs1-undub/build-src/usa-d1/MGS/SLUS_861.11"
 execFilename = "/home/solidmixer/projects/mgs1-undub/build-src/jpn-d1/MGS/SLPM_861.11"

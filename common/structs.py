@@ -6,7 +6,7 @@ demoSub is one of the big ones as the similar thing is used in demo, vox, zmovie
 import sys, struct, os
 sys.path.append(os.path.abspath('./myScripts'))
 
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 
 
 class subtitle:

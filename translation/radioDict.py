@@ -15,19 +15,21 @@
 """
 
 import os, struct, re, sys
-sys.path.append(os.path.abspath('./myScripts'))
-import radioTools.characters as characters
+# sys.path.append(os.path.abspath('./myScripts'))
+import translation.characters as characters
 # import characters
 
+# Disabling graphics output for now
+# os.makedirs('graphicsExport', exist_ok=True)
+# missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w', encoding='utf8')
+# missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w', encoding='utf8') # Accessed from RadioDatTools in main()
+
 # GLOBAL STUFF
-os.makedirs('graphicsExport', exist_ok=True)
-missingChars = open('graphicsExport/KanjiStillMissing.txt', 'w', encoding='utf8')
-missingGFX = open('graphicsExport/GraphicsStillMissing.txt', 'w', encoding='utf8') # Accessed from RadioDatTools in main()
 radioData = b''
 foundGraphics = []
 unidentifiedGraphics = []
 
-context = open("graphicsExport/contextList.txt", 'w')
+# context = open("graphicsExport/contextList.txt", 'w')
 debug = False
 
 class graphicSegment:
@@ -184,13 +186,14 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) ->
 					messageString += characters.kanji.get(bytestring[i:i+2].hex())
 				except:
 					# print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
-					missingChars.write(f'[{bytestring[i : i + 2].hex()}]\n')
+					# missingChars.write(f'[{bytestring[i : i + 2].hex()}]\n')
 					messageString += f'[{bytestring[i : i + 2].hex()}]'
 					customCharacter = True
 			i += 2
 	
-	if customCharacter == True:
-		context.write(f'{messageString}\n')
+	# Disabled for now
+	# if customCharacter == True:
+	# 	context.write(f'{messageString}\n')
 		
 	return messageString
 

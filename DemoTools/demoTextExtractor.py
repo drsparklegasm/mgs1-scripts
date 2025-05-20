@@ -18,7 +18,7 @@ import re
 import glob
 import struct
 import progressbar
-import radioTools.radioDict as RD
+import translation.radioDict as RD
 import json
 
 demoScriptData: dict = {}
@@ -37,7 +37,7 @@ os.makedirs(outputDir, exist_ok=True)
 outputJsonFile = f"workingFiles/{version}-d{disc}/demo/demoText-{version}.json"
 
 # Grab all files in the directory and sort into order.
-bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
+bin_files = glob.glob(os.path.join(inputDir, '*.dmo'))
 bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # flags
@@ -45,8 +45,8 @@ debug = True
 
 # List of files to skip (Ex: 005.bin does not contain texts)
 skipFilesListD1 = [
-    'demo-5',
-    'demo-6',
+    'demo-05',
+    'demo-06',
     'demo-31',
     'demo-33',
     'demo-35',

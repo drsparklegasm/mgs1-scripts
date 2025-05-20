@@ -1,10 +1,10 @@
 import os, struct
 # import progressbar, time
 
-version = "jpn"
+version = "usa"
 disc = 1
 filename = f"build-src/{version}-d{disc}/MGS/DEMO.DAT"
-outputDir = f"/workingFiles/{version}-d{disc}/demo/bins"
+outputDir = f"workingFiles/{version}-d{disc}/demo/bins"
 
 demoFile = open(filename, 'rb')
 demoData = demoFile.read()
@@ -12,8 +12,7 @@ demoData = demoFile.read()
 offsets = []
 os.makedirs(outputDir, exist_ok=True)
 opening = b'\x10\x08\x00\x00'
-# opening = b'\x10\x08\x00\x00\x05\x00\x00\x00' the other four bytes may not be needed, TODO: Test this further
-
+# opening = b'\x10\x08\x00\x00\x05\x00\x00\x00'
 
 def findDemoOffsets():
     offset = 0
@@ -33,13 +32,15 @@ def findDemoOffsets():
 
 def splitDemoFiles():
     i = 0
+    offsetFile = open(f'{outputDir}/demoOffsets.txt', 'w')
     for i in range(len(offsets)):  
         start = offsets[i] 
         if i < len(offsets) - 1:
             end = offsets[i + 1]
         else:
             end = len(demoData) 
-        f = open(f'{outputDir}/demo-{i + 1:02}.bin', 'wb')
+        f = open(f'{outputDir}/demo-{i + 1:02}.dmo', 'wb')
+        offsetFile.write(f'{i + 1:02}: {start:08x} - {end:08x}, length: {end - start}\n')
         f.write(demoData[start:end])
         f.close()
         print(f'Demo {i + 1} written!')

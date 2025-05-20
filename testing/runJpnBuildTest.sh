@@ -105,5 +105,8 @@ sleep 2
 
 mkpsxiso build/jpn-d1/rebuild.xml -o mgsJpnMod-d1.bin -c mgsJpnMod-d1.cue -y
 # mkpsxiso build/jpn-d2/rebuild.xml -o mgsJpnMod-d2.bin -c mgsJpnMod-d2.cue -y
-flatpak run org.duckstation.DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 
-
+if [ $(uname) = "Linux" ]; then 
+    flatpak run org.duckstation.DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 ;
+elif [ $(uname) = "Darwin" ]; then
+    /Applications/DuckStation.app/Contents/MacOS/DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 ;
+fi

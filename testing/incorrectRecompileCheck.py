@@ -3,7 +3,7 @@ Compares two binary files and reports back the offset where the file breaks
 """
 
 import os, struct
-# import radioTools.radioDict as radioDict 
+# import translation.radioDict as radioDict 
 import argparse
 
 # Start by parsing old and new files
