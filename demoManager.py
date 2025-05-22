@@ -25,7 +25,7 @@ workingDemo: demoCtrl.demo
 # Testing Variables
 filename = "build-src/usa-d1/MGS/DEMO.DAT"
 demoDatData = open(filename, "rb").read()
-outputFilename = "demoData"
+outputFilename = "workingFiles/demoDat.xml"
 
 DEMO_HEADER: bytes = b'\x10\x08\x00\x00'
 DEMO_CHUNKSIZE: int = 0x800
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     # TESTING BRANCH
     testDemoExport = allDemos[1].structure
     xmlstr = parseString(ET.tostring(testDemoExport)).toprettyxml(indent="  ")
-    xmlFile = open(f'{outputFilename}.xml', 'w', encoding='utf8')
+    xmlFile = open(outputFilename, 'w', encoding='utf8')
     xmlFile.write(xmlstr)
     xmlFile.close()
 
