@@ -52,6 +52,29 @@ class demo():
             
         pass
 
+    def toJson(self):
+        """
+        Returns a json item with the subs ONLY
+        """
+        sectionList = []
+        for dialogueSection in self.structure.findall(".//captionChunk"):
+            dialoguesList = [] 
+            for caption in dialogueSection.findall(".//subtitle"):
+                dialoguesList.append({caption.get("offset"): [
+                    { "length": caption.get("length") },
+                    { "startFrame": caption.get("startFrame") },
+                    { "displayFrames": caption.get("displayFrames") },
+                    { "buffer": caption.get("buffer") },
+                    { "text": caption.get("text") },
+                    { "final": caption.get("final")}
+                    ]
+                    }
+                )
+            sectionList.append({dialogueSection.get("offset") : dialoguesList})
+        
+        return {str(self.offset): sectionList}
+            
+    
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
     Expects only the subtitle data. If it's the final in a chunk, need to find length

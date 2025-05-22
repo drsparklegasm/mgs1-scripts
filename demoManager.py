@@ -23,7 +23,7 @@ demoStructure: list [demoCtrl.demo]
 workingDemo: demoCtrl.demo
 
 # Testing Variables
-filename = "DEMO.DAT"
+filename = "../DEMO.DAT"
 demoDatData = open(filename, "rb").read()
 outputFilename = "demoData"
 
@@ -57,16 +57,25 @@ if __name__ == "__main__":
     demos.append(demoCtrl.demo(demoOffsets[-1], demoData))
     
     allDemos = ET.Element("DemoDat")
-    allDemos.append(demos[0].structure)
+    # allDemos.append(demos[0].structure)
     for demo in demos:
         allDemos.append(demo.structure)
     
-    # TESTING BRANCH
-    testDemoExport = demos[0].structure
-    xmlstr = parseString(ET.tostring(allDemos)).toprettyxml(indent="  ")
+    jsonList = []
+    for demo in demos:
+        # Get demo json data here. 
+        jsonList.append(demo.toJson())
+    
+    with open("workingfiles/testJson.json", "w") as f:
+        json.dump(f, jsonList)
+
+
+    """# TESTING BRANCH
+    testDemoExport = allDemos[1].structure
+    xmlstr = parseString(ET.tostring(testDemoExport)).toprettyxml(indent="  ")
     xmlFile = open(f'{outputFilename}.xml', 'w', encoding='utf8')
     xmlFile.write(xmlstr)
-    xmlFile.close()
+    xmlFile.close()"""
 
 
 """
