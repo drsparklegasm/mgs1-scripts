@@ -12,7 +12,7 @@ submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts")  
 sys.path.insert(0, submodule_path) # Insert at the beginning to prioritize
 
 
-import DemoTools.demoClasses as demoCtrl
+import demoClasses as demoCtrl
 # import tools.myscripts.translation.radioDict as RD
 # import tools.myscripts.translation.characters
 
@@ -23,7 +23,7 @@ demoStructure: list [demoCtrl.demo]
 workingDemo: demoCtrl.demo
 
 # Testing Variables
-filename = "../DEMO.DAT"
+filename = "build-src/usa-d1/MGS/DEMO.DAT"
 demoDatData = open(filename, "rb").read()
 outputFilename = "demoData"
 
@@ -56,28 +56,29 @@ if __name__ == "__main__":
     # Add the final demo
     demos.append(demoCtrl.demo(demoOffsets[-1], demoData))
     
+    # JSON output
+    jsonList = {}
+    for demo in demos:
+        # Get demo json data here. 
+        offset, subdata = demo.toJson()
+        jsonList[offset] = subdata
+    
+    with open("workingfiles/testJson.json", "w") as f:
+        json.dump(jsonList, f, ensure_ascii=False, indent=2)
+    
+
+    # XML Output
     allDemos = ET.Element("DemoDat")
     # allDemos.append(demos[0].structure)
     for demo in demos:
         allDemos.append(demo.structure)
-    
-    jsonList = []
-    for demo in demos:
-        # Get demo json data here. 
-        jsonList.append(demo.toJson())
-    
-    with open("workingfiles/testJson.json", "w") as f:
-        json.dump(f, jsonList)
-        # Update
-
-
-    """# TESTING BRANCH
+        
+    # TESTING BRANCH
     testDemoExport = allDemos[1].structure
     xmlstr = parseString(ET.tostring(testDemoExport)).toprettyxml(indent="  ")
     xmlFile = open(f'{outputFilename}.xml', 'w', encoding='utf8')
     xmlFile.write(xmlstr)
-    xmlFile.close()"""
-
+    xmlFile.close()
 
 """
     stringOut = ET.tostring(testDemoExport, encoding='utf-8')

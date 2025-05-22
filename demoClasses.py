@@ -25,14 +25,21 @@ class demo():
     offset: int
     lengthInBlocks: int # size / 0x800
     structure: ET.Element  # Try to make this match the XML output to a file.
-    modified: bool = False
-    segments: list = [] # This is a list of segments in the demo. Use this for the structures. 
+    modified: bool 
+    segments: list  # This is a list of segments in the demo. Use this for the structures. 
     
     def __init__(self, demoStartOffset: int = None, demoData: bytes = None, demoElement: ET.Element = None):
         """
         We can initialize either from an XML element, or from offset + demoData (raw byte data)
         """
+        # Initialize as blank
+        offset: int = 0
+        lengthInBlocks: int = 0 # size / 0x800
+        structure: ET.Element = None # Try to make this match the XML output to a file.
+        modified: bool = False
+        segments: list = []         
         self.modified = False
+
         if demoElement == None and demoStartOffset is not None and demoData is not None:
             # This one is for initializing from Binary
             self.offset = demoStartOffset
@@ -56,23 +63,25 @@ class demo():
         """
         Returns a json item with the subs ONLY
         """
-        sectionList = []
+        sectionList = {}
+        countA = 0
         for dialogueSection in self.structure.findall(".//captionChunk"):
-            dialoguesList = [] 
+            dialoguesList = {}
+            countB = 0
             for caption in dialogueSection.findall(".//subtitle"):
-                dialoguesList.append({caption.get("offset"): [
-                    { "length": caption.get("length") },
-                    { "startFrame": caption.get("startFrame") },
-                    { "displayFrames": caption.get("displayFrames") },
-                    { "buffer": caption.get("buffer") },
-                    { "text": caption.get("text") },
-                    { "final": caption.get("final")}
-                    ]
-                    }
-                )
-            sectionList.append({dialogueSection.get("offset") : dialoguesList})
+                subtitle = {}
+                subtitle["length"] = caption.get("length")
+                subtitle["startFrame"] = caption.get("startFrame")
+                subtitle["displayFrames"] = caption.get("displayFrames")
+                # subtitle["buffer"] = caption.get("buffer")
+                subtitle["text"] = caption.get("text")
+                # subtitle["final"] = caption.get("final")
+                dialoguesList[str(countB)] = subtitle
+                countB += 1
+            sectionList[str(countA)] = dialoguesList
+            countA += 1
         
-        return {str(self.offset): sectionList}
+        return str(self.offset),  sectionList
             
     
 class dialogueLine():
@@ -85,7 +94,7 @@ class dialogueLine():
     buffer: bytes
     text: str
     final: bool
-    kanjiDict = {}
+    kanjiDict: dict
 
     def __init__(self, data: bytes, characterDict: dict):
         self.kanjiDict = characterDict
@@ -123,11 +132,12 @@ class captionChunk():
     headerLength: int
     dialogueLength: int
     unknownChunk: bytes # This chunk is probably lip sync data.
-    subtitles: list[dialogueLine] = []  # Initialize subtitles here
+    subtitles: list[dialogueLine]   # Initialize subtitles here ???
     kanjiDict: dict
 
     def __init__(self, data: bytes = None, element: ET.Element = None):
         """Initialize the caption chunk with data or an XML element."""
+        self.subtitles = []
         if data is not None:
             self.magic = data[0]
             self.length = struct.unpack("<H", data[1:3])[0]
