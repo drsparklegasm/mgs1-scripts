@@ -74,8 +74,8 @@ if __name__ == "__main__":
         allDemos.append(demo.structure)
         
     # TESTING BRANCH
-    testDemoExport = allDemos[1].structure
-    xmlstr = parseString(ET.tostring(testDemoExport)).toprettyxml(indent="  ")
+    # testDemoExport = demos[1].structure
+    xmlstr = parseString(ET.tostring(allDemos)).toprettyxml(indent="  ")
     xmlFile = open(outputFilename, 'w', encoding='utf8')
     xmlFile.write(xmlstr)
     xmlFile.close()
