@@ -117,7 +117,7 @@ def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, m
 	count = 0 # May need to start at 1 instead
 	callDictionary = {}
 	# Output a dictionary file for each dictionary we create
-	dictFile = open(f'graphicsExport/Dict-{offset}.txt', 'w', encoding='utf8')
+	# dictFile = open(f'graphicsExport/Dict-{offset}.txt', 'w', encoding='utf8')
 
 	# print(len(graphicsBytes))
 	count = int(len(graphicsBytes) / 36)
@@ -139,7 +139,7 @@ def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, m
 			result = characters.graphicsData.get(segment.hex())
 
 		callDictionary.update({x + 1: result})
-		dictFile.write(f'{x + 1}: {result}\n')
+		# dictFile.write(f'{x + 1}: {result}\n')
 
 	return callDictionary
 
