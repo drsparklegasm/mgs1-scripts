@@ -64,7 +64,7 @@ if __name__ == "__main__":
     import audioTools.vagAudioTools as VAG
 
     voxTestFilename = "workingFiles/usa-d1/demo/bins/demo-01.bin"
-    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0042.bin"
+    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0035.bin"
     voxData = open(voxTestFilename, 'rb').read()
     vox = demoCtrl.demo(demoData=voxData)
     fileWritten = demoCtrl.outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
