@@ -23,7 +23,7 @@ workingDemo: demoCtrl.demo
 
 # Testing Variables
 filename = "build-src/usa-d1/MGS/DEMO.DAT"
-demoDatData = open(filename, "rb").read()
+# demoDatData = open(filename, "rb").read()
 outputFilename = "workingFiles/demoDat.xml"
 
 DEMO_HEADER: bytes = b'\x10\x08\x00\x00'
