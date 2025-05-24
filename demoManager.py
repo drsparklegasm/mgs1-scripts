@@ -11,7 +11,6 @@ import os, sys, json
 # submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts")  # Adjust path if needed
 # sys.path.insert(0, submodule_path) # Insert at the beginning to prioritize
 
-
 import demoClasses as demoCtrl
 # import tools.myscripts.translation.radioDict as RD
 # import tools.myscripts.translation.characters
@@ -46,16 +45,21 @@ def findDemoOffsets(demoFileData: bytes, header: bytes, chunkSize: int):
             offset += chunkSize
     return offsets
 
+def parseDemoFile(demoDatData: bytes) -> dict [str, demoCtrl.demo]:
+    demoOffsets = findDemoOffsets(demoDatData, DEMO_HEADER, DEMO_CHUNKSIZE)
+    demos: dict [str, demoCtrl.demo] = {}
+    for i in range(len(demoOffsets) - 1):
+        demoData = demoDatData[demoOffsets[i]:demoOffsets[i + 1]]
+        demos[str(demoOffsets[i])] = demoCtrl.demo(demoOffsets[i], demoData)
+    demos[str(demoOffsets[-1])] = demoCtrl.demo(demoOffsets[-1], demoData)
+
+    return demos
+    # Add the final demo
+
 if __name__ == "__main__":
     # TESTING BRANCH
     print(f'This is a test!!!')
-    """demoOffsets = findDemoOffsets(demoDatData, DEMO_HEADER, DEMO_CHUNKSIZE)
-    demos: list [demoCtrl.demo] = []
-    for i in range(len(demoOffsets) - 1):
-        demoData = demoDatData[demoOffsets[i]:demoOffsets[i + 1]]
-        demos.append(demoCtrl.demo(demoOffsets[i], demoData))
-    # Add the final demo
-    demos.append(demoCtrl.demo(demoOffsets[-1], demoData))"""
+    
 
     import audioTools.vagAudioTools as VAG
 
@@ -65,17 +69,22 @@ if __name__ == "__main__":
     vox = demoCtrl.demo(demoData=voxData)
     fileWritten = demoCtrl.outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
 
-    VAG.playVagFile(fileWritten)
-    
-    """# JSON output
     jsonList = {}
-    for demo in demos:
-        # Get demo json data here. 
-        offset, subdata = demo.toJson()
-        jsonList[offset] = subdata
+    offset, subdata = vox.toJson()
+    jsonList[offset] = subdata
+    print(jsonList)
     
-    with open("workingfiles/testJson.json", "w") as f:
-        json.dump(jsonList, f, ensure_ascii=False, indent=2)"""
+    VAG.playVagFile(fileWritten)
+
+    # # JSON output
+    # jsonList = {}
+    # for demo in demos:
+    #     # Get demo json data here. 
+    #     offset, subdata = demo.toJson()
+    #     jsonList[offset] = subdata
+    
+    with open("workingfiles/vag-testing.json", "w") as f:
+        json.dump(jsonList, f, ensure_ascii=False, indent=2)
     
 
     """# XML Output

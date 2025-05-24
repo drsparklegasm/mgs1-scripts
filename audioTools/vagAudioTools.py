@@ -50,13 +50,13 @@ def convert_stereo_vag_to_wav(left_vag, right_vag, output_wav):
 
 def play_with_ffplay(wav_file):
     try:
-        print(subprocess.run(['ffplay', wav_file]))
+        print(subprocess.run(['ffplay', wav_file, "-nodisp", "-autoexit"]))
     except subprocess.SubprocessError as e:
         print(e)
 
-def playVagFile(filename: str):
+def playVagFile(filename: str) -> str:
     """
-    Automatically plays vag file, regardless of format
+    Automatically plays vag file, regardless of format. Returns the full path of the 
     """
     global tempDir
     with open(filename, 'rb') as f:
@@ -64,19 +64,21 @@ def playVagFile(filename: str):
         if magic == b'VAGp':
             print(f'File {filename} is MONO! Not playing!')
             convert_vag_to_wav(filename, f"{tempDir}/temp.wav")
-            play_with_ffplay(f"{tempDir}/temp.wav")
-            os.remove(f"{tempDir}/temp.wav")
         elif magic == b'VAGi':
             # Interleaved file! Play separately.
             splitVagFile(filename, f"{tempDir}/temp-L.vag", f"{tempDir}/temp-R.vag")
             convert_stereo_vag_to_wav(f"{tempDir}/temp-L.vag", f"{tempDir}/temp-R.vag", f"{tempDir}/temp.wav")
-            play_with_ffplay(f"{tempDir}/temp.wav")
             # Cleanup
-            os.remove(f"{tempDir}/temp-L.wav")
-            os.remove(f"{tempDir}/temp-R.wav")
-            # os.remove(f"{tempDir}/temp.wav")
+            # os.remove(f"{tempDir}/temp-L.wav")
+            # os.remove(f"{tempDir}/temp-R.wav")
         else:
             print(f'ERROR! File was not valid VAG file. Magic: 0x{magic.hex()} // {magic}')
+            return -1
+        
+        # File is ready, play it!!!
+        play_with_ffplay(f"{tempDir}/temp.wav")
+        os.remove(f"{tempDir}/temp.wav")
+        return 0
 
 
 def main():
