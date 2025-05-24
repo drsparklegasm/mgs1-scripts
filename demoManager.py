@@ -3,13 +3,13 @@ from xml.dom.minidom import parseString
 import os, sys, json
 
 # Add subfolder(s) relative to the script location
-script_dir = os.path.dirname(os.path.abspath(__file__))
+# script_dir = os.path.dirname(os.path.abspath(__file__))
 # sys.path.insert(0, os.path.join(script_dir, 'radioTools'))
 # sys.path.insert(0, os.path.join(script_dir, 'demoTools'))
 # Assuming your submodule is in 'my-renamed-lib'
-submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts", "radioTools")  # Adjust path if needed
-submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts")  # Adjust path if needed
-sys.path.insert(0, submodule_path) # Insert at the beginning to prioritize
+# submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts", "radioTools")  # Adjust path if needed
+# submodule_path = os.path.join(os.path.dirname(__file__), "tools", "myscripts")  # Adjust path if needed
+# sys.path.insert(0, submodule_path) # Insert at the beginning to prioritize
 
 
 import demoClasses as demoCtrl
@@ -33,6 +33,7 @@ DEMO_CHUNKSIZE: int = 0x800
 def findDemoOffsets(demoFileData: bytes, header: bytes, chunkSize: int):
     """
     Modified from the original splitter. This now accepts chunk size and header. 
+    This should work for Demo, Vox, and Zmovie (Zmovie has different chunk size)
     """
     offset = 0
     offsets = []
@@ -48,15 +49,25 @@ def findDemoOffsets(demoFileData: bytes, header: bytes, chunkSize: int):
 if __name__ == "__main__":
     # TESTING BRANCH
     print(f'This is a test!!!')
-    demoOffsets = findDemoOffsets(demoDatData, DEMO_HEADER, DEMO_CHUNKSIZE)
+    """demoOffsets = findDemoOffsets(demoDatData, DEMO_HEADER, DEMO_CHUNKSIZE)
     demos: list [demoCtrl.demo] = []
     for i in range(len(demoOffsets) - 1):
         demoData = demoDatData[demoOffsets[i]:demoOffsets[i + 1]]
         demos.append(demoCtrl.demo(demoOffsets[i], demoData))
     # Add the final demo
-    demos.append(demoCtrl.demo(demoOffsets[-1], demoData))
+    demos.append(demoCtrl.demo(demoOffsets[-1], demoData))"""
+
+    import audioTools.vagAudioTools as VAG
+
+    voxTestFilename = "workingFiles/usa-d1/demo/bins/demo-01.bin"
+    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0042.bin"
+    voxData = open(voxTestFilename, 'rb').read()
+    vox = demoCtrl.demo(demoData=voxData)
+    fileWritten = demoCtrl.outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
+
+    VAG.playVagFile(fileWritten)
     
-    # JSON output
+    """# JSON output
     jsonList = {}
     for demo in demos:
         # Get demo json data here. 
@@ -64,10 +75,10 @@ if __name__ == "__main__":
         jsonList[offset] = subdata
     
     with open("workingfiles/testJson.json", "w") as f:
-        json.dump(jsonList, f, ensure_ascii=False, indent=2)
+        json.dump(jsonList, f, ensure_ascii=False, indent=2)"""
     
 
-    # XML Output
+    """# XML Output
     allDemos = ET.Element("DemoDat")
     # allDemos.append(demos[0].structure)
     for demo in demos:
@@ -78,7 +89,7 @@ if __name__ == "__main__":
     xmlstr = parseString(ET.tostring(allDemos)).toprettyxml(indent="  ")
     xmlFile = open(outputFilename, 'w', encoding='utf8')
     xmlFile.write(xmlstr)
-    xmlFile.close()
+    xmlFile.close()"""
 
 """
     stringOut = ET.tostring(testDemoExport, encoding='utf-8')
