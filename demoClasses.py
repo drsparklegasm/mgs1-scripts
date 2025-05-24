@@ -19,7 +19,6 @@ SAMPLE_RATES = {
 class demo():
     """
     The demo class is a full polygon demo file. DEMO.DAT is filled with these.
-    
     """
     
     offset: int
@@ -40,7 +39,7 @@ class demo():
         segments: list = []         
         self.modified = False
 
-        if demoElement == None and demoStartOffset is not None and demoData is not None:
+        if demoElement == None and demoData is not None:
             # This one is for initializing from Binary
             self.offset = demoStartOffset
             self.structure = ET.Element("Demo", {
@@ -49,7 +48,9 @@ class demo():
                 "lengthInBlocks": str(len(demoData) // 0x800)
             })
             # This is a massive waste of space. 
-            createXMLDemoData(self.structure, demoData) 
+            createXMLDemoData(self.structure, demoData)
+            self.segments = parseDemoData(demoData)
+
         elif demoElement is not None: # TODO: THIS IS UNFINISHED!
             self.structure = demoElement
             self.modified = demoElement.get("modified")
@@ -82,7 +83,25 @@ class demo():
             countA += 1
         
         return str(self.offset),  sectionList
-            
+    
+    def getAudioHeader(self): # -> audioHeader: # returns audioHeader
+        for item in self.segments:
+            if isinstance(item, audioHeader):
+                return item
+    
+    def getAudioChunks(self) -> list:
+        items = []
+        for item in self.segments:
+            if isinstance(item, audioChunk):
+                items.append(item)
+        return items
+    
+    def getDemoChunks(self) -> list:
+        items = []
+        for item in self.segments:
+            if isinstance(item, demoChunk):
+                items.append(item)
+        return items
     
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
@@ -279,9 +298,8 @@ class demoChunk():
             "content": self.content.hex()
             }
         )
-        
-
         return elem
+    
     def __str__(self):
         return f"Demo Chunk: {self.magic} Length: {self.length} Content Length: {len(self.content)}"
 
@@ -346,18 +364,21 @@ class audioHeader():
     def __str__(self):
         return f"Audio Header: {self.magic} Length: {self.length} Sample Rate: {self.sampleRate} Channels: {self.channels} Content: {self.content.hex()}"
 
-# Is this going to be the demo class?
-class demoParser():
-    """Class to parse demo files."""
-    demoData: bytes
-    demoXml: ET.Element
-    dialogues: list
-    kanji: dict
+## TODO: This is unused, probably good to remove
 
-def parseDemoData(demoData: bytes):
+# # Is this going to be the demo class?
+# class demoParser():
+#     """Class to parse demo files."""
+#     demoData: bytes
+#     demoXml: ET.Element
+#     dialogues: list
+#     kanji: dict
+
+def parseDemoData(demoData: bytes) -> list:
     """
     Parse the demo data and return a list of dialogue lines.
-    This really just does the list, we'll write another function for the XML."""
+    This really just does the list, we'll write another function for the XML.
+    """
     items = []
     offset = 0
     while offset < len(demoData):
@@ -420,7 +441,7 @@ def createXMLDemoData(root: ET.Element, demoData: bytes):
                 # This is a subtitle block
                 root.append(captionChunk(demoData[offset:offset + length]).toElement())
             case 0x04:
-                # This is a second language chunk, not sure what it does. Revisit when doing MGS Integral
+                # This is a second language chunk, not sure what it does. TODO: Revisit when doing MGS Integral
                 root.append(fileHeader(demoData[offset:offset + length]).toElement())
             case 0x05:
                 # This is a demo/animation block
@@ -435,47 +456,141 @@ def createXMLDemoData(root: ET.Element, demoData: bytes):
         offset += length
     return root
 
-def outputVagFile(items: list, filename: str):
-    """Output the VAG file."""
-    header: audioHeader
+def writeVagHeader(header: audioHeader, filename: str) -> bytes:
+    """
+    Filename is max 16 Bytes. Optional
+    """
+    # Write the header. VAGp for mono, VAGi for stereo interleaved
+    if header.channels == 1:
+        headerBytes: bytes = b"VAGp"
+    elif header.channels == 2:   
+        headerBytes: bytes = b"VAGi"
+    else:
+        print(f"Unknown channel type: {header.channels}. Defaulting to mono.")
+        headerBytes: bytes = b"VAGp"
+        return
+    headerBytes += bytes.fromhex("00000003") # Version 3, static assignment for now # TODO: Check if always static
+    headerBytes += bytes(4)
+    headerBytes += struct.pack(">I", header.dataLength) # Data size
+    headerBytes += struct.pack(">I", header.sampleRate) # Sample rate
+    headerBytes += bytes(12)
+    headerBytes += bytes(filename.split("/")[-1][:16], encoding="utf-8") # Filename 
+    headerBytes += bytes(16-len(filename.split("/")[-1][:16])) # Filename
+    headerBytes += bytes(64-len(headerBytes)) # Padding
+
+    return headerBytes
+
+def outputVagFile(demo: demo, filename: str, path: str = None):
+    """
+    Output the VAG file.
+    Currently assumes only one audio file
+    """
+    # Fix formatting
+    if path == None:
+        path = ""
+    if filename[-4:] == ".vag":
+        filename = filename[:len(filename) - 4]
+
+    # Get header bytes
+    header = demo.getAudioHeader()
+    headerBytes = writeVagHeader(header, filename)
+
+    # Get data
     data: bytes = b""
-    with open(filename, "wb") as f:
-        for item in items:
-            if isinstance(item, audioChunk):
-                data += item.content
-            elif isinstance(item, audioHeader):
-                header = item
-            else:
-                continue
-
-        # Write the header. VAGp for mono, VAGi for stereo interleaved
-        if header.channels == 1:
-            headerBytes: bytes = b"VAGp"
-        elif header.channels == 2:   
-            headerBytes: bytes = b"VAGi"
-        else:
-            print(f"Unknown channel type: {header.channels}. Defaulting to mono.")
-            headerBytes: bytes = b"VAGp"
-            return
-        headerBytes += bytes.fromhex("00000003") # Version 3, static assignment for now
-        headerBytes += bytes(4)
-        headerBytes += struct.pack(">I", header.dataLength) # Data size
-        headerBytes += struct.pack(">I", header.sampleRate) # Sample rate
-        headerBytes += bytes(12)
-        headerBytes += bytes(filename.split("/")[-1][:16], encoding="utf-8") # Filename 
-        headerBytes += bytes(16-len(filename.split("/")[-1][:16])) # Filename
-        headerBytes += bytes(64-len(headerBytes)) # Padding
-
+    dataChunks = demo.getAudioChunks()
+    for chunk in dataChunks:
+        data += chunk.content
+    
+    # Write the file
+    with open(f'{path}/{filename}.vag', "wb") as f:
         f.write(headerBytes)
         f.write(data)
         print(f"Outputted {filename} with {len(data)} bytes of data.")
-        return
+
+    return f'{path}/{filename}.vag'
+    
+def splitVagChannels(demo: demo, filename: str, path: str = None) -> list[str]:
+    """
+    takes stereo vag data, outputs two mono audio file.
+    Filename should NOT have extension.
+    Returns single file if mono, dual if stereo. 
+    """
+
+    def stereoToMonoHeader(data: bytes) -> bytes:
+        """
+        Rewrites a stereo vag header as mono with half length
+        """
+        newData = b"VAGp" + data[4:12]
+        # Fix length
+        originalLength = struct.unpack(">I", data[12:16])[0]
+        newLength = struct.pack(">I", originalLength // 2)
+        newData += newLength
+        # Add the rest of the header and return
+        newData += header[16:]
+
+        return newData
+    
+    headerBytes: bytes
+    audioData: bytes
+    secondChannelData: bytes # Right channel if stereo file
+    if path == None:
+        path = ""
+
+    # Get the vag header 
+    header = demo.getAudioHeader()
+    headerBytes = writeVagHeader(header, filename)
+    
+    # Process audio chunks:
+    chunks = demo.getAudioChunks()
+    if header.channels == 1:
+        for chunk in chunks:
+            audioData += chunk.content
+        with open(filename, 'rb') as f:
+            f.write(headerBytes)
+            f.write(audioData)
+        return [f'{path}/{filename}.vag']
+
+    # Swap magic bytes if we are stereo to a mono vag file
+    elif header.channels == 2:
+        headerBytes = stereoToMonoHeader(headerBytes)
+        for chunk in chunks:
+            audioData += chunk.content[:len(chunk.content) // 2]
+            secondChannelData += chunk.content[len(chunk.content) // 2:]
+        with open(f'{path}/{filename}-l.vag', 'rb') as f:
+            f.write(headerBytes)
+            f.write(audioData)
+        with open(f'{path}/{filename}-r.vag', 'rb') as f:
+            f.write(headerBytes)
+            f.write(secondChannelData)
+        return [f'{path}/{filename}-l.vag', f'{path}/{filename}-r.vag']
+    else:
+        print(f'Invalid number of channels! Channels: {header.channels}')
+        return []
+
+def parseDemoFile(filename: str):
+    """
+    Parse single or multiple demo files.
+    """
+    with open(demoFilename, "rb") as f:
+        demoData = f.read()
+        demoItems = parseDemoData(demoData)
+        print("Demo Items:")
+        for item in demoItems:
+            print(item)    
+
+import audioTools.vagAudioTools as VAG
 
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
 
-    # Main loop to read and parse the demo/vox file
+    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0002.bin"
+    voxData = open(voxTestFilename, 'rb').read()
+    vox = demo(voxData)
+    fileWritten = outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
+    
+
+    """# Main loop to read and parse the demo/vox file
     demoFilename = "workingFiles/usa-d1/vox/bins/vox-0044.bin"
     with open(demoFilename, "rb") as f:
         demoData = f.read()
@@ -483,6 +598,7 @@ if __name__ == "__main__":
         print("Demo Items:")
         for item in demoItems:
             print(item)
+
     # Output the demo items to a text file for reference
     with open("workingFiles/vag-examples/demo.txt", "w") as f:
         for item in demoItems:
@@ -490,5 +606,5 @@ if __name__ == "__main__":
             f.write("\n")
 
     newFileName = demoFilename.split("/")[-1].split(".")[0] + ".vag"
-    outputVagFile(demoItems, f"workingFiles/vag-examples/{newFileName}")
+    outputVagFile(demoItems, f"workingFiles/vag-examples/{newFileName}")"""
 

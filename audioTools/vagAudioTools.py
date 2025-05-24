@@ -1,8 +1,8 @@
-import os, sys
 import ffmpeg
-import subprocess
+import subprocess, os
 
-filename = "workingFiles/vag-examples/test.vag"
+filename = ""
+tempDir = "/tmp"
 
 def splitVagFile(filename, leftChanFilename, rightChanFilename):
     # Check if the file is a VAG file
@@ -53,6 +53,30 @@ def play_with_ffplay(wav_file):
         print(subprocess.run(['ffplay', wav_file]))
     except subprocess.SubprocessError as e:
         print(e)
+
+def playVagFile(filename: str):
+    """
+    Automatically plays vag file, regardless of format
+    """
+    global tempDir
+    with open(filename, 'rb') as f:
+        magic = f.read(4)
+        if magic == b'VAGp':
+            print(f'File {filename} is MONO! Not playing!')
+            convert_vag_to_wav(filename, f"{tempDir}/temp.wav")
+            play_with_ffplay(f"{tempDir}/temp.wav")
+            os.remove(f"{tempDir}/temp.wav")
+        elif magic == b'VAGi':
+            # Interleaved file! Play separately.
+            splitVagFile(filename, f"{tempDir}/temp-L.vag", f"{tempDir}/temp-R.vag")
+            convert_stereo_vag_to_wav(f"{tempDir}/temp-L.vag", f"{tempDir}/temp-R.vag", f"{tempDir}/temp.wav")
+            play_with_ffplay(f"{tempDir}/temp.wav")
+            # Cleanup
+            os.remove(f"{tempDir}/temp-L.wav")
+            os.remove(f"{tempDir}/temp-R.wav")
+            # os.remove(f"{tempDir}/temp.wav")
+        else:
+            print(f'ERROR! File was not valid VAG file. Magic: 0x{magic.hex()} // {magic}')
 
 
 def main():
