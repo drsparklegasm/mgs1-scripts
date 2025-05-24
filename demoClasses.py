@@ -571,14 +571,13 @@ def parseDemoFile(filename: str):
     """
     Parse single or multiple demo files.
     """
-    with open(demoFilename, "rb") as f:
+    with open(filename, "rb") as f:
         demoData = f.read()
         demoItems = parseDemoData(demoData)
         print("Demo Items:")
         for item in demoItems:
             print(item)    
 
-import audioTools.vagAudioTools as VAG
 
 if __name__ == "__main__":
     # Check if the script is being run directly
