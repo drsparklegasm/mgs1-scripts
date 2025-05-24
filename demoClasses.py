@@ -583,11 +583,6 @@ import audioTools.vagAudioTools as VAG
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
-
-    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0002.bin"
-    voxData = open(voxTestFilename, 'rb').read()
-    vox = demo(voxData)
-    fileWritten = outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
     
 
     """# Main loop to read and parse the demo/vox file
