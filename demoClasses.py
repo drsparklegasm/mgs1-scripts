@@ -19,10 +19,11 @@ SAMPLE_RATES = {
 class demo():
     """
     The demo class is a full polygon demo file. DEMO.DAT is filled with these.
+    If a .dmo file is used, that's a single demo "object".
     """
     
     offset: int
-    lengthInBlocks: int # size / 0x800
+    lengthInBlocks: int # size / 0x800.
     structure: ET.Element  # Try to make this match the XML output to a file.
     modified: bool 
     segments: list  # This is a list of segments in the demo. Use this for the structures. 
@@ -32,7 +33,7 @@ class demo():
         We can initialize either from an XML element, or from offset + demoData (raw byte data)
         """
         # Initialize as blank
-        offset: int = 0
+        offset: int = 0 # This is only valid if analyzing the entire DEMO.DAT file, otherwise it is always 0.
         lengthInBlocks: int = 0 # size / 0x800
         structure: ET.Element = None # Try to make this match the XML output to a file.
         modified: bool = False
@@ -55,6 +56,7 @@ class demo():
             self.structure = demoElement
             self.modified = demoElement.get("modified")
             self.offset = demoElement.get("offset")
+            # TODO: Create raw chunks
         else:
             print("Error! Failed to parse demo!")
             
@@ -84,6 +86,7 @@ class demo():
         
         return str(self.offset),  sectionList
     
+    # Below functions return subset of the chunks
     def getAudioHeader(self): # -> audioHeader: # returns audioHeader
         for item in self.segments:
             if isinstance(item, audioHeader):
