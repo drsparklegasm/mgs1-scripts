@@ -16,6 +16,9 @@ SAMPLE_RATES = {
     0xF0: 44100
 }
 
+# For re-encoding
+SAMPLE_CODES = dict(zip(SAMPLE_RATES.values(), SAMPLE_RATES.keys()))
+
 class demo():
     """
     The demo class is a full polygon demo file. DEMO.DAT is filled with these.
@@ -277,9 +280,13 @@ class audioChunk():
         })
         return elem
 
-    
     def __str__(self):
         return f"Audio Chunk: {self.magic} Length: {self.length}"
+    
+    def toBytes(self):
+        binaryData = self.magic.to_bytes(1) + self.length.to_bytes(2, 'little') + b"\x00"
+        binaryData +=  + self.content
+        return binaryData
     
 class demoChunk():
     """Class to represent demo chunk (animation data) found in a .dmo file."""
@@ -305,6 +312,11 @@ class demoChunk():
     
     def __str__(self):
         return f"Demo Chunk: {self.magic} Length: {self.length} Content Length: {len(self.content)}"
+    
+    def toBytes(self):
+        binaryData = self.magic.to_bytes(1) + self.length.to_bytes(2, 'little') + b"\x00"
+        binaryData +=  + self.content
+        return binaryData
 
 class fileHeader():
     """Class to represent the header of the demo file."""
@@ -330,6 +342,11 @@ class fileHeader():
         )
         return elem
     
+    def toBytes(self):
+        binaryData = self.magic.to_bytes(1) + self.length.to_bytes(2, 'little') + b"\x00"
+        binaryData += self.content
+        return binaryData
+    
     def __str__(self):
         return f"File Header: {self.magic} Length: {self.length} Number: {self.number} Content Length: {len(self.content.hex())}"
 
@@ -342,13 +359,26 @@ class audioHeader():
     sampleRate: int
     channels: int
 
-    def __init__(self, data: bytes):
-        self.magic = data[0]
-        self.length = struct.unpack("<H", data[1:3])[0]
-        self.content = data[4:self.length]
-        self.dataLength = struct.unpack(">I", self.content[0:4])[0] # This particular value is big endian. Why? Who fucking knows. 
-        self.sampleRate = SAMPLE_RATES.get(data[10], 0)
-        self.channels = data[12]
+    def __init__(self, data: bytes = None, vagHeader: bytes = None):
+        if vagHeader == None:
+            self.magic = data[0]
+            self.length = struct.unpack("<H", data[1:3])[0]
+            self.content = data[4:self.length]
+            self.dataLength = struct.unpack(">I", self.content[0:4])[0] # This particular value is big endian. Why? Who fucking knows. 
+            self.sampleRate = SAMPLE_RATES.get(data[10], 0)
+            self.channels = data[12]
+        elif data == None:
+            if vagHeader[0:4] == b'VAGi':
+                self.channels = 2
+            elif vagHeader[0:4] == b'VAGp':
+                self.channels = 1
+            else:
+                ValueError(f"Unknown Vag Header type! {vagHeader[0:4]}")
+            self.magic = 3
+            self.length = 20 # Assuming all vox are same for now
+            self.dataLength = struct.unpack('>I', vagHeader[12:16])[0] 
+            self.sampleRate = struct.unpack('>I', vagHeader[16:20])[0]
+            self.content = self.toBytes()[4:]
         return
     
     def toElement(self):
@@ -364,6 +394,17 @@ class audioHeader():
         )
         return elem
     
+    def toBytes(self):
+        binaryData = self.magic.to_bytes()
+        binaryData += struct.pack("<H", self.length) # Statically 20, or 0x14
+        binaryData += b"\x00"
+        binaryData += struct.pack(">I", self.dataLength) # This particular value is big endian.
+        binaryData += bytes.fromhex("3fff") # UNTESTED!
+        binaryData += SAMPLE_CODES.get(self.sampleRate).to_bytes() + b'\x00'
+        binaryData += self.channels.to_bytes() + b'\x01' + bytes(6)
+
+        return binaryData
+
     def __str__(self):
         return f"Audio Header: {self.magic} Length: {self.length} Sample Rate: {self.sampleRate} Channels: {self.channels} Content: {self.content.hex()}"
 
@@ -581,12 +622,25 @@ def parseDemoFile(filename: str):
         for item in demoItems:
             print(item)    
 
+def injectVag(target: demo, vagData: bytes) -> demo: # Currently assumes same length of VAG data
+    headerLength: int = 0x40
+    offset = headerLength # Start at end of header, for tracking data entered
+    vagHeader = vagData[:headerLength]
+    for i, chunk in enumerate(target.segments):
+        if isinstance(chunk, audioHeader):
+            target.segments[i] = audioHeader(vagHeader=vagHeader)
+        elif isinstance(chunk, audioChunk):
+            lengthToAdd = target.segments[i].length - 4
+            target.segments[i].content = vagData[offset: offset + lengthToAdd]
+            offset += lengthToAdd 
+    
+    return target
 
 if __name__ == "__main__":
     # Check if the script is being run directly
     print("This script is not meant to be run directly.")
     
-
+    
     """# Main loop to read and parse the demo/vox file
     demoFilename = "workingFiles/usa-d1/vox/bins/vox-0044.bin"
     with open(demoFilename, "rb") as f:

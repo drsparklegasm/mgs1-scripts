@@ -64,10 +64,11 @@ if __name__ == "__main__":
     import audioTools.vagAudioTools as VAG
 
     voxTestFilename = "workingFiles/usa-d1/demo/bins/demo-01.bin"
-    voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0035.bin"
+    # voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0035.bin"
     voxData = open(voxTestFilename, 'rb').read()
     vox = demoCtrl.demo(demoData=voxData)
-    fileWritten = demoCtrl.outputVagFile(vox, 'livePlayTest', 'workingFiles/vag-examples/')
+    fileWritten = demoCtrl.outputVagFile(vox, 'demo-1', 'workingFiles/vag-examples/')
+    print(f'Wrote file: {fileWritten}')
 
     jsonList = {}
     offset, subdata = vox.toJson()
