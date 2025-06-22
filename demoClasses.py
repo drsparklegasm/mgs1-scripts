@@ -109,6 +109,19 @@ class demo():
                 items.append(item)
         return items
     
+    def toBytes(self) -> bytes:
+        """
+        Returns the demo in bytes format for writing to a file. 
+        """
+        demoBytes = b''
+        for item in self.items:
+            demoBytes += item.toBytes()
+        # Quick comparison to original length:
+        if demoBytes // 0x800 < self.lengthInBlocks:
+            print(f'Demo is less than original length. Padding with null bytes')
+            demoBytes += bytes(1) * ( (self.lengthInBlocks * 0x800) - len(demoBytes) )
+        return demoBytes
+    
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
     Expects only the subtitle data. If it's the final in a chunk, need to find length
@@ -251,14 +264,21 @@ class captionChunk():
 
         return elem
     
+    def toBytes(self) -> bytes:
+        """
+        Returns binary of the caption section
+        """
+        # TODO: Write this section
+        pass
+    
     def __str__(self):
         return f"Caption Chunk: {self.magic} Length: {self.length} Start Frame: {self.startFrame} End Frame: {self.endFrame} Unknown: {self.unknown} Header Length: {self.headerLength} Dialogue Length: {self.dialogueLength} Unknown Chunk: {self.unknownChunk} Subtitles: {len(self.subtitles)}"
     
     def __print__(self):
         """Print the object in a readable format."""
-        print(f"Caption Chunk: {self.magic} Length: {self.length} Start Frame: {self.startFrame} End Frame: {self.endFrame} Unknown: {self.unknown} Header Length: {self.headerLength} Dialogue Length: {self.dialogueLength} Unknown Chunk: {self.unknownChunk}")
+        print(str(self))
         for sub in self.subtitles:
-            print(f"  Subtitle: {sub.text}")
+            print(f"    Subtitle: {sub.text}")
         return
 
 class audioChunk():
@@ -418,6 +438,7 @@ class audioHeader():
 #     dialogues: list
 #     kanji: dict
 
+# This is an older version, returns a list of items. Deprecated in lieu of the demo class.
 def parseDemoData(demoData: bytes) -> list:
     """
     Parse the demo data and return a list of dialogue lines.
@@ -459,7 +480,8 @@ def parseDemoData(demoData: bytes) -> list:
 def createXMLDemoData(root: ET.Element, demoData: bytes):
     """
     Parse the demo data and return a list of dialogue lines.
-    This really just does the list, we'll write another function for the XML."""
+    This really just does the list, we'll write another function for the XML.
+    """
     # root = ET.Element("demoData")
     offset = 0
     while offset < len(demoData):

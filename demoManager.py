@@ -63,19 +63,22 @@ if __name__ == "__main__":
 
     import audioTools.vagAudioTools as VAG
 
-    voxTestFilename = "workingFiles/usa-d1/demo/bins/demo-01.bin"
-    # voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0035.bin"
-    voxData = open(voxTestFilename, 'rb').read()
-    vox = demoCtrl.demo(demoData=voxData)
-    fileWritten = demoCtrl.outputVagFile(vox, 'demo-1', 'workingFiles/vag-examples/')
-    print(f'Wrote file: {fileWritten}')
+    # voxTestFilename = "workingFiles/usa-d1/demo/bins/demo-01.bin"
+    # # voxTestFilename = "workingFiles/usa-d1/vox/bins/vox-0035.bin"
+    # voxData = open(voxTestFilename, 'rb').read()
+    # vox = demoCtrl.demo(demoData=voxData)
+    # fileWritten = demoCtrl.outputVagFile(vox, 'demo-1', 'workingFiles/vag-examples/')
+    # print(f'Wrote file: {fileWritten}')
 
-    jsonList = {}
-    offset, subdata = vox.toJson()
-    jsonList[offset] = subdata
-    print(jsonList)
+    # jsonList = {}
+    # offset, subdata = vox.toJson()
+    # jsonList[offset] = subdata
+    # print(jsonList)
     
-    VAG.playVagFile(fileWritten)
+    # testFile = filewritten 
+    testFile = "workingFiles/vag-examples/00067.vag" 
+
+    VAG.playVagFile(testFile)
 
     # # JSON output
     # jsonList = {}
@@ -84,8 +87,8 @@ if __name__ == "__main__":
     #     offset, subdata = demo.toJson()
     #     jsonList[offset] = subdata
     
-    with open("workingfiles/vag-testing.json", "w") as f:
-        json.dump(jsonList, f, ensure_ascii=False, indent=2)
+    # with open("workingfiles/vag-testing.json", "w") as f:
+    #     json.dump(jsonList, f, ensure_ascii=False, indent=2)
     
 
     """# XML Output
