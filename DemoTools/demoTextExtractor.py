@@ -58,7 +58,7 @@ skipFilesListD1 = [
 
 # None needed yet, will update later 
 skipFilesListD2 = [
-    None
+    'None'
 ]
 
 # Set up progress bar
