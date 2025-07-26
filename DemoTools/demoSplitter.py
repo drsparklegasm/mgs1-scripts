@@ -2,7 +2,7 @@ import os, struct
 # import progressbar, time
 
 version = "jpn"
-disc = 1
+disc = 2
 filename = f"build-src/{version}-d{disc}/MGS/DEMO.DAT"
 outputDir = f"workingFiles/{version}-d{disc}/demo/bins"
 

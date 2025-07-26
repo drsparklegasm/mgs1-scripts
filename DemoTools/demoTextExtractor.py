@@ -27,7 +27,7 @@ bar = progressbar.ProgressBar()
 
 version = "usa"
 version = "jpn"
-disc = 1
+disc = 2
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
