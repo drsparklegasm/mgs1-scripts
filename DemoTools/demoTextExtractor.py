@@ -56,6 +56,11 @@ skipFilesListD1 = [
     'demo-72',
 ]
 
+# None needed yet, will update later 
+skipFilesListD2 = [
+    None
+]
+
 # Set up progress bar
 bar.maxval = len(bin_files)
 barCount = 0
@@ -213,7 +218,11 @@ if __name__ == "__main__":
         filename = os.path.basename(bin_file)
 
         # Manual override to skip certain demos
-        if filename in skipFilesListD1:
+        if disc == 1 and filename in skipFilesListD1:
+            continue
+        
+        # Manual override to skip certain demos
+        if disc == 2 and filename in skipFilesListD2:
             continue
 
         if debug:
