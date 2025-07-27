@@ -76,7 +76,7 @@ fi
 sleep 2
 
 # # Extracting and automating translation (disk 1)
-# /bin/python3 /home/solidmixer/projects/mgs1-undub/myScripts/RadioDatTools.py -jzx build-src/jpn-d1/MGS/RADIO.DAT radioWorkingDir/jpn-d1/RADIO 
+# /bin/python3 /home/solidmixer/projects/mgs1-undub/myScripts/RadioDatTools.py -jzx build-src/jpn-d1/MGS/RADIO.DAT workingFiles/jpn-d1/radio/RADIO 
 
 if [ "$SKIP_RADIO" = false ]; then
     # This area re-compiles a RADIO file for jpn
