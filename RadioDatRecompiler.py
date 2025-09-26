@@ -30,6 +30,7 @@ import xmlModifierTools as xmlFix
 
 # Debugging for testing calls recompile with correct info
 subUseOriginalHex = False
+encodeJapaneseChars = False
 useDWidSaveB = False
 
 newOffsets = {}
@@ -74,8 +75,11 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
     Returns the hex for an entire subtitle command. Starts with FF01 and always ends with one null byte (\x00)
     It should be exclusively used within the getVoxBytes() def.
+
+    WE DO NOT ADJUST LENGTH HERE!
     """
     global subUseOriginalHex
+    global encodeJapaneseChars
 
     attrs = subtitle.attrib
     subtitleBytes = bytes.fromhex('ff01')
@@ -91,7 +95,9 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     text = text.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e')) # Replace \r\n with in-game byte codes for new lines
     
     if subUseOriginalHex:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex'))
+    elif encodeJapaneseChars:
+        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + RD.encodeJapaneseHex(attrs.get("text"), None, useDoubleLength=False)[0] + bytes.fromhex('00')
     else:
         subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
         
@@ -275,6 +281,7 @@ def fixStageDirOffsets():
 
 def main(args=None):
     global subUseOriginalHex 
+    global encodeJapaneseChars
     global stageBytes
     global debug
     global useDWidSaveB
@@ -290,6 +297,9 @@ def main(args=None):
     else:
         radioSource = ET.parse(args.input)
         root = radioSource.getroot()
+    
+    if args.reencode:
+        encodeJapaneseChars = True
 
     if args.output:
         outputFilename = args.output
@@ -366,6 +376,7 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
+    parser.add_argument('-R', '--reencode', action='store_true', help="Re-encode the characters based on characters.py (for non-english characters)")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
     
     main()
