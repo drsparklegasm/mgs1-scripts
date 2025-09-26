@@ -2534,6 +2534,13 @@ graphicsData = {
     "0000003ffffc3aaaac38002c38002c38002c38002c38002c3aaaac3ffffc38002c000000": "口",
     "3ffffc2aaaa82ffff82eaab82ffff82eaea42eaea82ffffc382f80bafaf927906c000000": "戻",
 	"2aaea82aaaa82ffff82eaeb82eaeb81aaea42ffff86aaea96befb9baebf40be4bd000000": "裏", # 346034
+    # Radio AI Fixes:
+	"2cbb2c2c2678bfbffe6ebaae2e2eb82f2eb8bc2ff86c2eb82c1ee86cbdee38a4bd000000": "撹",
+	"0abce00e6af92efded3daafdbcfaed3ca6ee2cabfd2efeac2eeeac2eeefc2efeac000000": "儲",
+	"28bffc1ebaac25bffc78baac1dbffc0060900ab9e90ebef92db0e479beee24e9bd000000": "混",
+	"3fce382abffebfeeb96a9ff83fceb82a8ae42abffe3febf93adff83feeed3a86c4000000": "謀",
+	"3ffc183aedbd3ffca03aec043ffc6e3aadf83bec803aec047bec2e72aef8203a90000000": "彫",
+	"3f9ba83baffc3b8b6c3fadbc3b84643bac383fbfbe7bab7ab3ab7a77bbba27baad000000": "整",
     "": "",
     "": "",
     "": "",
