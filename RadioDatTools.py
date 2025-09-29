@@ -207,7 +207,7 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
     length = struct.unpack('>H', line[9:11])[0] + 9 # Header - 2
 
     if splitCalls:
-        splitCall(offset, length)
+        splitCall(offset, length) # Note: This currently does not grab the Kanji graphics data. TODO: Will need to adjust this for Integral. 
     # Quick error check11ing
     """if debugOutput:
         if line[8].to_bytes() != b'\x80':
