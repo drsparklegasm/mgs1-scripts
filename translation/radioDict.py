@@ -31,6 +31,7 @@ unidentifiedGraphics = []
 
 # context = open("graphicsExport/contextList.txt", 'w')
 debug = False
+reverseSubtitleCharacters = True
 
 class graphicSegment:
 
@@ -201,6 +202,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 	"""
 	WORK IN PROGRESS! Re-encodes japanese characters. 
 	"""
+	global reverseSubtitleCharacters
 	unknownChars = True # For now we still dont know some characters
 
 	newBytestring = b''
@@ -235,7 +237,9 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 		elif character in characters.revSpanish:
 			newBytestring += bytes.fromhex(characters.revSpanish.get(character))
 		elif character in characters.revRadio:
-			newBytestring += b'\x80' + bytes.fromhex(characters.revRadio.get(character))
+			if useDoubleLength:
+				newBytestring += b'\x80' 
+			newBytestring += bytes.fromhex(characters.revRadio.get(character))
 		elif character in characters.revHiragana:
 			newBytestring += b'\x81' + bytes.fromhex(characters.revHiragana.get(character))
 		elif character in characters.revKatakana:
@@ -283,6 +287,9 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				callDict += customHex
 				newBytestring += index.to_bytes()
 	
+	if reverseSubtitleCharacters:
+		newBytestring = newBytestring[::-1]
+
 	return newBytestring, callDict
 
 """
