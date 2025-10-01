@@ -574,7 +574,7 @@ kanji = {
     '9054': "開",
     '9055': "風",
     '9056': "邪",
-    '9057': "薬", # 篥 Seems less likely to be this one
+    '9057': "薬", # Could be either 薬室 or 薬莢 ... See also 6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000 in Kanji dict
     '9058': "止",
     '9059': "精",
     '905a': "抻",
@@ -2563,10 +2563,10 @@ graphicsData = {
     "": "",
     # Additional Integral characters from staff calls
     "6aeba96aeba90ffff00eaab00eaab00aeaa0bffffe6faef97fffed0b2de0062c80000000": "幕",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
+    "3ffffe3aaaae3ad78e3aefae3ffffe3a6c9e3bacee3baeee3bffee38006e38003d000000": "岡", # Shigeo Okajima
+    "0e1ae80e2eacaeeffcaeeeacaeeea8aeeffeaeeea9aeeffebfd65eaaabae503bad000000": "島", # Shigeo Okajima
+    "28a0741ebaf912fffeb4a0a025a9a803efed29e9e82cb8b838acacb5fefe72eaea000000": "茂", # Shigeo Okajima
+    # "6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000": "莢", Posibly 薬室 for gun muzzle/flash OR 薬莢 cartidge case
     "": "",
     "": "",
     "": "",
