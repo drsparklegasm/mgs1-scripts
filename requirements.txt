@@ -1,3 +1,5 @@
 ProgressBar
 Pillow 
 ffmpeg-python
+numpy
+matplotlib
