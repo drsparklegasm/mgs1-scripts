@@ -2567,7 +2567,7 @@ graphicsData = {
     "0e1ae80e2eacaeeffcaeeeacaeeea8aeeffeaeeea9aeeffebfd65eaaabae503bad000000": "島", # Shigeo Okajima
     "28a0741ebaf912fffeb4a0a025a9a803efed29e9e82cb8b838acacb5fefe72eaea000000": "茂", # Shigeo Okajima
     "6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000": "莢", # Possibly 薬室 for gun muzzle/flash OR 薬莢 cartidge case
-    "": "",
+    "1964600f3cb46aaae9bffffeb0240e1abaa82ffffc00b02c02e02c6f86bc2903f4000000": "労", # Labor 苦労 
     "": "",
     "": "",
     "": "",
