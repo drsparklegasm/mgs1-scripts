@@ -2561,7 +2561,8 @@ graphicsData = {
     "": "",
     "": "",
     "": "",
-    "": "",
+    # Additional Integral characters from staff calls
+    "6aeba96aeba90ffff00eaab00eaab00aeaa0bffffe6faef97fffed0b2de0062c80000000": "幕",
     "": "",
     "": "",
     "": "",
