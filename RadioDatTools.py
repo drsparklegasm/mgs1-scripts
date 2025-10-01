@@ -82,10 +82,14 @@ def splitCall(offset: int, length: int) -> None:
         splitCall = radioData[offset:fileSize]
     else:
         splitCall = radioData[offset:end]
+
+    # Get graphics data and append it
+    graphicsData = getGraphicsData(end, True)
+
     filename = outputDir + str(offset) + '.bin'
-    f = open(filename, 'wb')
-    f.write(splitCall)
-    f.close()
+    with open(filename, 'wb') as f:
+        f.write(splitCall)
+        f.write(graphicsData)
 
 # Reference data
 
@@ -176,6 +180,9 @@ def getLengthManually(offset: int) -> int: # Assumes it's a header ending in 80 
     length = 0
     while True:
         length += 1
+        if offset + length >= fileSize:
+            print(f'Error! Reached end of file while manually calculating length at offset {offset}! Filename: ')
+            return length
         if radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 3].to_bytes() == b'\x80' and not checkFreq(offset + length):
             return length
         """elif radioData[offset + length].to_bytes() == b'\xff' and radioData[offset + length - 1].to_bytes() == b'\x00' and radioData[offset + length + 1].to_bytes() in commandNamesEng:
@@ -645,14 +652,16 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
 
-def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, but we return the string and hope its the graphics data 
+def getGraphicsData(offset: int, returnNulls=False) -> bytes: # This is a copy of handleUnknown, but we return the string and hope its the graphics data 
     """
     copied from handleUnknown() but we return the bytestring of the graphics data
     """
     count = 0
     global fileSize
     global exportGraphics
-    global call_element
+    global debugOutput
+    # global call_element
+
     while True:
         if offset + count >= fileSize - 1:
             break
@@ -660,6 +669,23 @@ def getGraphicsData(offset: int) -> bytes: # This is a copy of handleUnknown, bu
             break
         elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
             break
+        elif radioData[offset + count].to_bytes() == b'\x00':
+            nullCount = 1
+            while radioData[offset + count + nullCount].to_bytes() == b'\x00':
+                nullCount += 1
+                if offset + count + nullCount >= fileSize - 1:
+                    break
+            if nullCount > 36:
+                if returnNulls:
+                    count += nullCount
+                if debugOutput:
+                    print(f'Graphics data ended with {nullCount} nulls at offset {offset + count}, ending parse graphics data.')
+                    print(f'Hex at end of call is 0x{int(offset + count):X}')
+                break
+            else:
+                if debugOutput:
+                    print(f'Graphics data had {nullCount} nulls at offset {offset + count}, continuing parse graphics data!\r')
+                count += 36
         else: 
             count += 36
     content = radioData[offset: offset + count]
