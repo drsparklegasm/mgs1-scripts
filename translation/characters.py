@@ -2568,6 +2568,15 @@ graphicsData = {
     "28a0741ebaf912fffeb4a0a025a9a803efed29e9e82cb8b838acacb5fefe72eaea000000": "茂", # Shigeo Okajima
     "6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000": "莢", # Possibly 薬室 for gun muzzle/flash OR 薬莢 cartidge case
     "1964600f3cb46aaae9bffffeb0240e1abaa82ffffc00b02c02e02c6f86bc2903f4000000": "労", # Labor 苦労 
+    "2ffff82eaab82ffff82eaab82ffff80906000eaba80ffbe80e0b096ffbae3ea7fd000000": "帛", # Silk, maybe, describing fabric re: bandana
+    "1aaaa82ffffc2c2c2c2c2c2c2eaeac2ffffc2c2c2c2c2c2c2eaeac2ffffc2c002c000000": "田", # 小野田 onoda
+    "28b2c01ebae825fffc78a2c01dfffe00aaa90a6aa80ebffc2db02c78bffc24baac000000": "浩", # 浩平 Kohei
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
     "": "",
     "": "",
     "": "",
