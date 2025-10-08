@@ -2590,6 +2590,13 @@ graphicsData = {
     "1e26c92baeed76dae87faffc2e6eacbfeeac6eaffcaeeeac3f6ffc6feab97aae6c000000": "鎖",
     "0d01806c07e0ba5e783f6ead2e4bf07e8000beeffc2a5ba87b8b68aaefad5eafed000000": "絵",
     "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
     "": ""
     # Template
     # "": "", 
