@@ -1426,7 +1426,7 @@ graphicsData = {
 	"3f9ba82b9bac0b3ffe2e6bad3faffc179ba43b9ba42f7ffc1f83807efffd242aa8000000": "建",
 	"0e2eb80e3ffc3faeb92ebffe2f6ae93fbaeebe7ffe2e3aee0e3ffe0e6d790e2828000000": "横",
 	"26fffc7aebac29bff800aba468ebb8bcebb82cfff82daba82faba8bbfffd20aaa8000000": "運",
-	"2c38b82cfeb8bffaaa6eeeee2eeb982ffefebceaae6ceaed2dea786edabd389d99000000": "搬",
+	# "2c38b82cfeb8bffaaa6eeeee2eeb982ffefebceaae6ceaed2dea786edabd389d99000000": "搬",
 	"082c202d2c780b2ce0052c50bffffe6abfa901ff800badf87e2c6d242c04002c00000000": "米",
 	"002c003ffffc2aaea8bffffe6baae96baae9bffffe2aaea83ffffc002c00002c00000000": "幸",
 	"00280000be0006d7906faaf92affa8002c002ffff81aaea40b2ce06baee9bffffe000000": "金",
@@ -2234,7 +2234,7 @@ graphicsData = {
 	"6aeba9bffffe0682400bbffe1e6ab92e6a38bebb382ebb380ebf380e01b80e00f4000000": "荷",
 	"0ebffe0ebaae3ff2ce2ebffe2fbbee3ffbeebebffe2ebade0eb18e0ebffe0ebaae000000": "梱",
 	"0e00001ffff02eaab0baa9b02bfeb0000eb00ffeb00ea9e40e000e0eaaae0bfffd000000": "包",
-	"0e07d0bf9eb46eb82dbfaff8aeaa09aebfaebfbbae6e7baebfbfae6e772e0e322d000000": "輸",
+	# "0e07d0bf9eb46eb82dbfaff8aeaa09aebfaebfbbae6e7baebfbfae6e772e0e322d000000": "輸",
 	"3feffe2a9ae9000ffc6a9eacbfeffc2e8eac2e8ffc2aaeac3aeffcb69b69201e19000000": "頑",
 	"0aaea91ffffebeaba82efffc0ee3ac2eeba4bdfff82cee3829dbb03aebe819ae78000000": "疲",
 	"28bff81d6ba412fffeb6e7ae25a7a90026642afffe2daea93afffeb6ecee72d8ad000000": "濡",
@@ -2571,15 +2571,24 @@ graphicsData = {
     # "2ffff82eaab82ffff82eaab82ffff80906000eaba80ffbe80e0b096ffbae3ea7fd000000": "帛", # Silk, maybe, describing fabric re: bandana // This is more to do with seaweed/kelp
     "1aaaa82ffffc2c2c2c2c2c2c2eaeac2ffffc2c2c2c2c2c2c2eaeac2ffffc2c002c000000": "田", # 小野田 onoda
     "28b2c01ebae825fffc78a2c01dfffe00aaa90a6aa80ebffc2db02c78bffc24baac000000": "浩", # 浩平 Kohei
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
+    "0ba6a80ba6acbffbb87ba2f46a6b6d0ffff00eaab00eaab00ffff00eaab00eaab0000000": "督", 
+    "0e0d700e0eb03fac382eb82d2fb65d3f8380be47402e0b280e0e280e2efd0e3fad000000": "松",
+    "02c380bffffe6aeba9018a4002de101b8eb87f0fe02b0e000b0e090b0eae0b0bfd000000": "花",
+    "3ffbfc3ae76c3ab1f43aebb92aa6182ffff82eaab82eaab82eaab81bffe47e82bd000000": "買",
+    "0b00e03ffffc2baae80bffe00baae006ae903ffffc2affa81beee47e6cbd142c04000000": "葉",
+    "bfaeb86a7ffebfeeb96aaef8bfaea96a6ffe6a6ae9bfbffeba9bf8bfbeedba56c4000000": "諜",
+    "1aeba42eebb82ffff82eebb81aaaa43ffffc1aaaa42eaab82ffff86baae9bffffe000000": "豊",
+    "bfebb07aee383aeadd3fc7643adefd3fef993ac9843adaed7ffa597aeeb802cbf4000000": "聡",
+    "2aeadc3ffece02c2c4bffffe6aaae92aa6ec3ff9f83838f83ab9fa3ffbfe38075d000000": "哉", # Ikuya Nakamura 
+    "6abffebfeba90e2ffc0e2eac0e2ffc0e2eac0e2ffc0e2eac0e2ffc7e6e7928392c000000": "頂",
+    "3ffffc3abaac3affac3abaac3aaaac3aebac39feac3bfbac3ab2ac3ffffc3aaaac000000": "園",
+    "2c38b82cfeb8bffaaa6eeeee2eeb982ffefebceaae6ceaed2dea786edabd389d99000000": "輸", # Something dock, insertion 輸入? 挿入 import ? 
+    "278ffc3b8ea83b8e003feffc3a9eec3a8eec3fceec3aceb87adeb4b2eeed22c998000000": "版",
+    "bf82c06a6ae9bffffe6a82c0bfaffc6a5ae86a4ae0bfae5dbafe19bfaeb8ba4bf4000000": "誌",
+    "2803801ffffe15aaa9b4fffc28eaac00eaac0dfffc2d539428b3ac79eb9d704f44000000": "涼",
+    "3ee0003ee0000ca000189000000000000000000000000000000000000000000000000000": "＂", # Fullwidth Quotation Mark
+    "1e26c92baeed76dae87faffc2e6eacbfeeac6eaffcaeeeac3f6ffc6feab97aae6c000000": "鎖",
+    "0d01806c07e0ba5e783f6ead2e4bf07e8000beeffc2a5ba87b8b68aaefad5eafed000000": "絵",
     "": "",
     "": ""
     # Template
