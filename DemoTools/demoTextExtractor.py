@@ -211,6 +211,19 @@ def findOffsets(byteData: bytes, pattern: bytes) -> list:
             foundPatterns.append(pattern)
     return foundPatterns
 
+def createNewJson(texts: list[str], timings: list[str]):
+    demoDialogue: dict = {}
+    for text, timing in zip(texts, timings):
+        startFrame, duration = timing.split(",")
+        demoDialogue[startFrame] = {
+            "duration": duration, 
+            "text": text
+            }
+        
+    return demoDialogue
+        
+        
+
 if __name__ == "__main__":
     # Loop through each .bin file in the folder
     for bin_file in bin_files:
@@ -247,7 +260,8 @@ if __name__ == "__main__":
             timings.extend(coords)
         
         basename = filename.split('.')[0]
-        demoScriptData[basename] = [textToDict(texts), textToDict(timings)]
+        # demoScriptData[basename] = [textToDict(texts), textToDict(timings)]
+        demoScriptData[basename] = createNewJson(texts, timings)
         writeTextToFile(f'{outputDir}/{basename}.txt', texts)
         # writeTextToFile(f'{outputDir}/{basename}-timings.txt', timings) 
         
