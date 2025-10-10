@@ -2366,6 +2366,7 @@ graphicsData = {
     "0e3ffe0e2aa93faffc2baeac0b2ffc1f6aa97ffffe2e7aee0e3aee0e3ffe0e3aae000000": "福",
     "3faba83baeb83baeb93faaa93bbffc3bbaac3fbaac7baaa8b3eeed77eeba279ff4000000": "臆",
     "6a8e00bfeffcbaeeb8badbb4bfcbe4baeebdbaeaa8baeffcbfec2cbaaffc602eac000000": "略",
+    "6a8e00bfeffcbaeeb8badbb4bfcbe4baeebdbaeaa8baeffcbfec2cbaaffc602eac000000": "略",
     # DEMO JPN D2
     "2abaa83ffffc6b96e93beeec2fae901eae900eaea01aaaa42eaeb82eaeb82eaab8000000": "奮",
     "0b4ffe2eeea9bbae003feffe3aeeee3aeeee3feeee3a9eac3addb87ffeedb99989000000": "飯",
@@ -2408,21 +2409,6 @@ graphicsData = {
     "3ffffc3aaaa83bfff03aaaa93aefb9bbf6f92241a8bffffe6baae907dac0004b80000000": "辱",
     "28bff81e6eb4256be978bbae1dbffe00bbae0abffe0eaba92dfffe78aeae24b8bd000000": "湧",
     "0ba7a92ffffe79da741042a01ffff40ab900bffffe6abea901eb406b82e92e00b8000000": "笑",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
     # GPT Stuff
     "002c00bffffebbaaae6bffe92febd005fb807feafd2ffff80eaab00ffff00eaab0000000": "客",  # guest
     "003ff02ffaa82ebaac2efaa82dbff42eebb82eebb83daaa43ebb4dbbbaba2a7fe5000000": "慮",  # worry/concern
@@ -2484,19 +2470,6 @@ graphicsData = {
     "2cfffe2cebaebfebae6eebae2eefbe2feaaebceede6ceaea2ceaae6cfffe38eaae000000": "掴",
     "380380382ba8bfbffc7b83803baba9b7bffebb0bd06e2ff42fbbbdbaa398200380000000": "妹",
     "3fbffe3baba93bbffe3fbbae3bbffe3baba93faba97bbffeb39e74778be0276e6d000000": "腰",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
     "": "",
     # RADIO Fixes:
     "286da91ebafe25b5ee78baee1dffde00aaad0abffe0ebbae2dbbae78bffe24baae000000": "溜",
@@ -2598,9 +2571,6 @@ graphicsData = {
     "": "",
     "": "",
     "": ""
-    # Template
-    # "": "", 
-    
 }
 
 revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))
