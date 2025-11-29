@@ -6,7 +6,7 @@ import argparse
 This file has been heavily modified to accept arguments, and split both DEMO.DAT and VOX.DAT as they share formatting/chunking. 
 """
 
-parser = argparse.ArgumentParser(description=f'Split DEMO/VOX files into individual files')
+parser = argparse.ArgumentParser(description=f'Split DEMO/VOX files into individual files (.dmo/.vox)')
 
 # REQUIRED
 parser.add_argument('filename', type=str, help="DEMO.DAT or VOX.DAT file to split.")
