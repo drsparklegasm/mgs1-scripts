@@ -2,6 +2,10 @@ import os, struct
 import argparse
 # import progressbar, time
 
+"""
+This file has been heavily modified to accept arguments, and split both DEMO.DAT and VOX.DAT as they share formatting/chunking. 
+"""
+
 parser = argparse.ArgumentParser(description=f'Split DEMO/VOX files into individual files')
 
 # REQUIRED
