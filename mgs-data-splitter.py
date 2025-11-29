@@ -1,6 +1,5 @@
 import os, sys, subprocess
-import json
-import argparse
+# import json
 import RadioDatTools as RDT
 import DemoTools.demoSplitter as DS
 
@@ -79,6 +78,7 @@ def extractDemoVoxFiles(demoFile: str, outputDir: str):
 
 if __name__ == "__main__":
 
+    print(f"! WARNING !\n You MUST have dumpsxiso installed and in your PATH for this to run properly!")
     # Set up the working directory
     initializeStructure()
 
