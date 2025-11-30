@@ -2,13 +2,7 @@
 Adapted from Green Goblins scripts. 
 This is really heavily based on his awesome work. 
 
-# Script for working with Metal Gear Solid data
-#
-# Copyright (C) 2023 Green_goblin (https://mgsvm.blogspot.com/)
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
+Special thanks to Green_goblin (https://mgsvm.blogspot.com/)
 
 """
 
@@ -26,8 +20,8 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-version = "jpn"
-disc = 2
+# version = "jpn"
+disc = 1
 
 # Create a directory to store the extracted texts
 # Get the files from the folder directory
