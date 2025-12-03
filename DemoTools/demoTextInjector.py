@@ -10,6 +10,7 @@ Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
 copyright notice and this permission notice appear in all copies.
 
+TODO: Input/outputs?
 """
 
 import os, sys
@@ -34,7 +35,7 @@ debug = True
 # Directory configs
 inputDir = f'workingFiles/{version}-d{disc}/demo/bins'
 outputDir = f'workingFiles/{version}-d{disc}/demo/newBins'
-injectJson = f'build-proprietary/demo/demoText-{version}-undub.json'
+injectJson = f'build-proprietary/demo/demoText-{version}-undub-output.json'
 os.makedirs(outputDir, exist_ok=True)
 
 # Collect files to use
@@ -107,12 +108,15 @@ def genSubBlock(subs: list [subtitle] ) -> bytes:
 
     """ 
     newBlock = b''
-    for i in range(len(subs) -1):
+    for i in range(len(subs)):
         length = struct.pack("I", len(bytes(subs[i])) + 4)
         newBlock += length + bytes(subs[i])
     
     # Add the last one
-    newBlock += bytes(4) + bytes(subs[-1])
+    if len(subs) == 1:
+        newBlock += bytes(4) + bytes(subs[0])
+    else:
+        newBlock += bytes(4) + bytes(subs[-1])
     
     return newBlock
 
@@ -220,6 +224,7 @@ if __name__ == "__main__":
         # Initialize the demo data and the dictionary we're using to replace it.
         origDemoData = open(file, 'rb').read()
         origBlocks = len(origDemoData) // 0x800 # Use this later to check we hit the same length!
+
         demoDict: dict = injectTexts[basename][0]
         demoTimings: dict = injectTexts[basename][1]
         
@@ -274,7 +279,7 @@ if __name__ == "__main__":
                 newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]
             else:
                 print(f'CRITICAL ERROR! New demo cannot be truncated to original length!')
-                exit()
+                # exit(1) # For now let's check if this runs
         
         newBlocks = len(newDemoData) // 0x800
         if newBlocks != origBlocks:
