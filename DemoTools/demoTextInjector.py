@@ -267,19 +267,24 @@ if __name__ == "__main__":
                     newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]"""
         
         # Adjust length to match original file.
-        if len(newDemoData) == len(origDemoData):
+        if len(newDemoData) == len(origDemoData): # Files are same size; we don't care about the last demo per disk not being aligned.
             print("Alignment correct!")
         elif len(newDemoData) < len(origDemoData): # new demo shorter
             newDemoData += bytes(len(origDemoData) - len(newDemoData)) 
             if len(newDemoData) % 0x800 == 0:
                 print("Alignment correct!")
-        else:
-            checkBytes = newDemoData[len(newDemoData) - len(origDemoData):]
+        else: # New file is longer
+            checkBytes = newDemoData[len(newDemoData) - len(origDemoData):] # If all extra bytes are null, we trim.
             if checkBytes == bytes(len(checkBytes)):
                 newDemoData = newDemoData[:len(newDemoData) - len(checkBytes)]
-            else:
+            else: # This means we make a larger file, and will have to adjust offsets in STAGE.DIR later.
+                # TODO: Write the actual logic to do this
                 print(f'CRITICAL ERROR! New demo cannot be truncated to original length!')
                 # exit(1) # For now let's check if this runs
+                if len(newDemoData) % 0x800 != 0: # Only align if not already even. 
+                    paddingNeeded = 0x800 - (len(newDemoData) % 0x800)
+                    newDemoData += bytes(paddingNeeded)
+                    print(f'Added {paddingNeeded} bytes to make final length {len(newDemoData) // 0x800} blocks, with {len(newDemoData) % 0x800} extra bytes')
         
         newBlocks = len(newDemoData) // 0x800
         if newBlocks != origBlocks:

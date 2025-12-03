@@ -1,5 +1,6 @@
 import os, struct
 import argparse
+import json
 # import progressbar, time
 
 """
@@ -14,9 +15,10 @@ parser.add_argument('output', nargs="?", type=str, help="Output path")
 
 # Legacy
 version = "jpn"
-disc = 2
+disc = 1
 filename = f"build-src/{version}-d{disc}/MGS/DEMO.DAT"
 outputDir = f"workingFiles/{version}-d{disc}/demo/bins"
+offsetJson = f"workingFiles/{version}-d{disc}/demo/bins/demoOffsets.json"
 demoData: bytes
 
 # Output modifier
@@ -31,21 +33,28 @@ def initRadioData():
     return
 
 offsets = []
+offsetDict = {}
 opening = b'\x10\x08\x00\x00'
 # opening = b'\x10\x08\x00\x00\x05\x00\x00\x00'
 
 def findDemoOffsets():
     global extension
+    global offsetDict
     offset = 0
+    demoStartOffset = 0
+    demoCount = 1
     while offset < len(demoData) - 8:
         # print(f'We\'re at {offset}\n')
         checkbytes = demoData[offset:offset + 4]
         if checkbytes == opening:
-            print(f'Offset found at offset {offset}!')
+            print(f'Demo {demoCount} Offset found at offset {offset}!')
             offsets.append(offset)
-            offset += 2048 # All demo files are aligned to 0x800, SIGNIFICANTLY faster to do this than +8! Credit to Green Goblin
-        else:
-            offset += 2048
+            # Json work
+            demoNum = f"{demoCount:02}"
+            offsetDict.update( { demoNum: struct.pack(">I", offset // 0x800).hex()} )
+            demoCount += 1
+            demoStartOffset = offset # Update the next demo start value
+        offset += 2048
 
     print(f'Ending! {len(offsets)} offsets found:')
     for offset in offsets:
@@ -61,7 +70,7 @@ def splitDemoFiles():
             end = offsets[i + 1]
         else:
             end = len(demoData) 
-        f = open(f'{outputDir}/{extension}-{i + 1:02}.{extension}', 'wb')
+        f = open(f'{outputDir}/demo-{i + 1:02}.{extension}', 'wb')
         offsetFile.write(f'{i + 1:02}: {start:08x} - {end:08x}, length: {end - start}\n')
         f.write(demoData[start:end])
         f.close()
@@ -73,6 +82,7 @@ def main(args=None):
     global filename
     global outputDir
     global extension
+    global offsetDict
 
     if args is None:
         args = parser.parse_args()
@@ -90,6 +100,8 @@ def main(args=None):
 
     findDemoOffsets()
     splitDemoFiles()
+    with open(offsetJson, 'w') as f:
+        json.dump(offsetDict, f)
 
 if __name__ == '__main__':
     args = parser.parse_args()
