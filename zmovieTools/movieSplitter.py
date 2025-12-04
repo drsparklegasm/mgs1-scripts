@@ -9,8 +9,9 @@ sys.path.append(os.path.abspath('.'))
 import DemoTools.demoTextExtractor as DTE
 
 version = "usa"
+disc = 1
 filename = f"build-src/{version}-d1/MGS/ZMOVIE.STR"
-outputDir = f"zMovieWorkingDir/{version}/bins"
+outputDir = f"workingFiles/{version}-d{disc}/zmovie"
 
 zMovieScript = {}
 
@@ -33,20 +34,22 @@ def getOffsets(toc: bytes) -> list:
 
 if __name__ == "__main__":
     
-    # movieOffsets = getOffsets(zmData[0:0x920])
-    # movieOffsets.append(len(zmData))
-    # print(movieOffsets)
+    movieOffsets = getOffsets(zmData[0:0x920])
+    movieOffsets.append(len(zmData))
+    print(movieOffsets)
 
-    # for i in range(len(movieOffsets) - 1):
-    #     # Write the output movie file
-    #     with open(f'{outputDir}/{i:02}-movie.bin', 'wb') as f:
-    #         start = movieOffsets[i]
-    #         end = movieOffsets[i + 1]
-    #         # Output movie data
-    #         f.write(zmData[start : end])
+    for i in range(len(movieOffsets) - 1):
+        # Write the output movie file
+        with open(f'{outputDir}/bins/zmovie-{i:02}.bin', 'wb') as f:
+            start = movieOffsets[i]
+            end = movieOffsets[i + 1]
+            # Output movie data
+            f.write(zmData[start : end])
 
-    bin_files = glob.glob(os.path.join(outputDir, '*.bin'))
-    bin_files.sort(key=lambda f: int(f.split('/')[-1].split('-')[0]))
+    bin_files = glob.glob(os.path.join(f"{outputDir}/bins", '*.bin'))
+    workingFile = f.name
+
+    bin_files.sort(key=lambda f: int(f.split('/')[-1].split('-')[1].split(".")[0]))
 
     for bin_file in bin_files:
         with open(bin_file, 'rb') as movieTest:
@@ -80,7 +83,7 @@ if __name__ == "__main__":
 
             basename = filename.split('.')[0]
             zMovieScript[basename] = [DTE.textToDict(texts), DTE.textToDict(timings)]
-            DTE.writeTextToFile(f'{outputDir}/{basename}.txt', texts)
+            DTE.writeTextToFile(f'{outputDir}/texts/{basename}.txt', texts)
 
         zMovieScript.update({basename: [DTE.textToDict(texts), DTE.textToDict(timings)]})
 
