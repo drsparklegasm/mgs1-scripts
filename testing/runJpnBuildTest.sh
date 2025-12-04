@@ -12,6 +12,8 @@ SKIP_VOX=false
 SKIP_DEMO=false
 SKIP_RADIO=false
 
+# Start with all original files
+cp -rv build-src/jpn-d1/* build/jpn-d1/
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -72,6 +74,8 @@ if [ "$SKIP_DEMO" = false ]; then
     echo "Compiling new DEMO.DAT..."
     python3 myScripts/DemoTools/demoTextInjector.py
     python3 myScripts/DemoTools/demoRejoiner.py
+    # ADJUST DEMO OFFSETS! 
+    python3 myScripts/StageDirTools/demoOffsetAdjuster.py
 fi
 sleep 2
 
@@ -89,15 +93,22 @@ fi
 sleep 2
 
 echo "Moving files into position"
-# Move all files into the build folder.
-# rm build/jpn-d1/MGS/RADIO.DAT
-cp -v workingFiles/jpn-d1/radio/new-RADIO.DAT build/jpn-d1/MGS/RADIO.DAT 
-# rm build/jpn-d1/MGS/STAGE.DIR
-cp -v workingFiles/jpn-d1/stage/new-STAGE.DIR build/jpn-d1/MGS/STAGE.DIR
-# rm build/jpn-d1/MGS/DEMO.DAT
-cp -v workingFiles/jpn-d1/demo/new-DEMO.DAT build/jpn-d1/MGS/DEMO.DAT
-# rm build/jpn-d1/MGS/VOX.DAT
-cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
+# Move all files into the build folder. Ignore files not edited.
+if [ "$SKIP_GRAPHICS" = false ]; then
+    cp -v workingFiles/jpn-d1/stage/new-STAGE.DIR build/jpn-d1/MGS/STAGE.DIR
+fi
+if [ "$SKIP_RADIO" = false ]; then
+    cp -v workingFiles/jpn-d1/radio/new-RADIO.DAT build/jpn-d1/MGS/RADIO.DAT 
+    else cp -v workingFiles/jpn-d1/stage/STAGE-j1.DIR build/jpn-d1/MGS/STAGE.DIR
+fi
+# DEMO
+if [ "$SKIP_DEMO" = false ]; then
+    cp -v workingFiles/jpn-d1/demo/new-DEMO.DAT build/jpn-d1/MGS/DEMO.DAT
+fi
+# VOX
+if [ "$SKIP_VOX" = false ]; then
+    cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
+fi
 # 
 
 echo "READY TO BUILD ISO!"
