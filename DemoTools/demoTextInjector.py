@@ -84,6 +84,7 @@ def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
         subsList.append(a)
     
     return subsList
+
 """
 # TODO:
 - change key to int

@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath('./myScripts'))
 sys.path.append(os.path.abspath('.'))
 import DemoTools.demoTextExtractor as DTE
 
-version = "usa"
+version = "jpn"
 disc = 1
 filename = f"build-src/{version}-d1/MGS/ZMOVIE.STR"
 outputDir = f"workingFiles/{version}-d{disc}/zmovie"
