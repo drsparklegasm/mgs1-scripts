@@ -67,6 +67,15 @@ The top level of my project folder looks like this:
 │   ├── DemoTools
 │   ├── ... etc
 ├── workingFiles
+│   ├── jpn-d1
+│   │   ├── demo
+│   │   ├── radio
+│   │   ├── stage
+│   │   ├── vox
+│   │   └── zmovie
+│   ├── usa-d1
+│   │   ├── demo
+│   │   ├── ... etc
 ```
 
 For each of the top level directories here's my description:
@@ -74,7 +83,7 @@ For each of the top level directories here's my description:
 - **build** : These are the modified files that are rebuilt using mkpsxiso for testing
 - **build-proprietary** : These files contain my script files that are injected. 
 - **myScripts** : (this repository of code)
-- **workingFiles** : I should have everything extracted by script going here. This was a recent change, not everything is there. 
+- **workingFiles** : I should have everything extracted by script going here. This was a recent change, not everything is there. I think in the future a "project folder" will be the extracted files from a disk, including those other working files.
 
 The reasons I had for splitting them this way was:
 1. Common file paths that could have [*version*] or [*disk*] swapped out easily.
