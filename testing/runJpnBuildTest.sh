@@ -109,6 +109,8 @@ fi
 if [ "$SKIP_VOX" = false ]; then
     cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
 fi
+# For now, using zmovie no matter what!
+cp -v workingFiles/jpn-d1/zmovie/ZMOVIE-new.STR build/jpn-d1/MGS/ZMOVIE.STR
 # 
 
 echo "READY TO BUILD ISO!"
