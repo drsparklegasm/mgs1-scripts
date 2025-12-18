@@ -1,14 +1,6 @@
 import json
 
-oldVersion = "build-proprietary/demo/demoText-jpn-undub-v2.json"
-output = "build-proprietary/demo/demoText-jpn-undub-output.json"
-
-oldData = json.load(open(oldVersion, 'r'))
-newData = {}
-
-timing: int
-duration: int
-blankDict = {}
+workingFile = "build-proprietary/demo/testOutput.json"
 
 def convertToNew(oldData: dict) -> dict: # Returns newData format
     newData = {}
@@ -23,7 +15,6 @@ def convertToNew(oldData: dict) -> dict: # Returns newData format
             }
     
     return newData
-
 
 """
 A bit of an oversight, but since we've changed formats for the demo json, we need to convert it BACK. 
@@ -41,10 +32,24 @@ def convertToOld(newData: dict) -> dict: # Returns oldData format
             timings.update( {iFormat: f"{startFrame},{newData[demoName][startFrame]["duration"]}"})
             oldData[demoName] = [texts, timings]
             i += 1 
-        print(oldData[demoName])
+        # print(oldData[demoName])
     return oldData
 
 if __name__ == "__main__":
-    outputData = convertToOld(oldData)
-    with open(output, 'w') as f:
+    inputData = json.load(open(workingFile, 'r'))
+    newData = {}
+    
+    # If the first demo is a list, it's v1 and we convert to v2. 
+    # Else if it's a dict, we convert back to v1.
+    if type(inputData.get("demo-01")) == list:
+        # Convert to new format
+        print(f"Type is {type(inputData.get("demo-01"))}, convert to v2...")
+        outputData = convertToNew(inputData)
+    elif type(inputData["demo-01"]) == dict:
+        print(f"Type is {type(inputData.get("demo-01"))}, convert to v1...")
+        # Convert to old format
+        outputData = convertToOld(inputData)
+    
+    # Write the file back to the same filename.
+    with open(workingFile, 'w') as f:
         json.dump(outputData, f, ensure_ascii=False)
