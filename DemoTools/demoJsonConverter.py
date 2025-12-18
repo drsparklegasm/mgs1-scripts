@@ -1,4 +1,4 @@
-import json
+import json, argparse
 
 workingFile = "build-proprietary/demo/testOutput.json"
 
@@ -36,6 +36,12 @@ def convertToOld(newData: dict) -> dict: # Returns oldData format
     return oldData
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=f'Convert a demo dialogue JSON between v1 and v2. NOTE: REPLACES INPUT FILE CONTENTS!')
+    parser.add_argument("input", type=str, help="File to convert")
+    args = parser.parse_args()
+
+    workingFile = args.input
+
     inputData = json.load(open(workingFile, 'r'))
     newData = {}
     
