@@ -182,6 +182,13 @@ There are nuances there but that's basically the gist. either `RadioRecompiler -
 
 # Scripts Overview
 
+Starting December 2025, I am updating tutorials on my blog site. Please find them here:
+https://blog.mgs-undubbed.io/tutorials/
+
+I'll be keeping these up to date, and eventually will publish video walkthroughs. If you're in need of clarification, or instruction using the scripts, please reach out in the discord and I'll be happy to assist!
+
+---- BELOW THIS POINT TO BE REMOVED! ---
+
 ## Main tools:
 
 ### RadioDatTools.py
@@ -217,8 +224,8 @@ Use this to zip together offsets from one json and subtitles from another json (
 
 Scripts for finding all call offsets in Stage.dir. Currently this is working. Can be run on its own for analysis tools. 
 
-Logic is shamelessly reverse engineered from iseeeva's radio extractor:
-https://github.com/iseeeva/metal/tree/main
+~~Logic is shamelessly reverse engineered from iseeeva's radio extractor:
+https://github.com/iseeeva/metal/tree/main~~ Archived!
 
 ## radioTools
 
