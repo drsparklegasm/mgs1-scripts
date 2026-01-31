@@ -4,6 +4,8 @@ Early test for iso extraction... doesn't work on BIN files yet.
 
 Extract every file from game.iso into ./extracted/.
 Also writes a manifest.txt listing all paths and sizes (bytes).
+
+DEPRECATED! Use dumpsxiso!
 """
 
 import os
@@ -64,5 +66,5 @@ def main():
     iso.close()
     print(f"Extraction finished. Manifest written to {MANIFEST}")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
