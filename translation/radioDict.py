@@ -152,9 +152,9 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) ->
 		if bytestring[i].to_bytes() in ( b'\x96' , b'\x97' , b'\x98', b'\x9c'): # TEMP CHANGE, might last. TODO: Review
 			customCharNum = int(bytestring[i + 1])
 			if bytestring[i].to_bytes() ==  b'\x97':
-				customCharNum += 254
+				customCharNum += 255 
 			elif bytestring[i].to_bytes() ==  b'\x98':
-				customCharNum += 508
+				customCharNum += 510
 			try:
 				messageString += callDict.get(customCharNum)
 			except:
