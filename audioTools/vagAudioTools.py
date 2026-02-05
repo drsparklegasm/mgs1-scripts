@@ -54,7 +54,7 @@ def play_with_ffplay(wav_file):
     except subprocess.SubprocessError as e:
         print(e)
 
-def playVagFile(filename: str) -> str:
+def playVagFile(filename: str, convertOnly=False) -> str:
     """
     Automatically plays vag file, regardless of format. Returns the full path of the 
     """
@@ -76,8 +76,9 @@ def playVagFile(filename: str) -> str:
             return -1
         
         # File is ready, play it!!!
-        play_with_ffplay(f"{tempDir}/temp.wav")
-        os.remove(f"{tempDir}/temp.wav")
+        if not convertOnly:
+            play_with_ffplay(f"{tempDir}/temp.wav")
+        # os.remove(f"{tempDir}/temp.wav")
         return 0
 
 

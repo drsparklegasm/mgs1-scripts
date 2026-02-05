@@ -553,7 +553,7 @@ def outputVagFile(demo: demo, filename: str, path: str = None):
     """
     # Fix formatting
     if path == None:
-        path = ""
+        path = "."
     if filename[-4:] == ".vag":
         filename = filename[:len(filename) - 4]
 
