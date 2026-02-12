@@ -1638,7 +1638,7 @@ graphicsData = {
 	"6aaea9bffffe1aaea42eaeb82ffff82eaeb81aaae4bffffe6baae906d6e00043d0000000": "専",
 	"3febfc3aebac3febfc3aebac3febfc38002c38002c38002c38002c3800ac3800b8000000": "門",
 	"bfebfcbba6bcbfe7b4bba2e4bfeffe6b9aee6b90fcbfe0e80ba0e0bfe6e06903d0000000": "野",
-	"0e0ea90e2ffe3ffea82baeac0baffc2eeeacbf9ba81eaffc0e2ab40e2be90e2e6c000000": "複",
+	# "0e0ea90e2ffe3ffea82baeac0baffc2eeeacbf9ba81eaffc0e2ab40e2be90e2e6c000000": "複",
 	# "25aba87afffc28aba400ebb868ebb8bcafe42cbfe42deb782e4610bbfffd20aaa8000000": "円",
 	"02838007fffc0b2eb82e1d747ebffe6e6aa90e3ffc0e3aac0e382c0e3ffc0e3aac000000": "倍",
 	"026ff00b6eb92d3cba26b87d0b6aa82e3ffcbe1d2c1e0e780e07f00e6fb90e2928000000": "役",
@@ -2202,7 +2202,7 @@ graphicsData = {
 	"2c00282c2ffd3fdac02ec2c02ec2c03abffe3baae92f02c01f82c07deae8242ffc000000": "妊",
 	"2c2ffe2eaaa93feaa87b8ffc138e2c3feeac2b9ffc0b8a241eeb387caab9242ffe000000": "短",
 	"01e0000ffff00eaab00eaab00ffff00eaab00abaa03ffffc2affa86bd7e92e00b8000000": "臭",
-	"027ffc0b6eac2d1e782647e00bafb92e2928be02c01e3ffc0e2ae80e6ae90ebffe000000": "径", # 口径 == Caliber, ie 45口径
+	# "027ffc0b6eac2d1e782647e00bafb92e2928be02c01e3ffc0e2ae80e6ae90ebffe000000": "径", # 口径 == Caliber, ie 45口径
 	"2aaea93ffffe034d00079ffc0b2eac1f7bac7ff9f82b5ee00b0bd00b6eb90b382c000000": "夜",
 	"0e2aa40e3ff8bfec386eacb80eadfc0fee2cbe3bb86e3af40eb6f46eeb6d3d6618000000": "扱",
 	"01aba926fffe2daba408abb802fffe04abb81eaba42efffe3878a075afe910f96c000000": "凄",
@@ -2315,7 +2315,7 @@ graphicsData = {
     "6aaaa9bffffe00780000b00002d0001bfffc7faaac2b002c0b002c0bfffc0baaac000000": "増",
     "3faba83bbffc3bafe43ff7ad3baee43bfaad3fb7a87bab94b3aff477f7ad275b44000000": "反",
     "0640900781e02aeae93ffffe00e38028e38d2ce3ac0ee3b804e3906aeba9bffffe000000": "命",
-    "25aba87afffc29bae802ebac6aefecbedbac2eeeec2edafc2f8064bbfffd20aaa8000000": "複", # 秒?
+    # "25aba87afffc29bae802ebac6aefecbedbac2eeeec2edafc2f8064bbfffd20aaa8000000": "複", # 秒?
     "0eaaa92ffffe7aaaa41ffff80e2c38bffffe6ebab91ebab83ffffc240ab0000be0000000": "毎",
     "24aabc78ffe928eaa800fffc68ee38bcebb02ecbe42dee7d2e9404bbfffd20aaa8000000": "倒",
     "1aaea96ffffebc1f907db8b92c9a98bcebaeacebae38eb6e78aa08b6baad222ff5000000": "背",
@@ -2504,7 +2504,7 @@ graphicsData = {
     "0028743fafed3b6ae83bbaec3bb8bc3bbaac3bbaac3b6ab83fbffe3829b00005e0000000": "噂", # 1436447
     "3faab82bafe80b02c02e6ee83faefc17aec03baec02fbffc1feaa87efffd242aa8000000": "延",
 	"6b5e007e4b600e0638bf8bb46e6bb82fbbed3febc9be5b946e2f2c0ebfac0e67f8000000": "秘",
-    "0000003ffffc3aaaac38002c38002c38002c38002c38002c3aaaac3ffffc38002c000000": "口",
+    # "0000003ffffc3aaaac38002c38002c38002c38002c38002c3aaaac3ffffc38002c000000": "口",
     "3ffffc2aaaa82ffff82eaab82ffff82eaea42eaea82ffffc382f80bafaf927906c000000": "戻",
 	"2aaea82aaaa82ffff82eaeb82eaeb81aaea42ffff86aaea96befb9baebf40be4bd000000": "裏", # 346034
     # Radio AI Fixes:
@@ -2518,7 +2518,6 @@ graphicsData = {
     "29bab91ffffe14bab8b4eaac28fffc00eaac0daba82efffe29afe979bef970a468000000": "湿",
     "26ffe079aae02838e00038e06afee0bdb9e92c38ee2c38bc2e6424bbfffd20aaa8000000": "迅",
     "1e3ffe2bbbae76fbae7fbbae2e7ffebff9de6ebaeaaefaea3f7bfe6ff82e7ab82d000000": "鋼",
-    "0e0e740e2ffebfbee86ebee80eaffc0feee9be1aa96e3ffc0e2eb96e6d0e3d382d000000": "携",
     "28bffc1ebaac25bffc78baac1dbffc000ee00a9ee90eaeed2d6ee878aee924fffe000000": "速",
     # Radio Claude Fixes
 	"0b3ffc2b2eac3b9e783bc7e0abafb9ab1d281b02c00b2ffc0b1ae80b2ae90b3ffe000000": "怪",
@@ -2590,6 +2589,7 @@ graphicsData = {
     "befbfeaeb6e9befbfc2a8bac3fcbfc6aabacbffbfc2e9bac7febfc1aeaa90b8a59000000": "顎",
     "6ee6a9bffbfe2ee2ce1b96ce3ffbce3bb7de3ff2fe2ba3aebffb4e6bab6e038a38000000": "靭",
     "0eaabc0ebfa9bfb69d6e65a80e7ffc0faae8bebffe6e6ae90eb2ce6ebffe3dbaae000000": "揺",
+	"0b3ffc2b2eac3b9e783bc7e0abafb9ab1d281b02c00b2ffc0b1ae80b2ae90b3ffe000000": "怪",
     "": "",
     "": "",
     "": "",
@@ -2600,7 +2600,6 @@ graphicsData = {
     "": "",
     # VOX Fixes:
     "2aaea82aaea82ffff86aaea96aaaa90ffff80eaab80eaab80ffff80e02b80e02f4000000": "蒼",
-    # "3ffffc3abaac38382c38382c3abaac3ffffc38002c38002c38002c3800ac3800b8000000": "円",
     "1e0a742b8ea076effe7fbeb92e6ffcbfceb86e8eb8aecffc3f4eb06fcffe7a8ea9000000": "錐",
     "": "",
     "": "",
