@@ -49,4 +49,8 @@ def splitDemoFiles():
 
 if __name__ == '__main__':
     findDemoOffsets()
+    # Quick way to see offsets
+    if debug:
+        for offset in offsets:
+            print(f"{offset}: {hex(offset)} / Block {offset // 2048}")
     splitDemoFiles()
