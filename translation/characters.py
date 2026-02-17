@@ -1,6 +1,11 @@
 """
 These are manual matches of the font data found in jpn disc 1 Radio.dat.
-Credit for matching all of the graphic characters goes to Green Goblin!
+Massive shout out to Green Goblin for a lot of OCR work. A lot of manual matching went into this. 
+
+Further, thank you to Konami for improving graphics of the Master Collection in V3.0,
+the graphics patching and Claude code are responsible for figuring that out. 
+
+Further, thanks to Nuggs and Afevis for pointing out the update to me. 
 
 All of the revX dicts are for re-encoding. It was easier than doing a find each time.
 """
