@@ -1249,7 +1249,7 @@ punctuation = { # 0xd0
 
 revPunct = dict(zip(punctuation.values(), punctuation.keys()))
 
-# graphicsData = {
+# graphicsData_old = {
 # 	"03aaa40bfff81faaa07eaaa02fffe01aaee01e1de00be8e401f8b92f9ebe190428000000": "気",
 # 	"0283800783800b03802eaba97efffe6e03800e03800e03800e03800ebffc0e6aa8000000": "仕",
 # 	"2c2cb02cbfb0bf6eb06eaeb02efff82f18bdbcaeba6cffb42c2eb06cffb038a4b0000000": "掛",
