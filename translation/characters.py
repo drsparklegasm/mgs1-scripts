@@ -8140,7 +8140,7 @@ revCustomChar = dict(zip(graphicsData.values(), graphicsData.keys()))
 
 # Chat GPT $#!+ below
 def print_hiragana_shiftjis_with_offset():
-    # Starting and ending Shift-JIS values for Hiragana
+    # Starting and ending Shift-JIS values for Hiragana. No longer needed.
     start_sjis = 0x829F  # Shift-JIS value for 'あ'
     end_sjis = 0x82F1  # Shift-JIS value for 'ん'
     offset = -414  # Decimal offset
