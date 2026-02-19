@@ -20,7 +20,7 @@ demoScriptData: dict = {}
 bar = progressbar.ProgressBar()
 
 version = "usa"
-# version = "jpn"
+version = "jpn"
 disc = 1
 
 # Create a directory to store the extracted texts
