@@ -36,14 +36,27 @@ def convertToOld(newData: dict) -> dict: # Returns oldData format
     return oldData
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=f'Convert a demo dialogue JSON between v1 and v2. NOTE: REPLACES INPUT FILE CONTENTS!')
+    parser = argparse.ArgumentParser(description=f'Convert a demo dialogue JSON between v1 and v2. CAN OVERWRITE IF NO OUTPUT GIVEN!')
     parser.add_argument("input", type=str, help="File to convert")
+    parser.add_argument("output", type=str, nargs="?", default=None, help="Output filename. If none is provided, overwrites original file.")
+    parser.add_argument("--force", "-f", action="store_true", help="Force overwrite original file.")
     args = parser.parse_args()
 
     workingFile = args.input
+    forceOverwrite: bool = args.force
+    print(forceOverwrite)
 
     inputData = json.load(open(workingFile, 'r'))
     newData = {}
+    if args.output == None:
+        outputFile = workingFile
+        if not forceOverwrite:
+            confirm = input(f"WARNING! This will overwrite the original file! Continue? >")
+            if confirm.lower() not in ["y", "yes"]:
+                print(f"NOT CONFIRMED! Use y, yes to confirm.")
+                exit(1)
+    else:
+        outputFile = args.output
     
     # If the first demo is a list, it's v1 and we convert to v2. 
     # Else if it's a dict, we convert back to v1.
@@ -57,5 +70,5 @@ if __name__ == "__main__":
         outputData = convertToOld(inputData)
     
     # Write the file back to the same filename.
-    with open(workingFile, 'w') as f:
+    with open(outputFile, 'w') as f:
         json.dump(outputData, f, ensure_ascii=False)
