@@ -167,10 +167,10 @@ def getHash(): # Not yet implemented!
 
 def commandToEnglish(hex: bytes) -> str:
     global output
-    try: 
+    try:
         commandNamesEng[hex]
         return commandNamesEng[hex]
-    except:
+    except KeyError:
         return f'BYTE {hex.hex()} WAS NOT DEFINED!!!!'
 
 # Analysis commands

@@ -155,9 +155,10 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) ->
 				customCharNum += 255 
 			elif bytestring[i].to_bytes() ==  b'\x98':
 				customCharNum += 510
-			try:
-				messageString += callDict.get(customCharNum)
-			except:
+			result = callDict.get(customCharNum)
+			if result is not None:
+				messageString += result
+			else:
 				# print(f'Cound not translate {bytestring[i + 1]}')
 				messageString += f'[{bytestring[i:i+2].hex()}]'
 				customCharacter = True
@@ -182,9 +183,10 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) ->
 			elif bytestring[i] in (0xd0, 0xb0):
 				messageString += characters.punctuation.get(bytestring[i+1].to_bytes().hex())
 			else:
-				try:
-					messageString += characters.kanji.get(bytestring[i:i+2].hex())
-				except:
+				result = characters.kanji.get(bytestring[i:i+2].hex())
+				if result is not None:
+					messageString += result
+				else:
 					# print(f'Unable to translate Japanese byte code {bytestring[i : i + 2].hex()}!!!\n')
 					# missingChars.write(f'[{bytestring[i : i + 2].hex()}]\n')
 					messageString += f'[{bytestring[i : i + 2].hex()}]'
