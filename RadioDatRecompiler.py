@@ -320,13 +320,17 @@ def main(args=None):
         attrs = call.attrib
         outputContent += bytes.fromhex(attrs.get("content"))
         
-        # Experimental change! This *should* make modified calls inject, while unmodified ones 
-        if attrs.get('modified') == "true":
+        # -x flag forces original hex for all calls (round-trip mode).
+        # Otherwise: modified calls inject new text, unmodified calls preserve original hex.
+        if args.hex:
             subUseOriginalHex = True
             xmlFix.subUseOriginalHex = True
-        else:
+        elif attrs.get('modified') == "True":
             subUseOriginalHex = False
             xmlFix.subUseOriginalHex = False
+        else:
+            subUseOriginalHex = True
+            xmlFix.subUseOriginalHex = True
 
         for subelem in call:
             outputContent += handleElement(subelem)
