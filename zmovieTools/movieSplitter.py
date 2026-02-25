@@ -3,24 +3,14 @@ Adapted from Green Goblins scripts. Very similar to demo
 only alignments are 0x920
 """
 
-import os, struct, re, sys, glob, json
+import os, struct, re, sys, glob, json, argparse
 sys.path.append(os.path.abspath('./myScripts'))
 sys.path.append(os.path.abspath('.'))
 import DemoTools.demoTextExtractor as DTE
 
-version = "jpn"
-disc = 1
-filename = f"build-src/{version}-d1/MGS/ZMOVIE.STR"
-outputDir = f"workingFiles/{version}-d{disc}/zmovie"
-
-zMovieScript = {}
-
-zmFile = open(filename, 'rb')
-zmData = zmFile.read()
-
-
-offsets = []
-os.makedirs(outputDir, exist_ok=True)
+parser = argparse.ArgumentParser(description='Split ZMOVIE.STR into individual .bin files.')
+parser.add_argument('filename', type=str, help='Input ZMOVIE.STR file to split.')
+parser.add_argument('output', nargs='?', type=str, help='Output directory for .bin files and extracted text.')
 
 def getOffsets(toc: bytes) -> list:
     demoNum = 4 # If we figure out where this is we can implement it.
@@ -32,8 +22,21 @@ def getOffsets(toc: bytes) -> list:
         counter += 8
     return offsets
 
-if __name__ == "__main__":
-    
+def main(args=None):
+    if args is None:
+        args = parser.parse_args()
+
+    filename = args.filename
+    outputDir = args.output if args.output else os.path.join(os.path.dirname(os.path.abspath(filename)), '../zmovie')
+
+    with open(filename, 'rb') as zmFile:
+        zmData = zmFile.read()
+
+    os.makedirs(os.path.join(outputDir, 'bins'), exist_ok=True)
+    os.makedirs(os.path.join(outputDir, 'texts'), exist_ok=True)
+
+    zMovieScript = {}
+
     movieOffsets = getOffsets(zmData[0:0x920])
     movieOffsets.append(len(zmData))
     print(movieOffsets)
@@ -47,14 +50,13 @@ if __name__ == "__main__":
             f.write(zmData[start : end])
 
     bin_files = glob.glob(os.path.join(f"{outputDir}/bins", '*.bin'))
-    workingFile = f.name
 
     bin_files.sort(key=lambda f: int(f.split('/')[-1].split('-')[1].split(".")[0]))
 
     for bin_file in bin_files:
         with open(bin_file, 'rb') as movieTest:
-            filename = os.path.basename(bin_file)
-            DTE.filename = filename
+            fname = os.path.basename(bin_file)
+            DTE.filename = fname
             movieData = movieTest.read()
 
             # Get text areas
@@ -66,22 +68,20 @@ if __name__ == "__main__":
             for offset in offsets:
                 if movieData[offset + 28: offset + 32] == bytes(4):
                     finalMatches.append(offset)
-            
+
             offsets = finalMatches
 
             texts = []
             timings = [] # list of timings (start time, duration)
-            timingCount = 1
             # For now we assume they are correct.
             for offset in offsets:
-                # offset = offsets[0]
                 length = struct.unpack("I", movieData[offset + 12 : offset + 16])[0] # Length for text only here.
                 subset = movieData[offset + 16: offset + 0x7e0]
                 textHexes, graphicsBytes, coords = DTE.getTextHexes(subset)
                 texts.extend(DTE.getDialogue(textHexes, graphicsBytes))
                 timings.extend(coords)
 
-            basename = filename.split('.')[0]
+            basename = fname.split('.')[0]
             zMovieScript[basename] = [DTE.textToDict(texts), DTE.textToDict(timings)]
             DTE.writeTextToFile(f'{outputDir}/texts/{basename}.txt', texts)
 
@@ -89,3 +89,7 @@ if __name__ == "__main__":
 
     with open(f'{outputDir}/zMovie-out.json', 'w') as f:
         json.dump(zMovieScript, f, ensure_ascii=False)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(args)
