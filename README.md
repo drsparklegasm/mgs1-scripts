@@ -28,6 +28,9 @@ The top level of my project folder looks like this:
 │   ├── jpn-d1
 │   │   ├── DUMMY3M.DAT
 │   │   ├── MGS
+│   │   │   ├── DEMO.DAT
+│   │   │   ├── RADIO.DAT
+│   │   │   └── ...
 │   │   ├── SYSTEM.CNF
 │   │   ├── license_data.dat
 │   │   └── rebuild.xml
@@ -186,68 +189,3 @@ Starting December 2025, I am updating tutorials on my blog site. Please find the
 https://blog.mgs-undubbed.io/tutorials/
 
 I'll be keeping these up to date, and eventually will publish video walkthroughs. If you're in need of clarification, or instruction using the scripts, please reach out in the discord and I'll be happy to assist!
-
----- BELOW THIS POINT TO BE REMOVED! ---
-
-## Main tools:
-
-### RadioDatTools.py
-
-This extracts all call data, hopefully keeping other byte data intact in the file. The goal is to have all bytes there so it can be re-compiled into a new file. -h for help. This should be mostly complete now. Remaining work will be adjusting XML container data as needed for recompilation.
-
-Can also split calls out for further analysis.
-
-Usage:
-
-```
-$ RadioDatTools.py path/to/Radio.dat [outputfilename] [-h, -i, -d, ...]
-```
-
-### RadioDatRecompiler.py 
-Recompiles a given XML document (exported from RadioDatTools) into a binary file. 
-
-Eventually, it will inject the json data and recompute the lengths for all containers.
-
-### xmlModifierTools.py
-
-Scripts to modify the XML, including recalculating lengths once dialogues have been changed. 
-
-NOTE! It will not correctly account for any two-byte characters that were decoded!
-
-### jsonTools.py
-
-Use this to zip together offsets from one json and subtitles from another json (useful for injecting an English subtitle in with japanese offsets)
-
-### StageDirTools
-
-### callsInStageDirFinder.py
-
-Scripts for finding all call offsets in Stage.dir. Currently this is working. Can be run on its own for analysis tools. 
-
-~~Logic is shamelessly reverse engineered from iseeeva's radio extractor:
-https://github.com/iseeeva/metal/tree/main~~ Archived!
-
-## radioTools
-
-### callExtractor.py
-
-Extracts a single call based on offsets (leaves in a bin format), to be merged into a better library
-
-### callInsertor.py
-
-Inserts a call into an existing RADIO.DAT file. Useful if you want to modify only one call's worth of binary and inject it at the original offset. Good for testing recompiler logic.
-
-### splitRadioFile.py -- DEPRECATED
-
-Previously split RADIO.DAT into individual calls. Use RadioDatTools with the -s option. 
-
-### characters.py
-
-Contains dicts in use by the radioDict library. SOME CHARACTERS HAVE YET TO BE IDENTIFIED!
-
-### radioDict.py
-
-The heart of the translation of japanese/special character hex. This has libraries for decoding the odd hex codes into japanese characters, but can also assist in outputting graphics found in the data. 
-
-NOTE: Does not yet decode / re-encode all characters. 
-
