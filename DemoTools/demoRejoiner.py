@@ -47,9 +47,8 @@ with open(outputDemoFile, 'wb') as f:
         demoStart = struct.pack(">L", len(newDemoBytes) // 0x800).hex()
         newOffsets.update({demoNum: demoStart})
         # Finally, add the demo to the master file
-        demoBytes = open(file, 'rb')
-        newDemoBytes += demoBytes.read()
-        demoBytes.close()
+        with open(file, 'rb') as demoBytes:
+            newDemoBytes += demoBytes.read()
 
     f.write(newDemoBytes)
     f.close()

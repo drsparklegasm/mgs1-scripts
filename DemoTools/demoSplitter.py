@@ -28,8 +28,8 @@ def initRadioData():
     global filename
     global demoData
 
-    demoFile = open(filename, 'rb')
-    demoData = demoFile.read()
+    with open(filename, 'rb') as demoFile:
+        demoData = demoFile.read()
     return
 
 offsets = []
@@ -62,20 +62,18 @@ def findDemoOffsets():
 
 def splitDemoFiles():
     global extension
-    i = 0
-    offsetFile = open(f'{outputDir}/{extension}Offsets.txt', 'w')
-    for i in range(len(offsets)):  
-        start = offsets[i] 
-        if i < len(offsets) - 1:
-            end = offsets[i + 1]
-        else:
-            end = len(demoData) 
-        f = open(f'{outputDir}/demo-{i + 1:02}.{extension}', 'wb')
-        offsetFile.write(f'{i + 1:02}: {start:08x} - {end:08x}, length: {end - start}\n')
-        f.write(demoData[start:end])
-        f.close()
-        print(f'File {extension} {i + 1} written!')
-    
+    with open(f'{outputDir}/{extension}Offsets.txt', 'w') as offsetFile:
+        for i in range(len(offsets)):
+            start = offsets[i]
+            if i < len(offsets) - 1:
+                end = offsets[i + 1]
+            else:
+                end = len(demoData)
+            with open(f'{outputDir}/demo-{i + 1:02}.{extension}', 'wb') as f:
+                offsetFile.write(f'{i + 1:02}: {start:08x} - {end:08x}, length: {end - start}\n')
+                f.write(demoData[start:end])
+            print(f'File {extension} {i + 1} written!')
+
     print(f'{len(offsets)} {extension} files written!')
 
 def main(args=None):

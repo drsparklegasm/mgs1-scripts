@@ -223,7 +223,8 @@ if __name__ == "__main__":
             continue
         
         # Initialize the demo data and the dictionary we're using to replace it.
-        origDemoData = open(file, 'rb').read()
+        with open(file, 'rb') as f:
+            origDemoData = f.read()
         origBlocks = len(origDemoData) // 0x800 # Use this later to check we hit the same length!
 
         demoDict: dict = injectTexts[basename][0]
@@ -293,8 +294,7 @@ if __name__ == "__main__":
             print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
 
         # Finished work! Write the new file. 
-        newFile = open(f'{outputDir}/{basename}.dmo', 'wb')
-        newFile.write(newDemoData)
-        newFile.close()
+        with open(f'{outputDir}/{basename}.dmo', 'wb') as newFile:
+            newFile.write(newDemoData)
     print(f'New Demo Files have been injected!')
     exit(0)

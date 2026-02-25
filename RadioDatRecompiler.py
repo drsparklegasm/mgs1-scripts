@@ -335,9 +335,8 @@ def main(args=None):
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
         # print(content)
     
-    radioOut = open(outputFilename, 'wb')
-    radioOut.write(outputContent)
-    radioOut.close()
+    with open(outputFilename, 'wb') as radioOut:
+        radioOut.write(outputContent)
 
     if args.stageOut:
         stageOutFile = args.stageOut
@@ -349,9 +348,8 @@ def main(args=None):
         stageTools.init(stageDirFilename)
         stageBytes = bytearray(stageTools.stageData)
         fixStageDirOffsets()
-        stageOut = open(stageOutFile, 'wb')
-        stageOut.write(stageBytes)
-        stageOut.close()
+        with open(stageOutFile, 'wb') as stageOut:
+            stageOut.write(stageBytes)
 
     if debug:
         print(newOffsets)

@@ -83,8 +83,8 @@ def setRadioData(filename: str) -> bool:
     global fileSize
     global elementStack
     
-    radioFile = open(filename, 'rb')
-    radioData = radioFile.read()
+    with open(filename, 'rb') as radioFile:
+        radioData = radioFile.read()
     fileSize = len(radioData)
     elementStack = [(root, fileSize)]
     return True
@@ -834,9 +834,8 @@ def main(args=None):
     if args.xmloutput:
         if fancy:
             xmlstr = parseString(ET.tostring(root)).toprettyxml(indent="  ")
-            xmlFile = open(f'{outputFilename}.xml', 'w', encoding='utf8')
-            xmlFile.write(xmlstr)
-            xmlFile.close()
+            with open(f'{outputFilename}.xml', 'w', encoding='utf8') as xmlFile:
+                xmlFile.write(xmlstr)
         else:
             # THE OLD METHOD! 
             xmlOut = ET.ElementTree(root)
@@ -852,10 +851,9 @@ def main(args=None):
                 call_element.set(attr, value)
             headerRoot.append(call_element)
    
-        headerFile = open(f'{outputFilename}-headers.xml', 'w')
         xmlstr = parseString(ET.tostring(headerRoot)).toprettyxml(indent="  ")
-        headerFile.write(xmlstr)
-        headerFile.close()
+        with open(f'{outputFilename}-headers.xml', 'w') as headerFile:
+            headerFile.write(xmlstr)
     
     if args.iseeeva:
         """
