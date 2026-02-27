@@ -193,21 +193,26 @@ def getGoblinBytes(elem: ET.Element) -> bytes:
 
     binary = b''
     if elem.tag ==  'USR_OPTN':
-        content = "07" + int(elem.get('length')).to_bytes().hex() + elem.get('text').encode('utf8').hex() + "00"
+        if subUseOriginalHex and elem.get('textHex') is not None:
+            content = "07" + int(elem.get('length')).to_bytes().hex() + elem.get('textHex')  # textHex already includes null terminator
+        else:
+            content = "07" + int(elem.get('length')).to_bytes().hex() + elem.get('text').encode('utf8').hex() + "00"
         binary = bytes.fromhex(content)
         if bytes.fromhex("2E") in binary:
             period = binary.find(bytes.fromhex("2e"))
             binary = binary[0 : period - 1] + bytes.fromhex("80") + binary[period - 1:] # TODO: NEEDS TESTING
     elif elem.tag ==  'SAVE_OPT':
-        if useDWidSaveB or subUseOriginalHex:
-            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=True)[0] # DOES THIS WITH THE FLAG NOW
+        if subUseOriginalHex and elem.get('contentAHex') is not None:
+            contentA_bytes = bytes.fromhex(elem.get('contentAHex'))  # already includes null terminator
+            binary = bytes.fromhex("07") + len(contentA_bytes).to_bytes() + contentA_bytes
+        else:
+            useDouble = useDWidSaveB or subUseOriginalHex
+            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=useDouble)[0]
             """if bytes.fromhex("2E") in binary:
                 period = contentA.find(bytes.fromhex("2e"))
                 contentA = contentA[0 : period] + bytes.fromhex("80") + contentA[period:] # TODO: NEEDS TESTING"""
-        else:
-            contentA = RD.encodeJapaneseHex(elem.get('contentA'), "", useDoubleLength=False)[0]
+            binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         contentB = elem.get('contentB').encode("shift-jis")
-        binary = bytes.fromhex("07") + (len(contentA) + 1).to_bytes() + contentA + bytes.fromhex("00")
         binary = binary + bytes.fromhex("07") + (len(contentB) + 1).to_bytes() + elem.get('contentB').encode("shift-jis") + bytes.fromhex("00")
     else:
         print(f'WE GOT THE WRONG ELEMENT! Should be goblin, got {elem.text}')

@@ -55,7 +55,7 @@ compare() {
     fi
 }
 
-for DISK in "jpn-d1" "usa-d1"; do
+for DISK in "jpn-d1" "jpn-d2" "usa-d1" "usa-d2" "integral-d1" "integral-d2"; do
     VERSION=$(echo "$DISK" | cut -d'-' -f1)
     SRC="build-src/$DISK/MGS"
     BUILD="build/$DISK/MGS"
@@ -70,7 +70,7 @@ for DISK in "jpn-d1" "usa-d1"; do
     echo "[RADIO.DAT] Extracting..."
     mkdir -p "$WORK/radio"
     RADIO_FLAGS="-x"
-    [ "$VERSION" = "jpn" ] && RADIO_FLAGS="-jx"
+    { [ "$VERSION" = "jpn" ] || [ "$VERSION" = "integral" ]; } && RADIO_FLAGS="-jx"
     if python3 myScripts/RadioDatTools.py "$SRC/RADIO.DAT" "$WORK/radio/RADIO" $RADIO_FLAGS; then
         echo "[RADIO.DAT] Recompiling..."
         python3 myScripts/RadioDatRecompiler.py "$WORK/radio/RADIO.xml" "$BUILD/RADIO.DAT" -x -D

@@ -474,7 +474,8 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                         'length' : str(lengthA + lengthB + 4),
                         'lengthA' : str(lengthA),
                         'contentA' : str(translateJapaneseHex(contentA)),
-                        'lengthB' : str(lengthB), 
+                        'contentAHex': contentA.hex(),
+                        'lengthB' : str(lengthB),
                         'contentB' : bytes.decode(contentB[0:-1], encoding='shift-jis', errors='replace') # We could omit this, but the error checking is good.
                     })
                 elif line[parser] == 0:
@@ -520,6 +521,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                     saveOption = ET.SubElement(promptElement, "USR_OPTN", {
                         'length' : str(lengthA),
                         'text' : str(translateJapaneseHex(contentA)),
+                        'textHex': contentA.hex(),
                     })
                 elif line[parser] == 0:
                     parser += 1
