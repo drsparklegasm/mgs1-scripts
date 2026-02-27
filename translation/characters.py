@@ -579,7 +579,7 @@ kanji = {
     '9054': "開",
     '9055': "風",
     '9056': "邪",
-    # '9057': "薬", # Could be either 薬室 or 薬莢 ... See also 6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000 in Kanji dict
+    '9057': "薬", # Could be either 薬室 or 薬莢 ... See also 6aeba9bffffe019a406aaea9bffffe0e2cb02f6df8266d9801be406fd7f92e00b8000000 in Kanji dict
     '9058': "止",
     '9059': "精",
     '905a': "抻",
@@ -677,7 +677,7 @@ kanji = {
     '90b2': "咽",
     '90b3': "過",
     '90b4': "注",
-    # '90b5': "意", # 寧 This one is so on the fence
+    '90b5': "意", # 寧 This one is so on the fence
     '90b6': "可",
     '90b7': "倍",
     '90b8': "率",
@@ -689,7 +689,7 @@ kanji = {
     '90be': "堛",
     '90bf': "映",
     '90c0': "像",
-    # '90c1': "器", # 嚣 not likely
+    '90c1': "器", # 嚣 not likely
     '90c2': "材",
     '90c3': "場",
     '90c4': "所",
