@@ -423,9 +423,11 @@ def injectSubs(jsonData: dict):
             if debug:
                 print(f'Set {offset} to {newCallDialogue.get(offset)}')
 
-def injectSaveBlocks(jsonData: dict): 
+def injectSaveBlocks(jsonData: dict):
     global root
 
+    if not jsonData['saves']:  # guardrail: skip if no save block data provided
+        return
     newBlockDict = next(iter(jsonData['saves'].values()))
     for saveBlock in root.findall(".//MEM_SAVE"):
         i = 0
@@ -448,11 +450,14 @@ def injectCallNames(jsonData: dict):
     for codecSave in root.findall(".//ADD_FREQ"):
         offset = codecSave.get('offset')
         newName = callNames.get(offset)
-        codecSave.set('name', newName)
+        if newName is not None:  # guardrail: skip entries absent from injection JSON
+            codecSave.set('name', newName)
 
 def injectUserPrompts(jsonData: dict):
     global root
 
+    if not jsonData['prompts']:  # guardrail: skip if no prompt data provided
+        return
     # Inject user prompts:
     prompts: dict = next(iter(jsonData['prompts'].values()))
     for promptOption in root.findall(".//ASK_USER"):
