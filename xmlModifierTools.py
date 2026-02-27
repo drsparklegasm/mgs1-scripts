@@ -546,10 +546,9 @@ def main(args=None, radioXML=None):
             injectUserPrompts(jsonData)
             injectSaveBlocks(jsonData) # Not working for some reason. 
 
-            outputXml = open(xmlOutputFile.replace(".xml", "-merged.xml"), 'wb')
             xmlbytes = ET.tostring(root, encoding=None)
-            outputXml.write(xmlbytes)
-            outputXml.close()
+            with open(xmlOutputFile.replace(".xml", "-merged.xml"), 'wb') as outputXml:
+                outputXml.write(xmlbytes)
             
 
         case 'prepare':
@@ -581,10 +580,9 @@ def main(args=None, radioXML=None):
             fixSaveBlockLengths()
 
             if not offsetFailed:
-                outputXml = open(xmlOutputFile, 'wb')
                 xmlbytes = ET.tostring(root, encoding='utf8')
-                outputXml.write(xmlbytes)
-                outputXml.close()
+                with open(xmlOutputFile, 'wb') as outputXml:
+                    outputXml.write(xmlbytes)
             else:
                 print(f'PREP FAILED!!! The following calls exceeded the hex length of 65535 bytes:')
                 print(failedOffsets)

@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath('./myScripts'))
 import re
 import glob
 import struct
+import argparse
 import progressbar
 import translation.radioDict as RD
 import json
@@ -17,25 +18,16 @@ import json
 import DemoTools.demoTextExtractor as DTE
 from common.structs import subtitle
 
-version = "usa"
-version = "jpn"
-disc = 1
+parser = argparse.ArgumentParser(description='Assemble ZMOVIE.STR from bin files, optionally injecting new subtitles.')
+parser.add_argument('input', type=str, help='Input directory containing .bin files (from movieSplitter.py).')
+parser.add_argument('output', type=str, help='Output ZMOVIE.STR file path.')
+parser.add_argument('-s', '--source', type=str, required=True, help='Original ZMOVIE.STR (used for the file header).')
+parser.add_argument('-j', '--inject', nargs='?', type=str, help='JSON file containing subtitle data to inject. If omitted, all bins are passed through unchanged.')
+parser.add_argument('-n', '--new-bins', nargs='?', type=str, help='Output directory for individually modified .bin files.')
 
 # Toggles
 debug = True
 
-# Directory configs
-inputDir = f'workingFiles/{version}-d{disc}/zmovie/bins/'
-outputDir = f'workingFiles/{version}-d{disc}/zmovie/newBins/'
-injectJson = f'build-proprietary/zmovie/zMovie-jpn-d1-undub.json'
-os.makedirs(outputDir, exist_ok=True)
-
-# Collect files to use
-bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
-bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
-
-# Collect source json to inject
-injectTexts = json.load(open(injectJson, 'r'))
 
 def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
     subsList = []
@@ -45,7 +37,7 @@ def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
         duration = timings.get(index).split(",")[1]
         a = subtitle(texts.get(index), start, duration)
         subsList.append(a)
-    
+
     return subsList
 
 """
@@ -56,34 +48,34 @@ def assembleTitles(texts: dict, timings: dict) -> list [subtitle]:
 
 def genSubBlock(subs: list [subtitle] ) -> bytes:
     """
-    Injects the new text to the original data, returns the bytes. 
-    Also returns the index we were at when we finished. 
+    Injects the new text to the original data, returns the bytes.
+    Also returns the index we were at when we finished.
 
-    """ 
+    """
     newBlock = b''
     for i in range(len(subs)):
         length = struct.pack("I", len(bytes(subs[i])) + 4)
         newBlock += length + bytes(subs[i])
-    
+
     # Add the last one
     if len(subs) == 1:
         newBlock += bytes(4) + bytes(subs[0])
     else:
         newBlock += bytes(4) + bytes(subs[-1])
-    
+
     return newBlock
 
 def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, timings: dict = None) -> bytes:
     """
-    Injects the new text to the original data, returns the bytes. 
-    Also returns the index we were at when we finished. 
+    Injects the new text to the original data, returns the bytes.
+    Also returns the index we were at when we finished.
 
     New vers: Framelimit is the end of a cutscene segment.
-    """ 
+    """
 
     def encodeNewText(text: str, timing: str):
         """
-        Simple. Encodes the dialogue as bytes. 
+        Simple. Encodes the dialogue as bytes.
         Adds the buffer we need to be divisible by 4...
         Return the new bytes.
         """
@@ -97,11 +89,11 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, 
         for j in range(bufferNeeded):
             newBytes += b'\x00'
             j += 1
-        
-        return subtitleBytes
-    
 
-    
+        return subtitleBytes
+
+
+
     newBytes = b""
     firstLengthBytes = originalBinary[18:20]
     firstLength = struct.unpack('<H', firstLengthBytes)[0]
@@ -135,7 +127,7 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, 
             newText = encodeNewText(newTexts[str(i)])
             newLength = len(newText) + 16
             newBytes += newLength.to_bytes() + origTextData[1:4] + struct.pack("<I", start) + struct.pack("<I", duration) + origTextData[12:16] + newText
-        
+
             i += 1
             offset += origTextLength
 
@@ -148,39 +140,46 @@ def injectSubtitles(originalBinary: bytes, newTexts: dict, frameLimit: int = 1, 
 #     headerLength = struct.unpack("H", data[14:16])[0] + 4
 #     return data[:headerLength]
 
-if __name__ == "__main__":
-    """
-    Main logic is here.
-    """
+def main(args=None):
+    if args is None:
+        args = parser.parse_args()
+
+    inputDir = args.input
+    outputFile = args.output
+    sourceFile = args.source
+    newBinsDir = args.new_bins if args.new_bins else os.path.join(inputDir, '../newBins')
+
+    os.makedirs(newBinsDir, exist_ok=True)
+    os.makedirs(os.path.dirname(outputFile) if os.path.dirname(outputFile) else '.', exist_ok=True)
+
+    bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
+    bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
+
+    injectTexts = json.load(open(args.inject, 'r')) if args.inject else {}
+
     completeFile = b''
     # Get original file header
-    completeFile += open("build-src/jpn-d1/MGS/ZMOVIE.STR", 'rb').read(0x920)
-    # Build zmovie files 
+    completeFile += open(sourceFile, 'rb').read(0x920)
+
+    # Build zmovie files
     for file in bin_files:
         print(os.path.basename(f"{file}: "), end="")
         filename = os.path.basename(file)
         basename = filename.split(".")[0]
 
-        # if debug:
-        #     print(f'Processing {basename}')
-
-        # if basename in skipFilesListD1:
-        #     if debug:
-        #         print(f'{basename} in skip list. Continuing...         ')
-        #     continue
-
-        # if injectTexts[basename] is None:
         if basename not in injectTexts:
-            print(f'{basename} was not in the json. Skipping...\r', end="")
+            # Passthrough: no injection data for this bin, use original unchanged
+            print(f'{basename}: Passing through...\r', end="")
+            completeFile += open(file, 'rb').read()
             continue
-        
+
         # Initialize the demo data and the dictionary we're using to replace it.
         origDemoData = open(file, 'rb').read()
         origBlocks = len(origDemoData) // 0x920 # Use this later to check we hit the same length!
 
         demoDict: dict = injectTexts[basename][0]
         demoTimings: dict = injectTexts[basename][1]
-        
+
         subtitles = assembleTitles(demoDict, demoTimings)
         newDemoData = origDemoData[0 : 0x38] # Static start point
         # Encode and add subtitles
@@ -190,14 +189,17 @@ if __name__ == "__main__":
         # Add the rest of original zmovie data
         newDemoData += origDemoData[0x800:]
 
-        # Finished work! Write the new file. 
-        newFile = open(f'{outputDir}/{basename}.bin', 'wb')
+        # Finished work! Write the new file.
+        newFile = open(f'{newBinsDir}/{basename}.bin', 'wb')
         newFile.write(newDemoData)
         newFile.close()
         completeFile += newDemoData
+
     print(f'New Demo Files have been injected!')
     # Since we're here, write the whole zmovie file to disk!
-    # We assume all are modified.
-    with open(f"workingFiles/{version}-d{disc}/zmovie/ZMOVIE-new.STR", 'wb') as out:
+    with open(outputFile, 'wb') as out:
         out.write(completeFile)
-    exit(0)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    main(args)

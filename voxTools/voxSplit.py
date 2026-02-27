@@ -4,22 +4,18 @@ Pretty much follows the same rules as demo.dat for chunking
 """
 
 import os
+import argparse
 
-# Config
-version = 'usa'
-version = 'jpn'
-disc = 1
+parser = argparse.ArgumentParser(description='Split VOX.DAT into individual .vox files')
+parser.add_argument('filename', type=str, help='Input VOX.DAT file to split.')
+parser.add_argument('output', nargs='?', type=str, help='Output directory for .vox files.')
+parser.add_argument('-v', '--verbose', action='store_true', help='Show debug output.')
 
-filename = f'build-src/{version}-d{disc}/MGS/VOX.DAT'
-outputDir = f'workingFiles/{version}-d{disc}/vox/bins'
-
-demoFile = open(filename, 'rb')
-demoData = demoFile.read()
-
-debug = True
-
+# Globals
+demoData = b''
 offsets = []
-os.makedirs(outputDir, exist_ok=True)
+outputDir = ''
+debug = False
 opening = b'\x10\x08\x00\x00'  # Adjusted opening pattern
 
 def findDemoOffsets():
@@ -33,10 +29,8 @@ def findDemoOffsets():
             offset += 2048
 
 def splitDemoFiles():
-    global debug
-
-    for i in range(len(offsets)):  
-        start = offsets[i] 
+    for i in range(len(offsets)):
+        start = offsets[i]
         if i < len(offsets) - 1:
             end = offsets[i + 1]
         else:
@@ -47,10 +41,27 @@ def splitDemoFiles():
         if debug:
             print(f'Wrote VOX file {i}')
 
-if __name__ == '__main__':
+def main(args=None):
+    global filename, outputDir, debug, demoData, offsets
+
+    if args is None:
+        args = parser.parse_args()
+
+    filename = args.filename
+    outputDir = args.output if args.output else os.path.join(os.path.dirname(os.path.abspath(filename)), 'bins')
+    debug = args.verbose
+
+    with open(filename, 'rb') as f:
+        demoData = f.read()
+
+    os.makedirs(outputDir, exist_ok=True)
+
     findDemoOffsets()
-    # Quick way to see offsets 
     if debug:
         for offset in offsets:
             print(f"{offset}: {hex(offset)} / Block {offset // 2048}")
     splitDemoFiles()
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(args)

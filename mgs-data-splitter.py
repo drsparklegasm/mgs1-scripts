@@ -43,8 +43,8 @@ def extractISO(isoFilename: str):
                 isoFilename
                 ],
             check=True)
-    except:
-        print(Exception)
+    except subprocess.CalledProcessError as e:
+        print(e)
     pass
 
 def rebuildISO(xmlFile: str, outputFilename: str):
@@ -57,8 +57,8 @@ def rebuildISO(xmlFile: str, outputFilename: str):
                 '-c', f'{outputFilename}.cue'
                 ],
             check=True)
-    except:
-        print(Exception)
+    except subprocess.CalledProcessError as e:
+        print(e)
     pass
 
 def extractRadioFiles(radioFile: str, outputDir: str):
