@@ -275,7 +275,7 @@ def processSubtitle(call: ET.Element):
         parents = getParentTree(subtitle, call)
         print(f"\rSubtitle {count} of {numSubtitles} Offset: {subtitle.get('offset')} / {call.get('offset')}: ", end="")
         # Re-encode two-byte characters
-        callDict: str = parents[-1].get('graphicsBytes')
+        callDict: str = parents[-1].get('graphicsBytes') # parents[-1] is equivelant to call. OK but a little inconsistent.
         newText, newDict = RD.encodeJapaneseHex(subtitle.get('text'), callDict)
 
         # textString = repr(newText)
