@@ -341,7 +341,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 lineBreakRepace = True
                 dialogue = dialogue.replace(b'\x80\x23\x80\x4e', b'\x5c\x72\x5c\x6e')
 
-            # Translate
+            # Translate # TODO: This is redundant, can be removed. 
             translatedDialogue = translateJapaneseHex(dialogue) # We'll translate when its working
             dialogue = str(translatedDialogue)
             translatedDifference = len(dialogue) - len(translatedDialogue)
