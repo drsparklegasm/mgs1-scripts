@@ -21,6 +21,7 @@ TODO: Remove 'content' attribute passthrough from all elements (VOX_CUES, ANI_FA
 
 stageBytes: bytearray = b''
 debug = False
+ROUND_TRIP = True
 
 # ==== Dependencies ==== #
 
@@ -106,13 +107,17 @@ def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     anim = bytes.fromhex(attrs.get("anim"))
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
-    text_bytes, _ = RD.encodeJapaneseHex(attrs.get('text'), currentCallDict, useDoubleLength=useDWidSaveB)
-    # Restore in-game newline bytes if the text string contains literal \r\n escapes
-    text_bytes = text_bytes.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e'))
-    text_bytes += b'\x00'
+    if ROUND_TRIP:
+        text_bytes = bytes.fromhex(attrs.get('textHex'))
+    else:
+        text_bytes, _ = RD.encodeJapaneseHex(attrs.get('text'), currentCallDict, useDoubleLength=useDWidSaveB)
+        # Restore in-game newline bytes if the text string contains literal \r\n escapes
+        text_bytes = text_bytes.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e'))
+        text_bytes += b'\x00'
 
     payload = face + anim + unk3 + text_bytes # Null added above
-    return b'\xff\x01' + createLength(len(payload)) + payload
+    total = b'\xff\x01' + createLength(len(payload)) + payload
+    return total
 
 def getVoxBytes(vox: ET.Element) -> bytes:
     """
@@ -141,7 +146,7 @@ def getAnimBytes(elem: ET.Element) -> bytes:
     face = bytes.fromhex(attrs.get('face'))
     anim = bytes.fromhex(attrs.get('anim'))
     buff = bytes.fromhex(attrs.get('buff'))
-    payload = face + anim + buff + b'\x00'
+    payload = face + anim + buff 
     return b'\xff\x03' + createLength(len(payload)) + payload
 
 def getFreqAddBytes(elem: ET.Element) -> bytes:
@@ -374,6 +379,8 @@ def handleElement(elem: ET.Element) -> bytes:
     """
     Takes an element and returns the bytes for that element and all subelements. 
     """
+    global ROUND_TRIP
+    
     binary = b''
     attrs = elem.attrib
     match elem.tag:
@@ -390,7 +397,10 @@ def handleElement(elem: ET.Element) -> bytes:
             binary = getAnimBytes(elem)
         case 'ADD_FREQ':
             # ff04
-            binary = getFreqAddBytes(elem)
+            if ROUND_TRIP:
+                binary = getContentBytes(elem) # For testing checksums, because dictionary issues
+            else:
+                binary = getFreqAddBytes(elem) 
         case 'MEM_SAVE':
             # ff05
             binary = getMemSaveBytes(elem)
