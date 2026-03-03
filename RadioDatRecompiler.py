@@ -13,6 +13,9 @@ To do list:
 TODO: ~~Element checker~~ I think this is done
 TODO: Need logic to re-insert b'\x80' before each punctuation mark that needs it (new lines and japanese supertext pairs {a, b})
 TODO: Calculate double byte length characters for length in subtitles
+TODO: Remove 'content' attribute passthrough from all elements (VOX_CUES, ANI_FACE, ADD_FREQ, etc.) —
+      content is retained in the XML for reference/diffing but all sizes should be recalculated from
+      labeled fields at recompile time. Affects both extractor (RadioDatTools.py) and recompiler.
 
 """
 
@@ -32,6 +35,22 @@ import xmlModifierTools as xmlFix
 subUseOriginalHex = False
 useDWidSaveB = False
 
+# Format flags
+USE_LONG = False        # Set True when targeting the patched executable (4-byte size fields)
+currentCallDict = ''    # Graphics bytes dict for the current call; updated in main loop
+
+def createLength(payload_size: int) -> bytes:
+    """
+    Returns the binary size field bytes for a given payload size.
+    The stored value includes the size field itself:
+      USE_LONG=False → '>H'  value = 2 + payload_size  (original binary)
+      USE_LONG=True  → '>L'  value = 4 + payload_size  (patched binary)
+    """
+    if USE_LONG:
+        return struct.pack('>L', 4 + payload_size)
+    else:
+        return struct.pack('>H', 2 + payload_size)
+
 newOffsets = {}
 stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
 
@@ -39,6 +58,7 @@ stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
 
 # Large steps here
 def realignOffsets():
+    # TODO: Wtf is this?
     print(f'Offset integrity reviewed and done')
 
 def createBinary(filename: str, binaryData: bytes):
@@ -72,85 +92,69 @@ def getCallHeaderBytes(call: ET.Element) -> bytes:
 
 def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
-    Returns the hex for an entire subtitle command. Starts with FF01 and always ends with one null byte (\x00)
-    It should be exclusively used within the getVoxBytes() def.
+    Returns the bytes for a SUBTITLE command (FF 01).
+    Text is always re-encoded via RD.encodeJapaneseHex using the current call's
+    graphics dictionary, so the output is correct for both modified and unmodified
+    subtitles without needing textHex or newTextHex passthrough.
+    Note: re-encoding Japanese may produce different bytes than the original for
+    characters with multiple valid encodings — the round-trip hash may not match.
     """
-    global subUseOriginalHex
+    global currentCallDict
 
     attrs = subtitle.attrib
-    subtitleBytes = bytes.fromhex('ff01')
-    lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2) # TODO: Check this is equal to what we intend!
     face = bytes.fromhex(attrs.get("face"))
     anim = bytes.fromhex(attrs.get("anim"))
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
-    text = attrs.get("text").encode('utf-8')
-    if "newTextHex" in attrs.keys():
-        text = bytes.fromhex(attrs.get('newTextHex'))
-    # textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
-    text = text.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e')) # Replace \r\n with in-game byte codes for new lines
-    
-    if subUseOriginalHex:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
-    else:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
-        
-    return subtitleBytes
+    text_bytes, _ = RD.encodeJapaneseHex(attrs.get('text'), currentCallDict, useDoubleLength=useDWidSaveB)
+    # Restore in-game newline bytes if the text string contains literal \r\n escapes
+    text_bytes = text_bytes.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e'))
+    text_bytes += b'\x00'
+
+    payload = face + anim + unk3 + text_bytes # Null added above
+    return b'\xff\x01' + createLength(len(payload)) + payload
 
 def getVoxBytes(vox: ET.Element) -> bytes:
     """
-    Returns the hex for a VOX container (FF02). 
-    Because it is a container that contains Subtitle elements, we will compile that hex here.
+    Returns the bytes for a VOX_CUES container (FF 02).
+    Structure: FF02 [outer_size] [vox_code 4B] 80 [inner_size] [SUBTITLE children...] 00
+    Sizes are recalculated from actual content; content attr is preserved in XML for reference only.
     """
     attrs = vox.attrib
-    binary = bytes.fromhex(attrs.get('content'))
+    vox_code = bytes.fromhex(attrs.get('voxCode'))
 
+    inner = b''
     for child in vox:
-        # print(child.tag)
-        binary += handleElement(child)
-    
-    binary += bytes.fromhex('00')
-    # there's always an extra null here.
-    # print(subsContent.hex())
-    """
-    length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
-    headerLength = struct.unpack(">H", header[-2:len(header)])[0]
-    """
-    return binary
+        inner += handleElement(child)
+    inner += b'\x00'
 
-def getAnimBytes(mus: ET.Element) -> bytes: 
-    """
-    Animation hex command 0xFF03
-    """
-    attrs = mus.attrib
+    inner_block = b'\x80' + createLength(len(inner)) + inner
+    payload = vox_code + inner_block
+    return b'\xff\x02' + createLength(len(payload)) + payload
 
-    animBytes = bytes.fromhex('FF03')
-    length = int(attrs.get('length')) - 2
+def getAnimBytes(elem: ET.Element) -> bytes:
+    """
+    ANI_FACE command (FF 03): faceCharaCode + faceImageName + faceUnk, each 2 bytes (read_word).
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    attrs = elem.attrib
     face = bytes.fromhex(attrs.get('face'))
     anim = bytes.fromhex(attrs.get('anim'))
     buff = bytes.fromhex(attrs.get('buff'))
-    
-    if length == 8:
-        animBytes =  animBytes + struct.pack('>H', length) + face + anim + buff
-    
-    return animBytes
+    payload = face + anim + buff + b'\x00'
+    return b'\xff\x03' + createLength(len(payload)) + payload
 
 def getFreqAddBytes(elem: ET.Element) -> bytes:
     """
-    freq-add hex command 0xFF04
+    ADD_FREQ command (FF 04): adds a contact to codec memory.
+    Payload: contact_freq (2B big-endian short) + name (null-terminated, game encoding).
+    Size recalculated via createLength; content attr retained in XML for reference only.
     """
     attrs = elem.attrib
-
-    elemBytes = bytes.fromhex('FF04')
-    length = int(attrs.get('length')) - 2
-    
     freq = getFreqbytes(attrs.get('freq'))
-    name = attrs.get('name').encode('utf8')
-    
-    if length == 8:
-        elemBytes = elemBytes + struct.pack('>H', length) + freq + name + b'\x00'
-    
-    return elemBytes
+    name_bytes, _ = RD.encodeJapaneseHex(attrs.get('name'), "")
+    payload = freq + name_bytes + b'\x00'
+    return b'\xff\x04' + createLength(len(payload)) + payload
 
 def getContentBytes(elem: ET.Element) -> bytes: 
     """
@@ -183,6 +187,152 @@ def getAddFreq(elem: ET.Element) -> bytes:
     binary += content.hex()
 
     return binary
+
+def getMemSaveBytes(elem: ET.Element) -> bytes:
+    """
+    MEM_SAVE command (FF 05): save-game slot selector.
+    Payload: 4 unknown bytes (extracted from content attr) + SAVE_OPT children + 0x00.
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    attrs = elem.attrib
+    unk4 = bytes.fromhex(attrs.get('content'))[4:8]  # bytes after FF 05 + 2B size field
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    payload = unk4 + inner
+    return b'\xff\x05' + createLength(len(payload)) + payload
+
+def getAskUserBytes(elem: ET.Element) -> bytes:
+    """
+    ASK_USER command (FF 07): presents a yes/no prompt to the player.
+    Payload: USR_OPTN children + 0x00.
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x07' + createLength(len(inner)) + inner
+
+def getIfBytes(elem: ET.Element) -> bytes:
+    """
+    IF_CHECK command (FF 10): conditional branch.
+
+    Binary payload layout (what radio_if_80047514 receives):
+        [GCL condition — opaque, variable length]
+        [0x80] [inner_sz 2B] [THEN commands...] [0x00]   ← THEN_DO block
+        [FF 12 cond 0x80 sz THEN2 0x00]...               ← zero or more ELSE_IFS
+        [FF 11 0x80 sz ELSE 0x00]                         ← optional ELSE
+        [0x00]                                            ← "no more branches" terminator
+                                                            always present; radio_if checks
+                                                            *pScript after skipping each block
+
+    XML children: THEN_DO (synthetic, holds THEN commands), then ELSE_IFS / ELSE siblings.
+    Content attr: [FF 10][outer_sz 2B][GCL cond...][0x80][inner_sz 2B] — sizes are stale.
+    Condition bytes extracted as content[4:-3]; 0x80+inner_sz suffix rebuilt via createLength.
+    """
+    attrs = elem.attrib
+    content_bytes = bytes.fromhex(attrs.get('content'))
+    # content layout: [FF(1)] [10(1)] [outer_sz(2)] [cond(var)] [0x80(1)] [inner_sz(2)]
+    cond_bytes = content_bytes[4:-3]  # strip FF+10+outer_sz from front, 0x80+inner_sz from back
+
+    then_inner = b''
+    chain_bytes = b''  # ELSE_IFS and ELSE within the IF payload
+    for child in elem:
+        if child.tag == 'THEN_DO':
+            for gc in child:
+                then_inner += handleElement(gc)
+            then_inner += b'\x00'  # null terminator for the THEN RDCODE_SCRIPT block
+        else:
+            chain_bytes += handleElement(child)
+    chain_bytes += b'\x00'  # "no more branches" terminator (always present; see above)
+
+    inner_block = b'\x80' + createLength(len(then_inner)) + then_inner
+    payload = cond_bytes + inner_block + chain_bytes
+    return b'\xff\x10' + createLength(len(payload)) + payload
+
+def getElseBytes(elem: ET.Element) -> bytes:
+    """
+    ELSE command (FF 11): unconditional else branch within an IF chain.
+
+    No outer size field — radio_if_80047514 reads FF+11 directly, advances 2 bytes,
+    then calls exec_block with pScript pointing at the 0x80 inner script marker.
+
+    Binary layout (what exec_block receives):
+        [0x80] [inner_sz 2B] [ELSE commands...] [0x00]
+
+    Content attr: [FF 11][0x80][inner_sz 2B] — inner size is stale; rebuilt here.
+    """
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x11' + b'\x80' + createLength(len(inner)) + inner
+
+def getElseIfBytes(elem: ET.Element) -> bytes:
+    """
+    ELSE_IFS command (FF 12): conditional else-if branch within an IF chain.
+
+    No outer size field — radio_if_80047514 advances past FF+12, then re-enters
+    the condition-evaluation loop. GCL condition is consumed by radio_getNextValue,
+    which advances pScript to the 0x80 inner script marker.
+
+    Binary layout (what radio_if_80047514 re-evaluates):
+        [GCL condition — opaque, variable length]
+        [0x80] [inner_sz 2B] [THEN commands...] [0x00]
+
+    XML children: the THEN commands directly (no THEN_DO wrapper, unlike IF_CHECK).
+    Content attr: [FF 12][GCL cond...][0x80][inner_sz 2B] — inner size is stale.
+    Condition bytes extracted as content[2:-3]; 0x80+inner_sz rebuilt via createLength.
+    """
+    attrs = elem.attrib
+    content_bytes = bytes.fromhex(attrs.get('content'))
+    # content layout: [FF(1)] [12(1)] [cond(var)] [0x80(1)] [inner_sz(2)]
+    cond_bytes = content_bytes[2:-3]  # strip FF+12 from front, 0x80+inner_sz from back
+
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x12' + cond_bytes + b'\x80' + createLength(len(inner)) + inner
+
+def getRndSwitchBytes(elem: ET.Element) -> bytes:
+    """
+    RND_SWCH command (FF 30): weighted random branch selector.
+    Binary: [FF 30][outer_sz 2B][totalWeight 2B][RND_OPTN entries...][0x00]
+
+    totalWeight is recomputed as the sum of all child RND_OPTN weights, so it
+    stays correct even when options are added, removed, or reweighted.
+    The stored 'totalWeight' XML attribute is informational only at recompile time.
+
+    TODO: Add a validation warning when the stored 'totalWeight' attr does not match
+    the computed sum, so edits that accidentally create an inconsistent XML are caught
+    early (before the binary is written). Only needed before modifying RND_OPTN entries.
+    """
+    total_weight = 0
+    options_bytes = b''
+    for child in elem:
+        options_bytes += handleElement(child)
+        if child.tag == 'RND_OPTN':
+            total_weight += int(child.attrib.get('weight', 0))
+    options_bytes += b'\x00'  # RDCODE_NULL terminator
+
+    payload = struct.pack('>H', total_weight) + options_bytes
+    return b'\xff\x30' + createLength(len(payload)) + payload
+
+def getRndOptnBytes(elem: ET.Element) -> bytes:
+    """
+    RND_OPTN entry (0x31): one weighted option within a RND_SWCH.
+    Binary: [31][weight 2B][0x80][inner_sz 2B][commands...][0x00]
+    No 0xFF prefix. Inner size recalculated via createLength().
+    """
+    weight = int(elem.attrib.get('weight', 0))
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\x31' + struct.pack('>H', weight) + b'\x80' + createLength(len(inner)) + inner
 
 def getGoblinBytes(elem: ET.Element) -> bytes:
     """
@@ -235,18 +385,39 @@ def handleElement(elem: ET.Element) -> bytes:
             binary = getVoxBytes(elem)
             """case 'ADD_FREQ':
             binary = getFreqAddBytes(elem)"""
-        case 'ANI_FACE' | 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD' | 'ADD_FREQ':  # ADD_FREQ temp as a check since we set the content.
-            # ff03-08, FF40
+        case 'ANI_FACE':
+            # ff03
+            binary = getAnimBytes(elem)
+        case 'ADD_FREQ':
+            # ff04
+            binary = getFreqAddBytes(elem)
+        case 'MEM_SAVE':
+            # ff05
+            binary = getMemSaveBytes(elem)
+        case 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD':
+            # ff06, ff08, ff40 — opaque content blobs, no translatable children
             binary = getContentBytes(elem)
+        case 'ASK_USER':
+            # ff07
+            binary = getAskUserBytes(elem)
         case 'USR_OPTN' | 'SAVE_OPT':
             binary = getGoblinBytes(elem)
-        case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN' | 'MEM_SAVE' | 'ASK_USER': 
-            binary = bytes.fromhex(attrs.get('content'))
-            binary += getContainerContentBytes(elem)
-            # Troubleshooting
-            """print(attrs.get('length'))
-            print(len(binary))"""
-        case 'THEN_DO': 
+        case 'IF_CHECK':
+            # ff10
+            binary = getIfBytes(elem)
+        case 'ELSE':
+            # ff11
+            binary = getElseBytes(elem)
+        case 'ELSE_IFS':
+            # ff12
+            binary = getElseIfBytes(elem)
+        case 'RND_SWCH':
+            # ff30
+            binary = getRndSwitchBytes(elem)
+        case 'RND_OPTN':
+            # 0x31 (no 0xFF prefix)
+            binary = getRndOptnBytes(elem)
+        case 'THEN_DO':
             binary += getContainerContentBytes(elem)
     
     return binary
@@ -279,10 +450,11 @@ def fixStageDirOffsets():
             print(stageBytes[key: key + 8].hex())
 
 def main(args=None):
-    global subUseOriginalHex 
+    global subUseOriginalHex
     global stageBytes
     global debug
     global useDWidSaveB
+    global USE_LONG
     
     
     if args == None:
@@ -301,10 +473,13 @@ def main(args=None):
     else:
         outputFilename = 'new-' + args.input.split("/")[-1].split(".")[0] + '.bin'
 
+    if args.long:
+        USE_LONG = True
+
     if args.hex:
         subUseOriginalHex = True
         xmlFix.subUseOriginalHex = True
-        
+
     if args.double:
         useDWidSaveB = True
         xmlFix.useDWSB = True
@@ -321,12 +496,10 @@ def main(args=None):
         newCallOffset = len(outputContent)
         newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
 
-        # We put the call together, starting with the call header. 
         attrs = call.attrib
-        outputContent += bytes.fromhex(attrs.get("content"))
-        
-        # -x flag forces original hex for all calls (round-trip mode).
-        # Otherwise: modified calls inject new text, unmodified calls preserve original hex.
+        currentCallDict = attrs.get('graphicsBytes', '')
+
+        # Set hex passthrough mode before compiling elements so handleElement sees it.
         if args.hex:
             subUseOriginalHex = True
             xmlFix.subUseOriginalHex = True
@@ -337,10 +510,27 @@ def main(args=None):
             subUseOriginalHex = True
             xmlFix.subUseOriginalHex = True
 
+        # Compile all child elements first so the true payload size is known.
+        elemContent = b''
         for subelem in call:
-            outputContent += handleElement(subelem)
-        outputContent += b'\x00'
-        if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True: # 2nd change, inject graphics ONLY if using original hex.
+            elemContent += handleElement(subelem)
+        elemContent += b'\x00'  # call payload terminator
+
+        # Build call header.
+        # USE_LONG=True: rebuild from named attrs with 4-byte size field.
+        # USE_LONG=False: pass through the original 11-byte content blob (stale size, acceptable
+        #   for normal use since the game indexes calls directly rather than chaining pointers).
+        if USE_LONG:
+            freq = getFreqbytes(attrs.get('freq'))
+            unk1 = bytes.fromhex(attrs.get("unknownVal1"))
+            unk2 = bytes.fromhex(attrs.get("unknownVal2"))
+            unk3 = bytes.fromhex(attrs.get("unknownVal3"))
+            callHeader = freq + unk1 + unk2 + unk3 + b'\x80' + createLength(len(elemContent))
+        else:
+            callHeader = bytes.fromhex(attrs.get("content"))
+
+        outputContent += callHeader + elemContent
+        if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
         # print(content)
     
@@ -373,6 +563,7 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
+    parser.add_argument('-l', '--long', action='store_true', help="Write 4-byte size fields (USE_LONG=True) for use with the patched SLPM_862.47 executable.")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
     
     main()

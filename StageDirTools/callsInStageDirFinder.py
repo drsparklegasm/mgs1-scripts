@@ -7,7 +7,7 @@ bar = progressbar.ProgressBar()
 
 # filename = "radioDatFiles/STAGE-usa-d1.DIR"
 
-freqList = [
+FREQ_LIST = [
     b'\x37\x05', # 140.85, Campbell
     b'\x37\x10', # 140.96, Mei Ling
     b'\x36\xbf', # 140.15, Meryl
@@ -23,6 +23,8 @@ freqList = [
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
 ]
 
+USE_LONG = False  
+
 # This dict will have {stageOffset: [ callOffset int, hexstr ] } to be updated later.
 offsetDict: dict[int, tuple[int, str]] = {}
 filesize = 0
@@ -33,14 +35,14 @@ outputFileToggle = False
 def checkFreq(offset):
     global stageData
     
-    if stageData[offset + 1 : offset + 3] in freqList:
+    if stageData[offset + 1 : offset + 3] in FREQ_LIST:
         return True
     else:
         return False
 
 def writeCall(offset):
     global stageData
-    global freqList
+    global FREQ_LIST
     global outputFileToggle
     
     callHex = stageData[offset + 4: offset + 8].hex()
@@ -129,6 +131,7 @@ if __name__ == "__main__":
 def init(filename: str):
     global filesize
     global stageData
+    global USE_LONG
     
     stageDir = open(filename, 'rb')
     stageData = stageDir.read()

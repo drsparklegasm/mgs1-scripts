@@ -383,9 +383,9 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "offset": str(offset),
                 "length": str(length),
                 "lengthA": str(lengthA),
-                "lengthA": str(lengthA),
                 "header": str(header),
                 "containerLength": str(containerLength),
+                "voxCode": line[4:8].hex(),
                 "content": f'{line.hex()}'
             })
             checkElement(length)
@@ -598,39 +598,41 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             return header
         
         case b'\x30':
-            # 30 is handled different, as it has a container header
-            # Worth mentioning, FF30{2 byte length}{2 byte total}
-            # Every 0x31 contained inside should have a value that adds up to the total
+            # FF30{2 byte outer_sz}{2 byte totalWeight}
+            # totalWeight = sum of all child RND_OPTN weights; rand() % totalWeight selects a branch
             length = getLength(offset)
             header = 6
             line = radioData[offset : offset + header]
+            totalWeight = struct.unpack('>H', line[4:6])[0]
 
-            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), 
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte),
                 {
                     "offset": str(offset),
                     "headerLength": str(header),
                     "length": str(length),
+                    "totalWeight": str(totalWeight),
                     "content": line.hex()
                 }
             )
             checkElement(length)
             elementStack.append((randomElement, length))
 
-            return header 
-        
+            return header
+
         case b'\x31':
-            # 31 passes offset as one before to match the command byte:
-            # 0x31{individual amount}80{length}
-            # All individual amounts add up to the total amount in the ff30
+            # 31{weight 2B}{80}{inner_sz 2B} — no 0xFF prefix
+            # weight = this option's share of totalWeight; probability = weight / totalWeight
             header = 6
             line = radioData[offset : offset + header]
-            length = struct.unpack('>H', line[4 : 6])[0] + 4
+            length = struct.unpack('>H', line[4:6])[0] + 4
+            weight = struct.unpack('>H', line[1:3])[0]
 
-            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), 
+            randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte),
                 {
                     "offset": str(offset),
                     "headerLength": str(header),
                     "length": str(length),
+                    "weight": str(weight),
                     "content": line.hex()
                 }
             )

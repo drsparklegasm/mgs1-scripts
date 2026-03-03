@@ -259,7 +259,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				newBytestring += bytes.fromhex('9601')
 				callDict = customHex
 			elif customHex in callDict:
-				index = int(callDict.find(customHex) / 72)
+				index = int(callDict.find(customHex) / 72) + 1
 				if index > 508:
 					index -= 508
 					newBytestring += b'\x98'
@@ -273,7 +273,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				# addCharToDict(customHex)
 				if debug:
 					print(f'Character {character} was not found in custom call dict. Adding...')
-				index = int(len(callDict) / 72)
+				index = int(len(callDict) / 72) + 1
 				if index > 508:
 					index -= 508
 					newBytestring += b'\x98'
