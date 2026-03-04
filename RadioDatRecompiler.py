@@ -21,6 +21,9 @@ TODO: Remove 'content' attribute passthrough from all elements (VOX_CUES, ANI_FA
 
 stageBytes: bytearray = b''
 debug = False
+# ROUND_TRIP: when True, FF01 uses original textHex and FF04 uses verbatim content passthrough.
+# Set automatically: True when recompiling as-extracted (no --prepare); False in translation
+# mode (--prepare re-encodes text, so getSubtitleBytes must re-encode too).
 ROUND_TRIP = True
 
 # ==== Dependencies ==== #
@@ -94,11 +97,9 @@ def getCallHeaderBytes(call: ET.Element) -> bytes:
 def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
     Returns the bytes for a SUBTITLE command (FF 01).
-    Text is always re-encoded via RD.encodeJapaneseHex using the current call's
-    graphics dictionary, so the output is correct for both modified and unmodified
-    subtitles without needing textHex or newTextHex passthrough.
-    Note: re-encoding Japanese may produce different bytes than the original for
-    characters with multiple valid encodings — the round-trip hash may not match.
+    ROUND_TRIP=True (default): uses original textHex verbatim — byte-for-byte accurate.
+    ROUND_TRIP=False (--prepare / translation mode): re-encodes text via encodeJapaneseHex;
+      output may differ from the original where multiple encodings are valid.
     """
     global currentCallDict
 
@@ -161,15 +162,24 @@ def getFreqAddBytes(elem: ET.Element) -> bytes:
     payload = freq + name_bytes + b'\x00'
     return b'\xff\x04' + createLength(len(payload)) + payload
 
-def getContentBytes(elem: ET.Element) -> bytes: 
+def getContentBytes(elem: ET.Element) -> bytes:
     """
-    This one is to get binary when we specifically mark a 'content' field. Full list of what this works for:
-    FF04, FF06, FF08
+    FF06 (MUS_CUES), FF08 (SAVEGAME), FF40 (EVAL_CMD), and ADD_FREQ in ROUND_TRIP mode —
+    opaque blobs, replayed verbatim.
+    When USE_LONG=False: returned as-is.
+    When USE_LONG=True: rewrites the outer size field from 2-byte to 4-byte.
+      blob layout: [FF(1)] [cmd(1)] [outer_sz(2)] [payload...]
     """
     attrs = elem.attrib
-    elemBytes = bytes.fromhex(attrs.get('content'))
-
-    return elemBytes
+    blob = bytes.fromhex(attrs.get('content'))
+    if not USE_LONG:
+        return blob
+    # Rewrite 2-byte outer size → 4-byte.
+    cmd_byte = blob[1:2]
+    old_sz = struct.unpack('>H', blob[2:4])[0]
+    payload_len = old_sz - 2
+    payload = blob[4:4 + payload_len]
+    return b'\xff' + cmd_byte + createLength(payload_len) + payload
 
 def getContainerContentBytes(elem: ET.Element) -> bytes:
     """
@@ -473,6 +483,7 @@ def main(args=None):
     # Read new radio source
     if args.prepare:
         print(f'Preparing XML by repairing lengths...')
+        ROUND_TRIP = False  # re-encode from text attr in translation mode
         root = xmlFix.init(args.input)
     else:
         radioSource = ET.parse(args.input)
@@ -542,7 +553,10 @@ def main(args=None):
         outputContent += callHeader + elemContent
         if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
-        # print(content)
+            if args.pad:
+                null_pad = int(attrs.get('nullPad', '0'))
+                if null_pad > 0:
+                    outputContent += b'\x00' * null_pad
     
     with open(outputFilename, 'wb') as radioOut:
         radioOut.write(outputContent)
@@ -574,6 +588,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
     parser.add_argument('-l', '--long', action='store_true', help="Write 4-byte size fields (USE_LONG=True) for use with the patched SLPM_862.47 executable.")
+    parser.add_argument('-P', '--pad', action='store_true', help="Re-insert inter-call null padding stored in nullPad XML attr (for Integral-format RADIO.DAT).")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
     
     main()

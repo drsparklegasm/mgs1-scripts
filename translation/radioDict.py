@@ -105,6 +105,10 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 			else:
 				data.write(bytes.fromhex("ffffffff"))
 
+def isGraphicsTile(tile: bytes) -> bool:
+	"""Return True if the 36-byte tile is a known character tile in characters.graphicsData."""
+	return tile.hex() in characters.graphicsData
+
 def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, may revert later
 	"""
 	Returns a DICT specific to the call where we sent the data. 

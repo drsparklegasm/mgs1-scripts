@@ -45,11 +45,12 @@ exportGraphics = False
 translateToggle = False
 # translator = Translator(from_lang="ja", to_lang="en")
 
-# Script variables 
+# Script variables
 offset = 0
 radioData = b''
 callDict = {}
 fileSize = 0
+callOffsetToNext: dict = {}  # maps each call's start offset → next call's start offset (or fileSize)
 
 """
 # ARG PARSER Ops 
@@ -244,25 +245,31 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
             output.write(f'ERROR! AT byte {offset}!! \\x80 was not found \n') # This means what we analyzed was not a call header!
             return 1"""
 
-    # Get graphics data and write to a global dict:
-    global callDict 
-    graphicsData = getGraphicsData(offset + length)
+    # Get graphics data and null padding using pre-scanned call boundaries.
+    # end_limit ensures the tile parser stops at the next call, preserving tiles
+    # that have trailing zero bytes as part of their pixel data (no rstrip).
+    global callDict, callOffsetToNext
+    gfx_start = offset + length
+    next_call = callOffsetToNext.get(offset, fileSize)
+    graphicsData = getGraphicsData(gfx_start, end_limit=next_call)
+    null_pad = next_call - gfx_start - len(graphicsData)
     if len(graphicsData) % 36 == 0:
         callDict = radioDict.makeCallDictionary(offset, graphicsData)
     else:
         print(f'Graphics parse error offset {offset}! \n')
-    
+
     output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
 
     call_element = ET.SubElement(root, "Call", {
         "offset": f'{offset}',
         "freq": f'{humanFreq:.2f}',
-        "length": f'{length}', 
+        "length": f'{length}',
         "unknownVal1": unk0.hex(),
         "unknownVal2": unk1.hex(),
         "unknownVal3": unk2.hex(),
         "content": line.hex(),
         "graphicsBytes": graphicsData.hex(),
+        "nullPad": str(null_pad),
         "modified": 'False'
         })
     
@@ -641,22 +648,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             return header
         
         case b'\x40':
-            # The last bytes in the 0x40 expression are 14 31 00...
-            length = 16
-            while True:
-                checkingOffset = offset + length
-                if checkFreq(checkingOffset):
-                    break
-
-                if radioData[checkingOffset].to_bytes() == b'\xff' or b'\x00':
-                    if radioData[checkingOffset - 3:checkingOffset] == b'\x14\x31\x00':
-                        break
-                
-                length += 1
-            
+            # FF 40 [outer_sz_hi] [outer_sz_lo] [content...] — standard length-prefixed format.
+            length = getLength(offset)
             line = radioData[offset : offset + length]
             output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-            
+
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -679,45 +675,89 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
 
-def getGraphicsData(offset: int, returnNulls=False) -> bytes: # This is a copy of handleUnknown, but we return the string and hope its the graphics data 
+def getGraphicsData(offset: int, returnNulls=False, end_limit: int = None) -> bytes:
     """
-    copied from handleUnknown() but we return the bytestring of the graphics data
+    Parse 36-byte graphics tiles starting at `offset` and return them as raw bytes.
+
+    If end_limit is given, parsing stops before reaching that offset.  Pass the
+    pre-scanned start of the next call so that null sector-padding is never consumed
+    as tile data and tiles with trailing zero bytes are kept intact (no rstrip).
+
+    Steps per tile position:
+      1. Known character tile (radioDict.isGraphicsTile) → advance 36.
+         Alerts if a tile is encountered that is not in characters.graphicsData
+         and is not a blank tile (all-zero) — indicates a previously unseen char.
+      2. Call header (checkFreq) or FF-command → stop.
+      3. Null bytes:
+           nullCount > 36  → large null region (sector padding / end of call); stop.
+           nullCount < 36  → short null run; if a call header follows immediately,
+                             stop (inter-call padding shorter than one tile).
+                             Otherwise advance 36 (fallback, original behaviour).
+           nullCount == 36 → blank tile; advance 36.
+      4. Non-null, non-tile, non-call → advance 36 (fallback).
     """
     count = 0
     global fileSize
     global exportGraphics
     global debugOutput
-    # global call_element
+
+    eff_end = min(end_limit, fileSize) if end_limit is not None else fileSize
 
     while True:
-        if offset + count >= fileSize - 1:
+        if offset + count >= eff_end - 1:
             break
-        elif checkFreq(offset + count): # Why the +1 ?
+
+        # Step 1: known character tile
+        tile = radioData[offset + count : offset + count + 36]
+        if radioDict.isGraphicsTile(tile):
+            count += 36
+            continue
+
+        # Step 2: call header or FF-command boundary
+        if checkFreq(offset + count):
             break
-        elif radioData[offset + count].to_bytes() == b'\xff' and radioData[offset + count + 1].to_bytes() in commandNamesEng:
+        if radioData[offset + count] == 0xFF and radioData[offset + count + 1 : offset + count + 2] in commandNamesEng:
             break
-        elif radioData[offset + count].to_bytes() == b'\x00':
+
+        # Step 3: null bytes
+        if radioData[offset + count] == 0:
             nullCount = 1
-            while radioData[offset + count + nullCount].to_bytes() == b'\x00':
+            while offset + count + nullCount < fileSize - 1 and radioData[offset + count + nullCount] == 0:
                 nullCount += 1
-                if offset + count + nullCount >= fileSize - 1:
-                    break
             if nullCount > 36:
+                if end_limit is not None and (offset + count + nullCount) < eff_end:
+                    # Null run ends before the next-call boundary, so non-null content follows.
+                    # These are blank (all-zero) character tiles, not sector null padding.
+                    count += nullCount
+                    continue
                 if returnNulls:
                     count += nullCount
                 if debugOutput:
                     print(f'Graphics data ended with {nullCount} nulls at offset {offset + count}, ending parse graphics data.')
                     print(f'Hex at end of call is 0x{int(offset + count):X}')
                 break
-            else:
+            elif nullCount < 36:
+                # Short null run — stop if a call follows immediately (inter-call padding)
+                if checkFreq(offset + count + nullCount):
+                    break
                 if debugOutput:
                     print(f'Graphics data had {nullCount} nulls at offset {offset + count}, continuing parse graphics data!\r')
+                count += 36  # fallback: advance a full tile
+            else:  # nullCount == 36
+                # Blank tile
+                if debugOutput:
+                    print(f'Graphics data had blank tile at offset {offset + count}, continuing parse graphics data!\r')
                 count += 36
-        else: 
-            count += 36
-    content = radioData[offset: offset + count]
 
-    return content
+        else:
+            # Non-null, non-tile, non-call — alert and advance 36
+            if debugOutput:
+                print(f'WARNING: unknown tile at offset {offset + count}: {tile.hex()}')
+            else:
+                print(f'WARNING: unknown graphics tile at 0x{offset + count:X}: {tile.hex()}')
+            count += 36
+
+    return radioData[offset : offset + count]
 
 def checkElement(length):
     """
@@ -736,6 +776,30 @@ def translateJapaneseHex(bytestring: bytes) -> str: # Needs fixins, maybe move t
     global callDict
     return radioDict.translateJapaneseHex(bytestring, callDict)
 
+def preloadCallOffsets() -> None:
+    """
+    Pre-scan the entire radio data for call header positions and build
+    callOffsetToNext: a dict mapping each call's start offset to the
+    next call's start offset (or fileSize for the last call).
+
+    This gives handleCallHeader an exact boundary for each call's
+    graphics + padding region without tile-by-tile heuristics.
+    """
+    global callOffsetToNext
+    offsets = []
+    i = 0
+    while i < fileSize - 9:
+        if checkFreq(i):
+            offsets.append(i)
+            sz = struct.unpack('>H', radioData[i+9:i+11])[0]
+            i += sz + 9
+        else:
+            i += 1
+    callOffsetToNext = {
+        off: offsets[idx + 1] if idx + 1 < len(offsets) else fileSize
+        for idx, off in enumerate(offsets)
+    }
+
 def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name, but this outputs a readable text file with the information broken down.
     offset = 0
     global debugOutput
@@ -747,6 +811,7 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     bar.maxval = fileSize
     bar.start()
     setOutputFile(outputFilename)
+    preloadCallOffsets()
 
     while offset < fileSize: # We might need to change this to Case When... as well.
         # Offset Tracking
