@@ -152,6 +152,7 @@ freqList = [
     bytes.fromhex('36bc'), # 140.12, ????
     b'\x36\xbc', 
     b'\x37\xac', # 142.52, Nastasha? ACCIDENT
+    b'\x36\xf2', # 140.66 # Hidden Music Freq
 ]
 
 # Hashes for each radio file. I did not include Integral yet, as it won't suit the needs of this project. We'll need to write something to hash the files when ingested.
