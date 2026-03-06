@@ -41,6 +41,7 @@ useDWidSaveB = False
 
 # Format flags
 USE_LONG = False        # Set True when targeting the patched executable (4-byte size fields)
+INTEGRAL = False        # Set True for Integral disc: 0x800-aligned calls, 2-byte block index in stage dir
 currentCallDict = ''    # Graphics bytes dict for the current call; updated in main loop
 
 def createLength(payload_size: int) -> bytes:
@@ -444,30 +445,80 @@ def handleElement(elem: ET.Element) -> bytes:
 
 def fixStageDirOffsets():
     """
-    Takes the finalized offset dict and uses the new values to overwrite values in stage.dir. 
+    Takes the finalized offset dict and uses the new values to overwrite values in stage.dir.
     Make sure you've backed up the original stage.dir file!
+
+    Two formats:
+      INTEGRAL=True:  2-byte big-endian block index at bytes[6:8], offset = block * 0x800
+      INTEGRAL=False: 3-byte big-endian byte offset at bytes[5:8] (USA/JPN)
     """
-    global stageBytes 
+    global stageBytes
     global newOffsets
     global debug
+    global INTEGRAL
+
+    if debug:
+        mode = "INTEGRAL (2-byte block index at [6:8])" if INTEGRAL else "USA/JPN (3-byte offset at [5:8])"
+        print(f"\n========== STAGE.DIR MODE: {mode} ==========")
+
+        print("\n========== RADIO CALL OFFSET MAP (old -> new) ==========")
+        for oldOff, newOff in sorted(newOffsets.items()):
+            changed = " *CHANGED*" if oldOff != newOff else ""
+            print(f"  old: {oldOff:>8d} (0x{oldOff:06X})  ->  new: {newOff:>8d} (0x{newOff:06X}){changed}")
+        print(f"  Total calls: {len(newOffsets)}")
+
+        print("\n========== STAGE.DIR OFFSETS FOUND ==========")
+        for key in stageTools.offsetDict.keys():
+            stageOff = int(stageTools.offsetDict.get(key)[0])
+            rawHex = stageTools.offsetDict.get(key)[1]
+            freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+            print(f"  stage.dir pos: {key:>8d} (0x{key:06X})  freq: {freq/100:.2f}  "
+                  f"radio offset: {stageOff:>8d} (0x{stageOff:06X})  raw hex: {rawHex}")
+
+        print("\n========== STAGE.DIR OFFSET REPLACEMENT AUDIT ==========")
 
     for key in stageTools.offsetDict.keys():
-        # We can move forward if there's a match. Might skip the initial few.
         stageOffset = int(stageTools.offsetDict.get(key)[0])
         newOffset = newOffsets.get(stageOffset)
         if newOffset == stageOffset:
             if debug:
-                print(f'{newOffset} = {stageOffset}')
+                print(f"  SKIP (unchanged): stage pos 0x{key:06X}  offset {stageOffset} (0x{stageOffset:06X})")
             continue
-        elif newOffset == None:
+        elif newOffset is None:
             print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
             continue
 
-        newOffsetHex = struct.pack('>L', newOffset)
-        stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
-        if debug:
-            print(newOffsetHex.hex())
-            print(stageBytes[key: key + 8].hex())
+        if INTEGRAL:
+            # Integral: write 2-byte big-endian block index to bytes[6:8]
+            if newOffset % 0x800 != 0:
+                print(f'ERROR! New offset {newOffset} (0x{newOffset:06X}) is not 0x800-aligned! Cannot convert to block index.')
+                continue
+            newBlock = newOffset // 0x800
+            if newBlock > 0xFFFF:
+                print(f'ERROR! Block index {newBlock} exceeds 2-byte max (65535)!')
+                continue
+            oldBytes = stageBytes[key + 6: key + 8]
+            stageBytes[key + 6: key + 8] = struct.pack('>H', newBlock)
+            newBytes = stageBytes[key + 6: key + 8]
+            if debug:
+                oldBlock = stageOffset // 0x800
+                freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+                print(f"  REPLACE: stage pos 0x{key:06X}  freq {freq/100:.2f}  "
+                      f"old block: {oldBlock:>5d} (off 0x{stageOffset:06X}) [{oldBytes.hex()}]  ->  "
+                      f"new block: {newBlock:>5d} (off 0x{newOffset:06X}) [{newBytes.hex()}]  "
+                      f"(2 bytes written to stageBytes[0x{key+6:06X}:0x{key+8:06X}])")
+        else:
+            # USA/JPN: write 3-byte big-endian byte offset to bytes[5:8]
+            newOffsetHex = struct.pack('>L', newOffset)
+            oldBytes = stageBytes[key + 5: key + 8]
+            stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
+            newBytes = stageBytes[key + 5: key + 8]
+            if debug:
+                freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+                print(f"  REPLACE: stage pos 0x{key:06X}  freq {freq/100:.2f}  "
+                      f"old: {stageOffset:>8d} (0x{stageOffset:06X}) [{oldBytes.hex()}]  ->  "
+                      f"new: {newOffset:>8d} (0x{newOffset:06X}) [{newBytes.hex()}]  "
+                      f"(3 bytes written to stageBytes[0x{key+5:06X}:0x{key+8:06X}])")
 
 def main(args=None):
     global subUseOriginalHex
@@ -475,8 +526,9 @@ def main(args=None):
     global debug
     global useDWidSaveB
     global USE_LONG
-    
-    
+    global INTEGRAL
+
+
     if args == None:
         args = parser.parse_args()
 
@@ -497,6 +549,13 @@ def main(args=None):
     if args.long:
         USE_LONG = True
 
+    if args.integral:
+        INTEGRAL = True
+        # Integral requires padding (calls must be 0x800-aligned)
+        if not args.pad:
+            print('WARNING: --integral implies --pad (0x800 alignment). Enabling automatically.')
+        args.pad = True
+
     if args.hex:
         subUseOriginalHex = True
         xmlFix.subUseOriginalHex = True
@@ -504,7 +563,7 @@ def main(args=None):
     if args.double:
         useDWidSaveB = True
         xmlFix.useDWSB = True
-    
+
     if args.debug:
         debug = True
         xmlFix.debug = True
@@ -513,8 +572,16 @@ def main(args=None):
     outputContent = b''
 
     for call in root:
+        if INTEGRAL:
+            # Align call start to 0x800 boundary
+            remainder = len(outputContent) % 0x800
+            if remainder != 0:
+                outputContent += b'\x00' * (0x800 - remainder)
+
         # Record the new offset created for the call
         newCallOffset = len(outputContent)
+        if INTEGRAL and newCallOffset % 0x800 != 0:
+            print(f'BUG: call at offset {newCallOffset} is not 0x800-aligned after padding!')
         newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
 
         attrs = call.attrib
@@ -553,11 +620,13 @@ def main(args=None):
         outputContent += callHeader + elemContent
         if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
-            if args.pad:
-                null_pad = int(attrs.get('nullPad', '0'))
-                if null_pad > 0:
-                    outputContent += b'\x00' * null_pad
-    
+
+    # Final alignment pad at end of file if integral
+    if INTEGRAL:
+        remainder = len(outputContent) % 0x800
+        if remainder != 0:
+            outputContent += b'\x00' * (0x800 - remainder)
+
     with open(outputFilename, 'wb') as radioOut:
         radioOut.write(outputContent)
 
@@ -565,9 +634,11 @@ def main(args=None):
         stageOutFile = args.stageOut
     else:
         stageOutFile = 'new-STAGE.DIR'
-    
+
     if args.stage:
         stageDirFilename = args.stage
+        stageTools.debug = debug
+        stageTools.INTEGRAL = INTEGRAL
         stageTools.init(stageDirFilename)
         stageBytes = bytearray(stageTools.stageData)
         fixStageDirOffsets()
@@ -588,7 +659,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
     parser.add_argument('-l', '--long', action='store_true', help="Write 4-byte size fields (USE_LONG=True) for use with the patched SLPM_862.47 executable.")
-    parser.add_argument('-P', '--pad', action='store_true', help="Re-insert inter-call null padding stored in nullPad XML attr (for Integral-format RADIO.DAT).")
+    parser.add_argument('-P', '--pad', action='store_true', help="Align each call to 0x800 boundaries (for Integral-format RADIO.DAT). Implied by --integral.")
+    parser.add_argument('-I', '--integral', action='store_true', help="Integral disc mode: 0x800-aligned calls, 2-byte block index in STAGE.DIR. Implies --pad.")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
     
     main()
