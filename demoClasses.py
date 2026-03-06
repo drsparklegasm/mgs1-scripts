@@ -111,16 +111,77 @@ class demo():
     
     def toBytes(self) -> bytes:
         """
-        Returns the demo in bytes format for writing to a file. 
+        Returns the demo in bytes format for writing to a file.
+        NOTE: Only works correctly if all segment types have working toBytes() implementations.
+        For partial updates (e.g. caption text only), prefer getModifiedBytes().
         """
         demoBytes = b''
-        for item in self.items:
+        for item in self.segments:  # was self.items (bug fix)
             demoBytes += item.toBytes()
         # Quick comparison to original length:
-        if demoBytes // 0x800 < self.lengthInBlocks:
+        if len(demoBytes) // 0x800 < self.lengthInBlocks:  # was demoBytes // 0x800 (bug fix)
             print(f'Demo is less than original length. Padding with null bytes')
-            demoBytes += bytes(1) * ( (self.lengthInBlocks * 0x800) - len(demoBytes) )
+            demoBytes += bytes((self.lengthInBlocks * 0x800) - len(demoBytes))
         return demoBytes
+
+    def getModifiedBytes(self, originalDemoBytes: bytes) -> bytes:
+        """
+        Patch-in-place: returns a copy of originalDemoBytes with only the captionChunk
+        sections replaced by their updated versions. All other data (audio, animation,
+        end-of-file marker) is preserved verbatim — matching the strategy used by the
+        CLI injector scripts (demoTextInjector / voxTextInjector).
+
+        Also applies the same length-alignment rules as those injectors.
+        """
+        # Build a list of captionChunks from parsed segments, in order
+        captionChunks = [s for s in self.segments if isinstance(s, captionChunk)]
+        captionIdx = 0
+
+        result = b''
+        offset = 0
+
+        while offset < len(originalDemoBytes):
+            chunkType = originalDemoBytes[offset]
+
+            # End-of-data marker — keep everything from here to EOF unchanged
+            if chunkType == 0xf0:
+                result += originalDemoBytes[offset:]
+                break
+
+            chunkLength = struct.unpack("<H", originalDemoBytes[offset + 1: offset + 3])[0]
+
+            if chunkType == 0x03 and captionIdx < len(captionChunks):
+                # Replace this caption block with the serialized (possibly modified) version
+                newChunkBytes = captionChunks[captionIdx].toBytes()
+                result += newChunkBytes
+                captionIdx += 1
+            else:
+                # Preserve chunk verbatim
+                result += originalDemoBytes[offset: offset + chunkLength]
+
+            offset += chunkLength
+
+        # ── Length alignment (mirrors injector logic) ──────────────────────
+        origLen = len(originalDemoBytes)
+        newLen = len(result)
+
+        if newLen == origLen:
+            pass  # Perfect — no adjustment needed
+        elif newLen < origLen:
+            result += bytes(origLen - newLen)  # Pad with zeros
+        else:
+            # New data is longer — try trimming trailing zeros
+            trailingZeros = result[origLen:]
+            if trailingZeros == bytes(len(trailingZeros)):
+                result = result[:origLen]
+            else:
+                # Legitimately larger; align to 0x800
+                remainder = len(result) % 0x800
+                if remainder != 0:
+                    result += bytes(0x800 - remainder)
+                print(f'Warning: demo grew from {origLen} to {len(result)} bytes. STAGE.DIR may need updating.')
+
+        return result
     
 class dialogueLine():
     """Class to represent a single line of dialogue in the demo file.
@@ -146,6 +207,23 @@ class dialogueLine():
         self.text= RD.translateJapaneseHex(data[16:], characterDict) 
         return
     
+    def toBytes(self) -> bytes:
+        """
+        Returns the subtitle content bytes WITHOUT the 4-byte length prefix.
+        The caller (captionChunk.toBytes) is responsible for prepending the length.
+        Layout: startFrame(4 LE) + displayFrames(4 LE) + buffer(4) + encoded_text + padding
+        """
+        textBytes = RD.encodeJapaneseHex(self.text)[0]
+        subBytes = struct.pack("<I", self.startFrame)
+        subBytes += struct.pack("<I", self.displayFrames)
+        subBytes += self.buffer  # 4 bytes — preserved from parse (or zeros for new entries)
+        subBytes += textBytes
+        # Pad to 4-byte boundary with null bytes
+        rem = len(subBytes) % 4
+        if rem != 0:
+            subBytes += bytes(4 - rem)
+        return subBytes
+
     def toElement(self):
         """Convert the object into an XML Element."""
         dialogue = self.text.replace("\x00", "")
@@ -187,6 +265,7 @@ class captionChunk():
             self.unknownChunk = data[18:self.headerLength + 4] # This chunk is probably lip sync data.
             # At this point we grab kanji graphics and make a dict. Keep an exception for no graphics data.
             graphicsData = data[self.dialogueLength + 4:self.length] # Safer to limit the length of the data.
+            self._graphicsData = graphicsData  # Store raw bytes for round-trip serialization
             if len(graphicsData) > 0:
                 self.kanjiDict = RD.makeCallDictionary("demo", graphicsData)
             else:
@@ -205,6 +284,7 @@ class captionChunk():
             self.dialogueLength = int(element.get("dialogueLength"))
             self.unknownChunk = bytes.fromhex(element.find("unknownChunk").text.replace("0x", ""))
             
+            self._graphicsData = b''  # No raw bytes available from XML; English text needs none
             kanjiDict_elem = element.find("kanjiDict")
             if kanjiDict_elem is not None:
                 self.kanjiDict = {item.get("key"): item.text for item in kanjiDict_elem.findall("item")}
@@ -266,10 +346,48 @@ class captionChunk():
     
     def toBytes(self) -> bytes:
         """
-        Returns binary of the caption section
+        Returns binary of the caption section.
+        Mirrors the logic used in voxTextInjector/demoTextInjector genSubBlock:
+          - All subtitles except the last get a 4-byte LE length prefix
+          - The last subtitle gets a 4-byte zero prefix (the "final" marker)
+        The header is reconstructed preserving unknownChunk; only dialogueLength is updated.
         """
-        # TODO: Write this section
-        pass
+        if not self.subtitles:
+            return b''
+
+        # ── Build subtitle block ───────────────────────────────────────────
+        subBlock = b''
+        for sub in self.subtitles[:-1]:
+            subBytes = sub.toBytes()
+            subBlock += struct.pack("<I", len(subBytes) + 4) + subBytes
+        # Final subtitle — zero-length marker
+        subBlock += bytes(4) + self.subtitles[-1].toBytes()
+
+        # ── Preserved graphics data (kanji/Japanese chars; empty for English) ─
+        graphicsBytes = getattr(self, '_graphicsData', b'')
+
+        # ── Recalculate lengths ────────────────────────────────────────────
+        # dialogueLength = headerLength + len(subBlock)  (offsets relative to byte 4)
+        newDialogueLength = self.headerLength + len(subBlock)
+        # Total chunk length includes the 4-byte prefix
+        newTotalLength = 4 + newDialogueLength + len(graphicsBytes)
+
+        # ── Reconstruct header ─────────────────────────────────────────────
+        result = struct.pack("<B", self.magic)           # 1 byte  offset 0
+        result += struct.pack("<H", newTotalLength)      # 2 bytes offset 1
+        result += b'\x00'                                # 1 byte  offset 3
+        result += struct.pack("<I", self.startFrame)     # 4 bytes offset 4
+        result += struct.pack("<I", self.endFrame)       # 4 bytes offset 8
+        result += self.unknown                           # 2 bytes offset 12
+        result += struct.pack("<H", self.headerLength)   # 2 bytes offset 14 (preserved)
+        result += struct.pack("<H", newDialogueLength)   # 2 bytes offset 16
+        result += self.unknownChunk                      # variable offset 18+
+
+        # ── Payload ────────────────────────────────────────────────────────
+        result += subBlock
+        result += graphicsBytes
+
+        return result
     
     def __str__(self):
         return f"Caption Chunk: {self.magic} Length: {self.length} Start Frame: {self.startFrame} End Frame: {self.endFrame} Unknown: {self.unknown} Header Length: {self.headerLength} Dialogue Length: {self.dialogueLength} Unknown Chunk: {self.unknownChunk} Subtitles: {len(self.subtitles)}"
@@ -304,10 +422,10 @@ class audioChunk():
         return f"Audio Chunk: {self.magic} Length: {self.length}"
     
     def toBytes(self):
-        binaryData = self.magic.to_bytes(1) + self.length.to_bytes(2, 'little') + b"\x00"
-        binaryData +=  + self.content
+        binaryData = self.magic.to_bytes(1, 'little') + self.length.to_bytes(2, 'little') + b"\x00"
+        binaryData += self.content
         return binaryData
-    
+
 class demoChunk():
     """Class to represent demo chunk (animation data) found in a .dmo file."""
     magic: int
@@ -334,8 +452,8 @@ class demoChunk():
         return f"Demo Chunk: {self.magic} Length: {self.length} Content Length: {len(self.content)}"
     
     def toBytes(self):
-        binaryData = self.magic.to_bytes(1) + self.length.to_bytes(2, 'little') + b"\x00"
-        binaryData +=  + self.content
+        binaryData = self.magic.to_bytes(1, 'little') + self.length.to_bytes(2, 'little') + b"\x00"
+        binaryData += self.content
         return binaryData
 
 class fileHeader():
