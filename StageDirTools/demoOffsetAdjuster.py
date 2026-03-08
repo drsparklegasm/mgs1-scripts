@@ -28,10 +28,16 @@ def importOffsets(filename: str) -> dict:
     return offsets
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Adjust DEMO offsets in STAGE.DIR")
+    parser.add_argument("-f", "--force", action="store_true", help="Skip interactive confirmation")
+    args = parser.parse_args()
+
     # ADDING A FINAL WARNING THAT THE SCRIPT IS DESTRUCTIVE!
-    confirm = input("WARNING!!! FOR NOW THIS SCRIPT IS DESTRUCTIVE!!!!\nChanges to the STAGE.DIR file selected will be\nPERMENANT as we overwrite the original file.\n\nType \"CONFIRM\" to continue!\n> ")
-    if confirm != "CONFIRM":
-        exit(0)
+    if not args.force:
+        confirm = input("WARNING!!! FOR NOW THIS SCRIPT IS DESTRUCTIVE!!!!\nChanges to the STAGE.DIR file selected will be\nPERMENANT as we overwrite the original file.\n\nType \"CONFIRM\" to continue!\n> ")
+        if confirm != "CONFIRM":
+            exit(0)
     
     # First we need a dictionary of all stages and their new offsets.
     origOffsets = importOffsets(oldOffsetFile)
