@@ -24,7 +24,7 @@ debug = False
 # ROUND_TRIP: when True, FF01 uses original textHex and FF04 uses verbatim content passthrough.
 # Set automatically: True when recompiling as-extracted (no --prepare); False in translation
 # mode (--prepare re-encodes text, so getSubtitleBytes must re-encode too).
-ROUND_TRIP = False
+ROUND_TRIP = True
 
 # ==== Dependencies ==== #
 
@@ -42,6 +42,7 @@ useDWidSaveB = False
 # Format flags
 USE_LONG = False        # Set True when targeting the patched executable (4-byte size fields)
 INTEGRAL = False        # Set True for Integral disc: 0x800-aligned calls, 2-byte block index in stage dir
+PAD = False             # Set True to align each call to 0x800 boundaries (set by --pad or --integral)
 currentCallDict = ''    # Graphics bytes dict for the current call; updated in main loop
 
 def createLength(payload_size: int) -> bytes:
@@ -80,7 +81,7 @@ def createBinary(filename: str, binaryData: bytes):
 # ==== Byte Encoding Defs ==== #
 
 def getFreqbytes(freq: str) -> bytes:
-    frequency = int(float(freq) * 100)
+    frequency = round(float(freq) * 100)
     freqBytes = struct.pack('>H', frequency)
     return freqBytes
 
@@ -532,6 +533,7 @@ def main(args=None):
     global useDWidSaveB
     global USE_LONG
     global INTEGRAL
+    global PAD
 
 
     if args == None:
@@ -554,12 +556,15 @@ def main(args=None):
     if args.long:
         USE_LONG = True
 
+    if args.pad:
+        PAD = True
+
     if args.integral:
         INTEGRAL = True
         # Integral requires padding (calls must be 0x800-aligned)
-        if not args.pad:
+        if not PAD:
             print('WARNING: --integral implies --pad (0x800 alignment). Enabling automatically.')
-        args.pad = True
+        PAD = True
 
     if args.hex:
         subUseOriginalHex = True
@@ -577,7 +582,7 @@ def main(args=None):
     outputContent = b''
 
     for call in root:
-        if INTEGRAL:
+        if PAD:
             # Align call start to 0x800 boundary
             remainder = len(outputContent) % 0x800
             if remainder != 0:
@@ -585,7 +590,7 @@ def main(args=None):
 
         # Record the new offset created for the call
         newCallOffset = len(outputContent)
-        if INTEGRAL and newCallOffset % 0x800 != 0:
+        if PAD and newCallOffset % 0x800 != 0:
             print(f'BUG: call at offset {newCallOffset} is not 0x800-aligned after padding!')
         newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
 
@@ -620,8 +625,8 @@ def main(args=None):
         if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
 
-    # Final alignment pad at end of file if integral
-    if INTEGRAL:
+    # Final alignment pad at end of file if padded
+    if PAD:
         remainder = len(outputContent) % 0x800
         if remainder != 0:
             outputContent += b'\x00' * (0x800 - remainder)
