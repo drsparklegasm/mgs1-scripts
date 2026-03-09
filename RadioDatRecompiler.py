@@ -560,7 +560,7 @@ def main(args=None):
     if args.pad:
         PAD = True
     
-    if args.round-trip:
+    if args.roundtrip:
         ROUND_TRIP = True
 
     if args.integral:
@@ -670,6 +670,6 @@ if __name__ == '__main__':
     parser.add_argument('-P', '--pad', action='store_true', help="Align each call to 0x800 boundaries (for Integral-format RADIO.DAT). Implied by --integral.")
     parser.add_argument('-I', '--integral', action='store_true', help="Integral disc mode: 0x800-aligned calls, 2-byte block index in STAGE.DIR. Implies --pad.")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
-    parser.add_argument('-R', '--round-trip', nargs="?", type=str, help="For comparing recompilation checksums. All original text hexes are used!")
+    parser.add_argument('-R', '--roundtrip', action='store_true', help="For comparing recompilation checksums. All original text hexes are used!")
     
     main()
