@@ -24,7 +24,7 @@ debug = False
 # ROUND_TRIP: when True, FF01 uses original textHex and FF04 uses verbatim content passthrough.
 # Set automatically: True when recompiling as-extracted (no --prepare); False in translation
 # mode (--prepare re-encodes text, so getSubtitleBytes must re-encode too).
-ROUND_TRIP = True
+ROUND_TRIP = False
 
 # ==== Dependencies ==== #
 
@@ -54,10 +54,15 @@ def createLength(payload_size: int) -> bytes:
     if USE_LONG:
         return struct.pack('>L', 4 + payload_size)
     else:
-        return struct.pack('>H', 2 + payload_size)
+        try:
+            return struct.pack('>H', 2 + payload_size)
+        except struct.error as a:
+            print(f"[createLength] Size is too large! {a}")
+            return bytes.fromhex('FFFF')  # Return max size
+
 
 newOffsets = {}
-stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
+stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR' # Deprecated
 
 # ==== DEFS ==== #
 
