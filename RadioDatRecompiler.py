@@ -24,7 +24,7 @@ debug = False
 # ROUND_TRIP: when True, FF01 uses original textHex and FF04 uses verbatim content passthrough.
 # Set automatically: True when recompiling as-extracted (no --prepare); False in translation
 # mode (--prepare re-encodes text, so getSubtitleBytes must re-encode too).
-ROUND_TRIP = True
+ROUND_TRIP = False
 
 # ==== Dependencies ==== #
 
@@ -534,6 +534,7 @@ def main(args=None):
     global USE_LONG
     global INTEGRAL
     global PAD
+    global ROUND_TRIP
 
 
     if args == None:
@@ -558,6 +559,9 @@ def main(args=None):
 
     if args.pad:
         PAD = True
+    
+    if args.round-trip:
+        ROUND_TRIP = True
 
     if args.integral:
         INTEGRAL = True
@@ -666,5 +670,6 @@ if __name__ == '__main__':
     parser.add_argument('-P', '--pad', action='store_true', help="Align each call to 0x800 boundaries (for Integral-format RADIO.DAT). Implied by --integral.")
     parser.add_argument('-I', '--integral', action='store_true', help="Integral disc mode: 0x800-aligned calls, 2-byte block index in STAGE.DIR. Implies --pad.")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
+    parser.add_argument('-R', '--round-trip', nargs="?", type=str, help="For comparing recompilation checksums. All original text hexes are used!")
     
     main()
