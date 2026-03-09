@@ -13,11 +13,18 @@ To do list:
 TODO: ~~Element checker~~ I think this is done
 TODO: Need logic to re-insert b'\x80' before each punctuation mark that needs it (new lines and japanese supertext pairs {a, b})
 TODO: Calculate double byte length characters for length in subtitles
+TODO: Remove 'content' attribute passthrough from all elements (VOX_CUES, ANI_FACE, ADD_FREQ, etc.) —
+      content is retained in the XML for reference/diffing but all sizes should be recalculated from
+      labeled fields at recompile time. Affects both extractor (RadioDatTools.py) and recompiler.
 
 """
 
 stageBytes: bytearray = b''
 debug = False
+# ROUND_TRIP: when True, FF01 uses original textHex and FF04 uses verbatim content passthrough.
+# Set automatically: True when recompiling as-extracted (no --prepare); False in translation
+# mode (--prepare re-encodes text, so getSubtitleBytes must re-encode too).
+ROUND_TRIP = True
 
 # ==== Dependencies ==== #
 
@@ -32,13 +39,37 @@ import xmlModifierTools as xmlFix
 subUseOriginalHex = False
 useDWidSaveB = False
 
+# Format flags
+USE_LONG = False        # Set True when targeting the patched executable (4-byte size fields)
+INTEGRAL = False        # Set True for Integral disc: 0x800-aligned calls, 2-byte block index in stage dir
+PAD = False             # Set True to align each call to 0x800 boundaries (set by --pad or --integral)
+currentCallDict = ''    # Graphics bytes dict for the current call; updated in main loop
+
+def createLength(payload_size: int) -> bytes:
+    """
+    Returns the binary size field bytes for a given payload size.
+    The stored value includes the size field itself:
+      USE_LONG=False → '>H'  value = 2 + payload_size  (original binary)
+      USE_LONG=True  → '>L'  value = 4 + payload_size  (patched binary)
+    """
+    if USE_LONG:
+        return struct.pack('>L', 4 + payload_size)
+    else:
+        try:
+            return struct.pack('>H', 2 + payload_size)
+        except struct.error as a:
+            print(f"[createLength] Size is too large! {a}")
+            return bytes.fromhex('FFFF')  # Return max size
+
+
 newOffsets = {}
-stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR'
+stageDirFilename = 'radioDatFiles/STAGE-jpn-d1.DIR' # Deprecated
 
 # ==== DEFS ==== #
 
 # Large steps here
 def realignOffsets():
+    # TODO: Wtf is this?
     print(f'Offset integrity reviewed and done')
 
 def createBinary(filename: str, binaryData: bytes):
@@ -50,7 +81,7 @@ def createBinary(filename: str, binaryData: bytes):
 # ==== Byte Encoding Defs ==== #
 
 def getFreqbytes(freq: str) -> bytes:
-    frequency = int(float(freq) * 100)
+    frequency = round(float(freq) * 100)
     freqBytes = struct.pack('>H', frequency)
     return freqBytes
 
@@ -72,95 +103,90 @@ def getCallHeaderBytes(call: ET.Element) -> bytes:
 
 def getSubtitleBytes(subtitle: ET.Element) -> bytes:
     """
-    Returns the hex for an entire subtitle command. Starts with FF01 and always ends with one null byte (\x00)
-    It should be exclusively used within the getVoxBytes() def.
+    Returns the bytes for a SUBTITLE command (FF 01).
+    ROUND_TRIP=True (default): uses original textHex verbatim — byte-for-byte accurate.
+    ROUND_TRIP=False (--prepare / translation mode): re-encodes text via encodeJapaneseHex;
+      output may differ from the original where multiple encodings are valid.
     """
-    global subUseOriginalHex
+    global currentCallDict
 
     attrs = subtitle.attrib
-    subtitleBytes = bytes.fromhex('ff01')
-    lengthBytes = struct.pack('>H', int(attrs.get("length")) - 2) # TODO: Check this is equal to what we intend!
     face = bytes.fromhex(attrs.get("face"))
     anim = bytes.fromhex(attrs.get("anim"))
     unk3 = bytes.fromhex(attrs.get("unk3"))
 
-    text = attrs.get("text").encode('utf-8')
-    if "newTextHex" in attrs.keys():
-        text = bytes.fromhex(attrs.get('newTextHex'))
-    # textBytes = codecs.decode(attrs.get("text"), 'unicode_escape')
-    text = text.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e')) # Replace \r\n with in-game byte codes for new lines
-    
-    if subUseOriginalHex:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + bytes.fromhex(attrs.get('textHex')) 
+    if ROUND_TRIP:
+        text_bytes = bytes.fromhex(attrs.get('textHex'))
     else:
-        subtitleBytes = subtitleBytes + lengthBytes + face + anim + unk3 + text + bytes.fromhex('00')
-        
-    return subtitleBytes
+        text_bytes, _ = RD.encodeJapaneseHex(attrs.get('text'), currentCallDict, useDoubleLength=useDWidSaveB)
+        # Restore in-game newline bytes if the text string contains literal \r\n escapes
+        text_bytes = text_bytes.replace(bytes.fromhex('5c725c6e'), bytes.fromhex('8023804e'))
+        text_bytes += b'\x00'
+
+    payload = face + anim + unk3 + text_bytes # Null added above
+    total = b'\xff\x01' + createLength(len(payload)) + payload
+    return total
 
 def getVoxBytes(vox: ET.Element) -> bytes:
     """
-    Returns the hex for a VOX container (FF02). 
-    Because it is a container that contains Subtitle elements, we will compile that hex here.
+    Returns the bytes for a VOX_CUES container (FF 02).
+    Structure: FF02 [outer_size] [vox_code 4B] 80 [inner_size] [SUBTITLE children...] 00
+    Sizes are recalculated from actual content; content attr is preserved in XML for reference only.
     """
     attrs = vox.attrib
-    binary = bytes.fromhex(attrs.get('content'))
+    vox_code = bytes.fromhex(attrs.get('voxCode'))
 
+    inner = b''
     for child in vox:
-        # print(child.tag)
-        binary += handleElement(child)
-    
-    binary += bytes.fromhex('00')
-    # there's always an extra null here.
-    # print(subsContent.hex())
-    """
-    length = int(attrs.get("lengthB")) # TODO: Check this is equal to what we intend!
-    headerLength = struct.unpack(">H", header[-2:len(header)])[0]
-    """
-    return binary
+        inner += handleElement(child)
+    inner += b'\x00'
 
-def getAnimBytes(mus: ET.Element) -> bytes: 
-    """
-    Animation hex command 0xFF03
-    """
-    attrs = mus.attrib
+    inner_block = b'\x80' + createLength(len(inner)) + inner
+    payload = vox_code + inner_block
+    return b'\xff\x02' + createLength(len(payload)) + payload
 
-    animBytes = bytes.fromhex('FF03')
-    length = int(attrs.get('length')) - 2
+def getAnimBytes(elem: ET.Element) -> bytes:
+    """
+    ANI_FACE command (FF 03): faceCharaCode + faceImageName + faceUnk, each 2 bytes (read_word).
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    attrs = elem.attrib
     face = bytes.fromhex(attrs.get('face'))
     anim = bytes.fromhex(attrs.get('anim'))
     buff = bytes.fromhex(attrs.get('buff'))
-    
-    if length == 8:
-        animBytes =  animBytes + struct.pack('>H', length) + face + anim + buff
-    
-    return animBytes
+    payload = face + anim + buff 
+    return b'\xff\x03' + createLength(len(payload)) + payload
 
 def getFreqAddBytes(elem: ET.Element) -> bytes:
     """
-    freq-add hex command 0xFF04
+    ADD_FREQ command (FF 04): adds a contact to codec memory.
+    Payload: contact_freq (2B big-endian short) + name (null-terminated, game encoding).
+    Size recalculated via createLength; content attr retained in XML for reference only.
     """
     attrs = elem.attrib
-
-    elemBytes = bytes.fromhex('FF04')
-    length = int(attrs.get('length')) - 2
-    
     freq = getFreqbytes(attrs.get('freq'))
-    name = attrs.get('name').encode('utf8')
-    
-    if length == 8:
-        elemBytes = elemBytes + struct.pack('>H', length) + freq + name + b'\x00'
-    
-    return elemBytes
+    name_bytes, _ = RD.encodeJapaneseHex(attrs.get('name'), "")
+    payload = freq + name_bytes + b'\x00'
+    return b'\xff\x04' + createLength(len(payload)) + payload
 
-def getContentBytes(elem: ET.Element) -> bytes: 
+def getContentBytes(elem: ET.Element) -> bytes:
     """
-    This one is to get binary when we specifically mark a 'content' field. Full list of what this works for:
-    FF04, FF06, FF08
+    FF06 (MUS_CUES), FF08 (SAVEGAME), FF40 (EVAL_CMD), and ADD_FREQ in ROUND_TRIP mode —
+    opaque blobs, replayed verbatim.
+    When USE_LONG=False: returned as-is.
+    When USE_LONG=True: rewrites the outer size field from 2-byte to 4-byte.
+      blob layout: [FF(1)] [cmd(1)] [outer_sz(2)] [payload...]
     """
     attrs = elem.attrib
-    elemBytes = bytes.fromhex(attrs.get('content'))
-
-    return elemBytes
+    blob = bytes.fromhex(attrs.get('content'))
+    if not USE_LONG:
+        return blob
+    # Rewrite 2-byte outer size → 4-byte.
+    cmd_byte = blob[1:2]
+    old_sz = struct.unpack('>H', blob[2:4])[0]
+    payload_len = old_sz - 2
+    payload = blob[4:4 + payload_len]
+    return b'\xff' + cmd_byte + createLength(payload_len) + payload
 
 def getContainerContentBytes(elem: ET.Element) -> bytes:
     """
@@ -183,6 +209,152 @@ def getAddFreq(elem: ET.Element) -> bytes:
     binary += content.hex()
 
     return binary
+
+def getMemSaveBytes(elem: ET.Element) -> bytes:
+    """
+    MEM_SAVE command (FF 05): save-game slot selector.
+    Payload: 4 unknown bytes (extracted from content attr) + SAVE_OPT children + 0x00.
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    attrs = elem.attrib
+    unk4 = bytes.fromhex(attrs.get('content'))[4:8]  # bytes after FF 05 + 2B size field
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    payload = unk4 + inner
+    return b'\xff\x05' + createLength(len(payload)) + payload
+
+def getAskUserBytes(elem: ET.Element) -> bytes:
+    """
+    ASK_USER command (FF 07): presents a yes/no prompt to the player.
+    Payload: USR_OPTN children + 0x00.
+    Size is recalculated via createLength; content attr retained in XML for reference only.
+    """
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x07' + createLength(len(inner)) + inner
+
+def getIfBytes(elem: ET.Element) -> bytes:
+    """
+    IF_CHECK command (FF 10): conditional branch.
+
+    Binary payload layout (what radio_if_80047514 receives):
+        [GCL condition — opaque, variable length]
+        [0x80] [inner_sz 2B] [THEN commands...] [0x00]   ← THEN_DO block
+        [FF 12 cond 0x80 sz THEN2 0x00]...               ← zero or more ELSE_IFS
+        [FF 11 0x80 sz ELSE 0x00]                         ← optional ELSE
+        [0x00]                                            ← "no more branches" terminator
+                                                            always present; radio_if checks
+                                                            *pScript after skipping each block
+
+    XML children: THEN_DO (synthetic, holds THEN commands), then ELSE_IFS / ELSE siblings.
+    Content attr: [FF 10][outer_sz 2B][GCL cond...][0x80][inner_sz 2B] — sizes are stale.
+    Condition bytes extracted as content[4:-3]; 0x80+inner_sz suffix rebuilt via createLength.
+    """
+    attrs = elem.attrib
+    content_bytes = bytes.fromhex(attrs.get('content'))
+    # content layout: [FF(1)] [10(1)] [outer_sz(2)] [cond(var)] [0x80(1)] [inner_sz(2)]
+    cond_bytes = content_bytes[4:-3]  # strip FF+10+outer_sz from front, 0x80+inner_sz from back
+
+    then_inner = b''
+    chain_bytes = b''  # ELSE_IFS and ELSE within the IF payload
+    for child in elem:
+        if child.tag == 'THEN_DO':
+            for gc in child:
+                then_inner += handleElement(gc)
+            then_inner += b'\x00'  # null terminator for the THEN RDCODE_SCRIPT block
+        else:
+            chain_bytes += handleElement(child)
+    chain_bytes += b'\x00'  # "no more branches" terminator (always present; see above)
+
+    inner_block = b'\x80' + createLength(len(then_inner)) + then_inner
+    payload = cond_bytes + inner_block + chain_bytes
+    return b'\xff\x10' + createLength(len(payload)) + payload
+
+def getElseBytes(elem: ET.Element) -> bytes:
+    """
+    ELSE command (FF 11): unconditional else branch within an IF chain.
+
+    No outer size field — radio_if_80047514 reads FF+11 directly, advances 2 bytes,
+    then calls exec_block with pScript pointing at the 0x80 inner script marker.
+
+    Binary layout (what exec_block receives):
+        [0x80] [inner_sz 2B] [ELSE commands...] [0x00]
+
+    Content attr: [FF 11][0x80][inner_sz 2B] — inner size is stale; rebuilt here.
+    """
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x11' + b'\x80' + createLength(len(inner)) + inner
+
+def getElseIfBytes(elem: ET.Element) -> bytes:
+    """
+    ELSE_IFS command (FF 12): conditional else-if branch within an IF chain.
+
+    No outer size field — radio_if_80047514 advances past FF+12, then re-enters
+    the condition-evaluation loop. GCL condition is consumed by radio_getNextValue,
+    which advances pScript to the 0x80 inner script marker.
+
+    Binary layout (what radio_if_80047514 re-evaluates):
+        [GCL condition — opaque, variable length]
+        [0x80] [inner_sz 2B] [THEN commands...] [0x00]
+
+    XML children: the THEN commands directly (no THEN_DO wrapper, unlike IF_CHECK).
+    Content attr: [FF 12][GCL cond...][0x80][inner_sz 2B] — inner size is stale.
+    Condition bytes extracted as content[2:-3]; 0x80+inner_sz rebuilt via createLength.
+    """
+    attrs = elem.attrib
+    content_bytes = bytes.fromhex(attrs.get('content'))
+    # content layout: [FF(1)] [12(1)] [cond(var)] [0x80(1)] [inner_sz(2)]
+    cond_bytes = content_bytes[2:-3]  # strip FF+12 from front, 0x80+inner_sz from back
+
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\xff\x12' + cond_bytes + b'\x80' + createLength(len(inner)) + inner
+
+def getRndSwitchBytes(elem: ET.Element) -> bytes:
+    """
+    RND_SWCH command (FF 30): weighted random branch selector.
+    Binary: [FF 30][outer_sz 2B][totalWeight 2B][RND_OPTN entries...][0x00]
+
+    totalWeight is recomputed as the sum of all child RND_OPTN weights, so it
+    stays correct even when options are added, removed, or reweighted.
+    The stored 'totalWeight' XML attribute is informational only at recompile time.
+
+    TODO: Add a validation warning when the stored 'totalWeight' attr does not match
+    the computed sum, so edits that accidentally create an inconsistent XML are caught
+    early (before the binary is written). Only needed before modifying RND_OPTN entries.
+    """
+    total_weight = 0
+    options_bytes = b''
+    for child in elem:
+        options_bytes += handleElement(child)
+        if child.tag == 'RND_OPTN':
+            total_weight += int(child.attrib.get('weight', 0))
+    options_bytes += b'\x00'  # RDCODE_NULL terminator
+
+    payload = struct.pack('>H', total_weight) + options_bytes
+    return b'\xff\x30' + createLength(len(payload)) + payload
+
+def getRndOptnBytes(elem: ET.Element) -> bytes:
+    """
+    RND_OPTN entry (0x31): one weighted option within a RND_SWCH.
+    Binary: [31][weight 2B][0x80][inner_sz 2B][commands...][0x00]
+    No 0xFF prefix. Inner size recalculated via createLength().
+    """
+    weight = int(elem.attrib.get('weight', 0))
+    inner = b''
+    for child in elem:
+        inner += handleElement(child)
+    inner += b'\x00'
+    return b'\x31' + struct.pack('>H', weight) + b'\x80' + createLength(len(inner)) + inner
 
 def getGoblinBytes(elem: ET.Element) -> bytes:
     """
@@ -224,6 +396,8 @@ def handleElement(elem: ET.Element) -> bytes:
     """
     Takes an element and returns the bytes for that element and all subelements. 
     """
+    global ROUND_TRIP
+    
     binary = b''
     attrs = elem.attrib
     match elem.tag:
@@ -235,62 +409,140 @@ def handleElement(elem: ET.Element) -> bytes:
             binary = getVoxBytes(elem)
             """case 'ADD_FREQ':
             binary = getFreqAddBytes(elem)"""
-        case 'ANI_FACE' | 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD' | 'ADD_FREQ':  # ADD_FREQ temp as a check since we set the content.
-            # ff03-08, FF40
+        case 'ANI_FACE':
+            # ff03
+            binary = getAnimBytes(elem)
+        case 'ADD_FREQ':
+            # ff04
+            if ROUND_TRIP:
+                binary = getContentBytes(elem) # For testing checksums, because dictionary issues
+            else:
+                binary = getFreqAddBytes(elem) 
+        case 'MEM_SAVE':
+            # ff05
+            binary = getMemSaveBytes(elem)
+        case 'MUS_CUES' | 'SAVEGAME' | 'EVAL_CMD':
+            # ff06, ff08, ff40 — opaque content blobs, no translatable children
             binary = getContentBytes(elem)
+        case 'ASK_USER':
+            # ff07
+            binary = getAskUserBytes(elem)
         case 'USR_OPTN' | 'SAVE_OPT':
             binary = getGoblinBytes(elem)
-        case 'IF_CHECK' | 'ELSE' | 'ELSE_IFS' | 'RND_SWCH' | 'RND_OPTN' | 'MEM_SAVE' | 'ASK_USER': 
-            binary = bytes.fromhex(attrs.get('content'))
-            binary += getContainerContentBytes(elem)
-            # Troubleshooting
-            """print(attrs.get('length'))
-            print(len(binary))"""
-        case 'THEN_DO': 
+        case 'IF_CHECK':
+            # ff10
+            binary = getIfBytes(elem)
+        case 'ELSE':
+            # ff11
+            binary = getElseBytes(elem)
+        case 'ELSE_IFS':
+            # ff12
+            binary = getElseIfBytes(elem)
+        case 'RND_SWCH':
+            # ff30
+            binary = getRndSwitchBytes(elem)
+        case 'RND_OPTN':
+            # 0x31 (no 0xFF prefix)
+            binary = getRndOptnBytes(elem)
+        case 'THEN_DO':
             binary += getContainerContentBytes(elem)
     
     return binary
 
 def fixStageDirOffsets():
     """
-    Takes the finalized offset dict and uses the new values to overwrite values in stage.dir. 
+    Takes the finalized offset dict and uses the new values to overwrite values in stage.dir.
     Make sure you've backed up the original stage.dir file!
+
+    Two formats:
+      INTEGRAL=True:  2-byte big-endian block index at bytes[6:8], offset = block * 0x800
+      INTEGRAL=False: 3-byte big-endian byte offset at bytes[5:8] (USA/JPN)
     """
-    global stageBytes 
+    global stageBytes
     global newOffsets
     global debug
+    global INTEGRAL
+
+    if debug:
+        mode = "INTEGRAL (2-byte block index at [6:8])" if INTEGRAL else "USA/JPN (3-byte offset at [5:8])"
+        print(f"\n========== STAGE.DIR MODE: {mode} ==========")
+
+        print("\n========== RADIO CALL OFFSET MAP (old -> new) ==========")
+        for oldOff, newOff in sorted(newOffsets.items()):
+            changed = " *CHANGED*" if oldOff != newOff else ""
+            print(f"  old: {oldOff:>8d} (0x{oldOff:06X})  ->  new: {newOff:>8d} (0x{newOff:06X}){changed}")
+        print(f"  Total calls: {len(newOffsets)}")
+
+        print("\n========== STAGE.DIR OFFSETS FOUND ==========")
+        for key in stageTools.offsetDict.keys():
+            stageOff = int(stageTools.offsetDict.get(key)[0])
+            rawHex = stageTools.offsetDict.get(key)[1]
+            freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+            print(f"  stage.dir pos: {key:>8d} (0x{key:06X})  freq: {freq/100:.2f}  "
+                  f"radio offset: {stageOff:>8d} (0x{stageOff:06X})  raw hex: {rawHex}")
+
+        print("\n========== STAGE.DIR OFFSET REPLACEMENT AUDIT ==========")
 
     for key in stageTools.offsetDict.keys():
-        # We can move forward if there's a match. Might skip the initial few.
         stageOffset = int(stageTools.offsetDict.get(key)[0])
         newOffset = newOffsets.get(stageOffset)
         if newOffset == stageOffset:
             if debug:
-                print(f'{newOffset} = {stageOffset}')
+                print(f"  SKIP (unchanged): stage pos 0x{key:06X}  offset {stageOffset} (0x{stageOffset:06X})")
             continue
-        elif newOffset == None:
+        elif newOffset is None:
             print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
             continue
 
-        newOffsetHex = struct.pack('>L', newOffset)
-        stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
-        if debug:
-            print(newOffsetHex.hex())
-            print(stageBytes[key: key + 8].hex())
+        if INTEGRAL:
+            # Integral: write 2-byte big-endian block index to bytes[6:8]
+            if newOffset % 0x800 != 0:
+                print(f'ERROR! New offset {newOffset} (0x{newOffset:06X}) is not 0x800-aligned! Cannot convert to block index.')
+                continue
+            newBlock = newOffset // 0x800
+            if newBlock > 0xFFFF:
+                print(f'ERROR! Block index {newBlock} exceeds 2-byte max (65535)!')
+                continue
+            oldBytes = stageBytes[key + 6: key + 8]
+            stageBytes[key + 6: key + 8] = struct.pack('>H', newBlock)
+            newBytes = stageBytes[key + 6: key + 8]
+            if debug:
+                oldBlock = stageOffset // 0x800
+                freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+                print(f"  REPLACE: stage pos 0x{key:06X}  freq {freq/100:.2f}  "
+                      f"old block: {oldBlock:>5d} (off 0x{stageOffset:06X}) [{oldBytes.hex()}]  ->  "
+                      f"new block: {newBlock:>5d} (off 0x{newOffset:06X}) [{newBytes.hex()}]  "
+                      f"(2 bytes written to stageBytes[0x{key+6:06X}:0x{key+8:06X}])")
+        else:
+            # USA/JPN: write 3-byte big-endian byte offset to bytes[5:8]
+            newOffsetHex = struct.pack('>L', newOffset)
+            oldBytes = stageBytes[key + 5: key + 8]
+            stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
+            newBytes = stageBytes[key + 5: key + 8]
+            if debug:
+                freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
+                print(f"  REPLACE: stage pos 0x{key:06X}  freq {freq/100:.2f}  "
+                      f"old: {stageOffset:>8d} (0x{stageOffset:06X}) [{oldBytes.hex()}]  ->  "
+                      f"new: {newOffset:>8d} (0x{newOffset:06X}) [{newBytes.hex()}]  "
+                      f"(3 bytes written to stageBytes[0x{key+5:06X}:0x{key+8:06X}])")
 
 def main(args=None):
-    global subUseOriginalHex 
+    global subUseOriginalHex
     global stageBytes
     global debug
     global useDWidSaveB
-    
-    
+    global USE_LONG
+    global INTEGRAL
+    global PAD
+
+
     if args == None:
         args = parser.parse_args()
 
     # Read new radio source
     if args.prepare:
         print(f'Preparing XML by repairing lengths...')
+        ROUND_TRIP = False  # re-encode from text attr in translation mode
         root = xmlFix.init(args.input)
     else:
         radioSource = ET.parse(args.input)
@@ -301,14 +553,27 @@ def main(args=None):
     else:
         outputFilename = 'new-' + args.input.split("/")[-1].split(".")[0] + '.bin'
 
+    if args.long:
+        USE_LONG = True
+
+    if args.pad:
+        PAD = True
+
+    if args.integral:
+        INTEGRAL = True
+        # Integral requires padding (calls must be 0x800-aligned)
+        if not PAD:
+            print('WARNING: --integral implies --pad (0x800 alignment). Enabling automatically.')
+        PAD = True
+
     if args.hex:
         subUseOriginalHex = True
         xmlFix.subUseOriginalHex = True
-        
+
     if args.double:
         useDWidSaveB = True
         xmlFix.useDWSB = True
-    
+
     if args.debug:
         debug = True
         xmlFix.debug = True
@@ -317,16 +582,22 @@ def main(args=None):
     outputContent = b''
 
     for call in root:
+        if PAD:
+            # Align call start to 0x800 boundary
+            remainder = len(outputContent) % 0x800
+            if remainder != 0:
+                outputContent += b'\x00' * (0x800 - remainder)
+
         # Record the new offset created for the call
         newCallOffset = len(outputContent)
+        if PAD and newCallOffset % 0x800 != 0:
+            print(f'BUG: call at offset {newCallOffset} is not 0x800-aligned after padding!')
         newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
 
-        # We put the call together, starting with the call header. 
         attrs = call.attrib
-        outputContent += bytes.fromhex(attrs.get("content"))
-        
-        # -x flag forces original hex for all calls (round-trip mode).
-        # Otherwise: modified calls inject new text, unmodified calls preserve original hex.
+        currentCallDict = attrs.get('graphicsBytes', '')
+
+        # Set hex passthrough mode before compiling elements so handleElement sees it.
         if args.hex:
             subUseOriginalHex = True
             xmlFix.subUseOriginalHex = True
@@ -337,13 +608,29 @@ def main(args=None):
             subUseOriginalHex = True
             xmlFix.subUseOriginalHex = True
 
+        # Compile all child elements first so the true payload size is known.
+        elemContent = b''
         for subelem in call:
-            outputContent += handleElement(subelem)
-        outputContent += b'\x00'
-        if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True: # 2nd change, inject graphics ONLY if using original hex.
+            elemContent += handleElement(subelem)
+        elemContent += b'\x00'  # call payload terminator
+
+        # Build call header from named attrs with recalculated size field.
+        freq = getFreqbytes(attrs.get('freq'))
+        unk1 = bytes.fromhex(attrs.get("unknownVal1"))
+        unk2 = bytes.fromhex(attrs.get("unknownVal2"))
+        unk3 = bytes.fromhex(attrs.get("unknownVal3"))
+        callHeader = freq + unk1 + unk2 + unk3 + b'\x80' + createLength(len(elemContent))
+
+        outputContent += callHeader + elemContent
+        if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
             outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
-        # print(content)
-    
+
+    # Final alignment pad at end of file if padded
+    if PAD:
+        remainder = len(outputContent) % 0x800
+        if remainder != 0:
+            outputContent += b'\x00' * (0x800 - remainder)
+
     with open(outputFilename, 'wb') as radioOut:
         radioOut.write(outputContent)
 
@@ -351,9 +638,11 @@ def main(args=None):
         stageOutFile = args.stageOut
     else:
         stageOutFile = 'new-STAGE.DIR'
-    
+
     if args.stage:
         stageDirFilename = args.stage
+        stageTools.debug = debug
+        stageTools.INTEGRAL = INTEGRAL
         stageTools.init(stageDirFilename)
         stageBytes = bytearray(stageTools.stageData)
         fixStageDirOffsets()
@@ -373,6 +662,9 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")
+    parser.add_argument('-l', '--long', action='store_true', help="Write 4-byte size fields (USE_LONG=True) for use with the patched SLPM_862.47 executable.")
+    parser.add_argument('-P', '--pad', action='store_true', help="Align each call to 0x800 boundaries (for Integral-format RADIO.DAT). Implied by --integral.")
+    parser.add_argument('-I', '--integral', action='store_true', help="Integral disc mode: 0x800-aligned calls, 2-byte block index in STAGE.DIR. Implies --pad.")
     parser.add_argument('-S', '--stageOut', nargs="?", type=str, help="Output for new STAGE.DIR file. Optional.")
     
     main()

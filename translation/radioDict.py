@@ -105,6 +105,10 @@ def outputGraphic(filename: str, file_data: bytes) -> None:
 			else:
 				data.write(bytes.fromhex("ffffffff"))
 
+def isGraphicsTile(tile: bytes) -> bool:
+	"""Return True if the 36-byte tile is a known character tile in characters.graphicsData."""
+	return tile.hex() in characters.graphicsData
+
 def makeCallDictionary(offset, graphicsBytes: bytes): # remove type on offset, may revert later
 	"""
 	Returns a DICT specific to the call where we sent the data. 
@@ -259,7 +263,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				newBytestring += bytes.fromhex('9601')
 				callDict = customHex
 			elif customHex in callDict:
-				index = int(callDict.find(customHex) / 72)
+				index = int(callDict.find(customHex) / 72) + 1
 				if index > 508:
 					index -= 508
 					newBytestring += b'\x98'
@@ -273,7 +277,7 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 				# addCharToDict(customHex)
 				if debug:
 					print(f'Character {character} was not found in custom call dict. Adding...')
-				index = int(len(callDict) / 72)
+				index = int(len(callDict) / 72) + 1
 				if index > 508:
 					index -= 508
 					newBytestring += b'\x98'

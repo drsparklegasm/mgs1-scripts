@@ -1,5 +1,12 @@
-ProgressBar
-Pillow 
-ffmpeg-python
+# Core — required for RadioDatTools, RadioDatRecompiler, xmlModifierTools
+progressbar2        # provides 'import progressbar' — used for extraction progress display
+
+# Graphics / translation tools (translation/graphicShower.py)
+Pillow              # PIL image export for face tile graphics
+
+# Audio tools (audioTools/vagAudioTools.py)
+ffmpeg-python       # VAG audio processing
+
+# Credits / image tools (creditsHacking/)
 numpy
 matplotlib

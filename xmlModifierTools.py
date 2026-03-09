@@ -32,6 +32,7 @@ debug = False
 multithreading = True
 subUseOriginalHex = False
 useDWSB = False
+modded = True
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -74,6 +75,7 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
 
     """
     global offsetFailed
+    global modded
     for parent in parents:
         
         origLength = int(parent.get('length')) # length in bytes total
@@ -97,7 +99,10 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                     failedOffsets.append(parent.get("offset"))
                     offsetFailed = True
                 else:
-                    newHexLength = struct.pack('>H', newLength - 9).hex()
+                    if modded: # Modding experiment
+                        newHexLength = struct.pack('>L', newLength - 9).hex()
+                    else:
+                        newHexLength = struct.pack('>H', newLength - 9).hex()
 
                 newContent = origContent[0:18] + newHexLength
 
@@ -107,9 +112,13 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "VOX_CUES": # DONE
                 # Remember length - header is 9
                 newLength = origLength + lengthChange
-                newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
-                newHexLengthB = struct.pack('>H', newLength - 9).hex() # end of line
-                
+                if modded: # Modding experiment
+                    newHexLengthA = struct.pack('>L', newLength - 2).hex() # beginning of headerz
+                    newHexLengthB = struct.pack('>L', newLength - 9).hex() # end of line
+                else:
+                    newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
+                    newHexLengthB = struct.pack('>H', newLength - 9).hex() # end of line
+
                 newContent = origContent[0:4] + newHexLengthA 
                 newContent += origContent[8:18] + newHexLengthB
 
