@@ -65,7 +65,7 @@ sleep 2
 if [ "$SKIP_VOX" = false ]; then
     echo "Processing VOX data..."
     python3 myScripts/voxTools/voxTextInjector.py
-    python3 myScripts/voxTools/voxRejoiner.py
+    python3 myScripts/voxTools/voxRejoiner.py workingFiles/jpn-d1/vox/bins workingFiles/jpn-d1/vox/new-VOX.DAT -n workingFiles/jpn-d1/vox/newBins -s build-src/jpn-d1/MGS/VOX.DAT
 fi
 sleep 2
 
@@ -73,9 +73,9 @@ sleep 2
 if [ "$SKIP_DEMO" = false ]; then
     echo "Compiling new DEMO.DAT..."
     python3 myScripts/DemoTools/demoTextInjector.py
-    python3 myScripts/DemoTools/demoRejoiner.py
-    # ADJUST DEMO OFFSETS! 
-    python3 myScripts/StageDirTools/demoOffsetAdjuster.py
+    python3 myScripts/DemoTools/demoRejoiner.py workingFiles/jpn-d1/demo/bins workingFiles/jpn-d1/demo/new-DEMO.DAT -n workingFiles/jpn-d1/demo/newBins -d workingFiles/jpn-d1/demo/newDemoOffsets.json
+    # ADJUST DEMO OFFSETS!
+    python3 myScripts/StageDirTools/demoOffsetAdjuster.py -f
 fi
 sleep 2
 

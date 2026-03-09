@@ -604,18 +604,12 @@ def main(args=None):
             elemContent += handleElement(subelem)
         elemContent += b'\x00'  # call payload terminator
 
-        # Build call header.
-        # USE_LONG=True: rebuild from named attrs with 4-byte size field.
-        # USE_LONG=False: pass through the original 11-byte content blob (stale size, acceptable
-        #   for normal use since the game indexes calls directly rather than chaining pointers).
-        if USE_LONG:
-            freq = getFreqbytes(attrs.get('freq'))
-            unk1 = bytes.fromhex(attrs.get("unknownVal1"))
-            unk2 = bytes.fromhex(attrs.get("unknownVal2"))
-            unk3 = bytes.fromhex(attrs.get("unknownVal3"))
-            callHeader = freq + unk1 + unk2 + unk3 + b'\x80' + createLength(len(elemContent))
-        else:
-            callHeader = bytes.fromhex(attrs.get("content"))
+        # Build call header from named attrs with recalculated size field.
+        freq = getFreqbytes(attrs.get('freq'))
+        unk1 = bytes.fromhex(attrs.get("unknownVal1"))
+        unk2 = bytes.fromhex(attrs.get("unknownVal2"))
+        unk3 = bytes.fromhex(attrs.get("unknownVal3"))
+        callHeader = freq + unk1 + unk2 + unk3 + b'\x80' + createLength(len(elemContent))
 
         outputContent += callHeader + elemContent
         if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
