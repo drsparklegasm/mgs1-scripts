@@ -32,6 +32,11 @@ unidentifiedGraphics = []
 # context = open("graphicsExport/contextList.txt", 'w')
 debug = False
 
+# Optional .tbl encoder overrides (char -> hex code string).
+# Set by the GUI when a .tbl file is loaded. Used as a fallback when
+# tblOverrides is not passed directly to encodeJapaneseHex.
+tblEncoderOverrides = None
+
 class graphicSegment:
 
 	def __init__(self, offset, callGraphicNum, graphicBytesHex) -> None:
@@ -203,10 +208,16 @@ def translateJapaneseHex(bytestring: bytes, callDict: dict[str, str] = None ) ->
 		
 	return messageString
 
-def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
+def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False, tblOverrides: dict = None) -> tuple[bytes, str]: # Needs fixins, maybe move to separate file?
 	"""
-	WORK IN PROGRESS! Re-encodes japanese characters. 
+	WORK IN PROGRESS! Re-encodes japanese characters.
+
+	tblOverrides: optional dict mapping character -> hex code string.
+	If provided, characters found in this dict are encoded using the
+	override bytes instead of the default characters.py lookups.
+	Falls back to the module-level tblEncoderOverrides if not passed.
 	"""
+	overrides = tblOverrides if tblOverrides is not None else tblEncoderOverrides
 	unknownChars = True # For now we still dont know some characters
 
 	newBytestring = b''
@@ -234,6 +245,8 @@ def encodeJapaneseHex(dialogue: str, callDict="", useDoubleLength=False) -> tupl
 	for character in dialogue:
 		if ord(character) == 65294:
 				newBytestring += b'\x80\x2e'
+		elif overrides and character in overrides:
+			newBytestring += bytes.fromhex(overrides[character])
 		elif ord(character) < 128:
 			if useDoubleLength:
 				newBytestring += b'\x80'
