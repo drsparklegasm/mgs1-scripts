@@ -24,6 +24,12 @@ ZMOVIE_BLOCK   = 0x920   # sector alignment for zmovie (vs 0x800 for demo/vox)
 NUM_ENTRIES    = 4       # hardcoded in movieSplitter.py
 SUBTITLE_PATCH_LIMIT = 0x800  # subtitle section padded to this within each entry
 
+# CD-ROM raw sector reconstruction constants
+_CD_SYNC = bytes([0x00] + [0xFF] * 10 + [0x00])  # 12-byte sync pattern
+_RAW_SECTOR_SIZE = 2352
+_XA_SUBHEADER_SIZE = 8     # subheader repeated twice at start of each 0x920 block
+_XA_PAYLOAD_SIZE = ZMOVIE_BLOCK - _XA_SUBHEADER_SIZE  # 2328 bytes
+
 # Pattern used by movieSplitter.py to locate subtitle blocks
 _SUBTITLE_RE = re.compile(b'\x02\x00\x00\x00......\x10\x00', re.DOTALL)
 
@@ -243,3 +249,41 @@ def compileToFile(outputPath: str, originalData: bytes, dialogueJson: dict) -> N
     with open(outputPath, 'wb') as f:
         f.write(bytes(output))
     print(f"ZMOVIE.STR written to: {outputPath}")
+
+
+# ── Video extraction ─────────────────────────────────────────────────────────
+
+def extractEntryVideo(originalData: bytes, entryIndex: int, outputPath: str) -> None:
+    """
+    Extract video+audio from a single zmovie entry as a standard PSX STR file.
+
+    Each 0x920-byte block in ZMOVIE.STR has an 8-byte CD-XA subheader followed
+    by 2328 bytes of payload. This reconstructs standard 2352-byte raw CD
+    sectors (sync + header + subheader + payload) that ffmpeg can decode.
+
+    Block 0 of each entry is the subtitle header and is skipped.
+
+    Parameters
+    ----------
+    originalData : bytes    — full ZMOVIE.STR file bytes
+    entryIndex   : int      — 0-3
+    outputPath   : str      — path to write the .str file
+    """
+    offsets = getEntryOffsets(originalData)
+    offsets.append(len(originalData))
+
+    start = offsets[entryIndex]
+    end = offsets[entryIndex + 1]
+    num_blocks = (end - start) // ZMOVIE_BLOCK
+
+    with open(outputPath, 'wb') as out:
+        for blk in range(1, num_blocks):  # skip block 0 (subtitle header)
+            off = start + blk * ZMOVIE_BLOCK
+            subheader = originalData[off:off + _XA_SUBHEADER_SIZE]
+            payload = originalData[off + _XA_SUBHEADER_SIZE:off + ZMOVIE_BLOCK]
+
+            # Fake CD header: minute, second, sector, mode=2
+            cd_header = bytes([0, 0, blk % 75, 2])
+            raw_sector = _CD_SYNC + cd_header + subheader + payload
+            # Pad to standard 2352-byte sector
+            out.write(raw_sector.ljust(_RAW_SECTOR_SIZE, b'\x00'))
