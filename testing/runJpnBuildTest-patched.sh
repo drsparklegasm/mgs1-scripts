@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Rebuild japanese iso and launch in duckstation
+# Argument parser by chatGPT
+
+set -e # Exit if we hit a script error.
+
+# Parse arguments
+SKIP_EXTRACTION=false
+SKIP_GRAPHICS=false
+SKIP_VOX=false
+SKIP_DEMO=false
+SKIP_RADIO=false
+
+# Start with all original files
+cp -rv build-src/jpn-d1/* build/jpn-d1/
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --skip-extraction)
+            SKIP_EXTRACTION=true
+            shift
+            ;;
+        --skip-graphics)
+            SKIP_GRAPHICS=true
+            shift
+            ;;
+        --skip-vox)
+            SKIP_VOX=true
+            shift
+            ;;
+        --skip-demo)
+            SKIP_DEMO=true
+            shift
+            ;;
+        --skip-radio)
+            SKIP_RADIO=true
+            shift
+            ;;
+        --help)
+            echo "Usage: $0 [--skip-extraction] [--skip-graphics] [--skip-vox] [--skip-demo]"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Graphics Injection Step
+if [ "$SKIP_GRAPHICS" = false ]; then
+    echo "Injecting graphics data..."
+    # Inject graphics data (STAGE.DIR) for disk 1 ONLY for now
+    echo "Inject D1 with ninja..."
+    wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/ -pack -o /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d1/stage/STAGE-j1.DIR -img  1>/dev/null
+    # Disk 2 temp disable
+    # echo "Inject D2 with ninja..."
+    # wine goblin-tools/ninja.exe -i /home/solidmixer/projects/mgs1-undub/workingFiles/jpn-d2/stage/ -pack -o stageGraphicsWorking/out/STAGE-j2.DIR -img >/dev/null
+    echo "New Stage.dir files created."
+fi
+sleep 2
+
+# VOX Editing Step
+if [ "$SKIP_VOX" = false ]; then
+    echo "Processing VOX data..."
+    python3 myScripts/voxTools/voxTextInjector.py
+    python3 myScripts/voxTools/voxRejoiner.py workingFiles/jpn-d1/vox/bins workingFiles/jpn-d1/vox/new-VOX.DAT -n workingFiles/jpn-d1/vox/newBins -s build-src/jpn-d1/MGS/VOX.DAT
+fi
+sleep 2
+
+# Demo Compilation Step
+if [ "$SKIP_DEMO" = false ]; then
+    echo "Compiling new DEMO.DAT..."
+    python3 myScripts/DemoTools/demoTextInjector.py
+    python3 myScripts/DemoTools/demoRejoiner.py workingFiles/jpn-d1/demo/bins workingFiles/jpn-d1/demo/new-DEMO.DAT -n workingFiles/jpn-d1/demo/newBins -d workingFiles/jpn-d1/demo/newDemoOffsets.json
+    # ADJUST DEMO OFFSETS!
+    python3 myScripts/StageDirTools/demoOffsetAdjuster.py -f
+fi
+sleep 2
+
+# # Extracting and automating translation (disk 1)
+# /bin/python3 /home/solidmixer/projects/mgs1-undub/myScripts/RadioDatTools.py -jzx build-src/jpn-d1/MGS/RADIO.DAT workingFiles/jpn-d1/radio/RADIO 
+
+if [ "$SKIP_RADIO" = false ]; then
+    # This area re-compiles a RADIO file for jpn
+    # use Programatic replacement
+    python3 build-proprietary/radio/dialogueSwap.py
+    python3 myScripts/xmlModifierTools.py inject workingFiles/jpn-d1/radio/injected-Iseeva.json workingFiles/jpn-d1/radio/RADIO.xml 
+    # python3 myScripts/RadioDatRecompiler.py -p radioWorkingDir/jpn-d1/RADIO-merged.xml radioWorkingDir/jpn-d1/new-RADIO.DAT -s build-src/jpn-d1/MGS/STAGE.DIR -S radioWorkingDir/jpn-d1/new-STAGE.DIR
+    python3 myScripts/RadioDatRecompiler.py --long -p workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR
+fi
+sleep 2
+
+echo "Moving files into position"
+# Move all files into the build folder. Ignore files not edited.
+if [ "$SKIP_GRAPHICS" = false ]; then
+    cp -v workingFiles/jpn-d1/stage/new-STAGE.DIR build/jpn-d1/MGS/STAGE.DIR
+fi
+if [ "$SKIP_RADIO" = false ]; then
+    cp -v workingFiles/jpn-d1/radio/new-RADIO.DAT build/jpn-d1/MGS/RADIO.DAT 
+    else cp -v workingFiles/jpn-d1/stage/STAGE-j1.DIR build/jpn-d1/MGS/STAGE.DIR
+fi
+# DEMO
+if [ "$SKIP_DEMO" = false ]; then
+    cp -v workingFiles/jpn-d1/demo/new-DEMO.DAT build/jpn-d1/MGS/DEMO.DAT
+fi
+# VOX
+if [ "$SKIP_VOX" = false ]; then
+    cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
+fi
+# For now, using zmovie no matter what!
+cp -v workingFiles/jpn-d1/zmovie/ZMOVIE-new.STR build/jpn-d1/MGS/ZMOVIE.STR
+# 
+
+echo "READY TO BUILD ISO!"
+sleep 2
+
+mkpsxiso build/jpn-d1/rebuild-patched.xml -o mgsJpnMod-d1.bin -c mgsJpnMod-d1.cue -y
+# mkpsxiso build/jpn-d2/rebuild.xml -o mgsJpnMod-d2.bin -c mgsJpnMod-d2.cue -y
+if [ $(uname) = "Linux" ]; then 
+    flatpak run org.duckstation.DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 ;
+elif [ $(uname) = "Darwin" ]; then
+    /Applications/DuckStation.app/Contents/MacOS/DuckStation mgsJpnMod-d1.cue >/dev/null 2>&1 ;
+fi
