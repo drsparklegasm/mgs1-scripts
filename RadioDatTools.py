@@ -654,54 +654,36 @@ def getGraphicsData(offset: int, returnNulls=False, end_limit: int = None) -> by
         if offset + count >= eff_end - 1:
             break
 
+        cur = offset + count
+
+        # Step 0: 0x800-aligned boundary check (Integral calls are sector-aligned)
+        if cur % 0x800 == 0 and checkFreq(cur):
+            break
+
         # Step 1: known character tile
-        tile = radioData[offset + count : offset + count + 36]
+        tile = radioData[cur : cur + 36]
         if radioDict.isGraphicsTile(tile):
             count += 36
             continue
 
         # Step 2: call header or FF-command boundary
-        if checkFreq(offset + count):
+        if checkFreq(cur):
             break
-        if radioData[offset + count] == 0xFF and radioData[offset + count + 1 : offset + count + 2] in commandNamesEng:
+        if radioData[cur] == 0xFF and radioData[cur + 1 : cur + 2] in commandNamesEng:
             break
 
-        # Step 3: null bytes
-        if radioData[offset + count] == 0:
-            nullCount = 1
-            while offset + count + nullCount < fileSize - 1 and radioData[offset + count + nullCount] == 0:
-                nullCount += 1
-            if nullCount > 36:
-                if end_limit is not None and (offset + count + nullCount) < eff_end:
-                    # Null run ends before the next-call boundary, so non-null content follows.
-                    # These are blank (all-zero) character tiles, not sector null padding.
-                    count += nullCount
-                    continue
-                if returnNulls:
-                    count += nullCount
-                if debugOutput:
-                    print(f'Graphics data ended with {nullCount} nulls at offset {offset + count}, ending parse graphics data.')
-                    print(f'Hex at end of call is 0x{int(offset + count):X}')
-                break
-            elif nullCount < 36:
-                # Short null run — stop if a call follows immediately (inter-call padding)
-                if checkFreq(offset + count + nullCount):
-                    break
-                if debugOutput:
-                    print(f'Graphics data had {nullCount} nulls at offset {offset + count}, continuing parse graphics data!\r')
-                count += 36  # fallback: advance a full tile
-            else:  # nullCount == 36
-                # Blank tile
-                if debugOutput:
-                    print(f'Graphics data had blank tile at offset {offset + count}, continuing parse graphics data!\r')
-                count += 36
+        # Step 3: null bytes — treat as padding, not tiles
+        if radioData[cur] == 0:
+            if debugOutput:
+                print(f'Graphics data hit null at offset 0x{cur:X}, ending parse.')
+            break
 
         else:
             # Non-null, non-tile, non-call — alert and advance 36
             if debugOutput:
-                print(f'WARNING: unknown tile at offset {offset + count}: {tile.hex()}')
+                print(f'WARNING: unknown tile at offset {cur}: {tile.hex()}')
             else:
-                print(f'WARNING: unknown graphics tile at 0x{offset + count:X}: {tile.hex()}')
+                print(f'WARNING: unknown graphics tile at 0x{cur:X}: {tile.hex()}')
             count += 36
 
     return radioData[offset : offset + count]
