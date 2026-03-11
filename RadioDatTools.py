@@ -16,7 +16,6 @@ This is the main script. See bottom for command arguments and how we parse the c
 """
 
 import os, struct
-from datetime import datetime
 import translation.radioDict as radioDict
 import argparse
 import xml.etree.ElementTree as ET
@@ -90,12 +89,6 @@ def setRadioData(filename: str) -> bool:
     elementStack = [(root, fileSize)]
     return True
 
-def setOutputFile(filename: str) -> bool:
-    global output
-    current_time = datetime.now().strftime("%H%M%S")
-    current_date = datetime.now().strftime("%Y-%m-%d") 
-    output = open(f'{filename}-{current_date}-{current_time}.log', 'w', encoding='utf8')
-
 def splitCall(offset: int, length: int) -> None:
     global radioData
     global fileSize
@@ -168,7 +161,6 @@ def getHash(): # Not yet implemented!
     return hash
 
 def commandToEnglish(hex: bytes) -> str:
-    global output
     try:
         commandNamesEng[hex]
         return commandNamesEng[hex]
@@ -221,13 +213,11 @@ def getCallLength(offset: int) -> int: # Returns CALL length, offset must be at 
 
 def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header for now, then \x80, then script length (2x bytes)
     global radioData
-    global output
     global root
     global elementStack
     global splitCalls
 
-    # OPTIONAL Add an offset tracker output?
-    
+
     header = 11 # Call headers are static 11
     line = radioData[ offset : offset + header ]
 
@@ -258,8 +248,6 @@ def handleCallHeader(offset: int) -> int: # Assume call is just an 8 byte header
         callDict = radioDict.makeCallDictionary(offset, graphicsData)
     else:
         print(f'Graphics parse error offset {offset}! \n')
-
-    output.write(f'Call Header: {humanFreq:.2f}, offset = {offset}, length = {length}, UNK0 = {unk0.hex()}, UNK1 = {unk1.hex()}, UNK2 = {unk2.hex()}, Content = {line.hex()}\n')
 
     call_element = ET.SubElement(root, "Call", {
         "offset": f'{offset}',
@@ -300,13 +288,6 @@ def handleUnknown(offset: int) -> int: # Iterates checking frequency until we ge
             break"""
         else: 
             count += 1
-    content = radioData[offset: offset + count]
-    
-    if len(content) % 36 != 0: # Alert user if the graphics content not evenly divisible by 36 bytes
-        output.write(f'ERROR! Unknown block at offset {offset}! ')
-
-    output.write(f'Unknown block: {content.hex()}')
-    output.write('\n')
     return count
 
 def handleCommand(offset: int) -> int: # We get through the file! But needs refinement... We're not ending evenly and lengths are too long. 
@@ -316,7 +297,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     header = header length
     line = Usually their header text/content
     """
-    global output
     global root
     global elementStack
 
@@ -326,8 +306,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
     else:
         commandByte = radioData[offset + 1].to_bytes()
     
-    output.write(f"{commandToEnglish(commandByte)} -- ")
-
     # We now deal with the byte
     match commandByte:
 
@@ -358,9 +336,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 # dialogue = translator.translate(dialogue)
                 print(f'Translated offset {offset}: {dialogue}')
 
-            # Output to text file
-            output.write(f'Offset = {offset}, Length = {length}, FACE = {face.hex()}, ANIM = {anim.hex()}, UNK3 = {unk3.hex()}, breaks = {lineBreakRepace}, \tText: {(dialogue)}\n')
-            
             subtitle_element = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -398,8 +373,7 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             })
             checkElement(length)
             elementStack.append((voxElement, length))
-            output.write(f'Offset: {str(offset)}, LengthA = {lengthA}, LengthB = {lengthB}, Content: {str(line.hex())}\n')
-            
+
             return header
         
         case b'\x03':
@@ -421,7 +395,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 'content': line.hex()
             })
 
-            output.write(f'Offset: {str(offset)}, length = {length} FACE = {face.hex()}, ANIM = {anim.hex()}, content: {str(line.hex())}\n')
             return length
         
         case b'\x04':
@@ -445,7 +418,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
                 "content": line.hex()
             })
 
-            output.write(f'Offset: {str(offset)}, length = {containerLength}, freqToAdd = {freq}, entryName = {entryName}, FullContent: {str(line.hex())}\n')
             return length
         
         case b'\x05':
@@ -458,8 +430,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = 8
             line = radioData[offset:offset + length]
             content = radioData[offset:offset + header]
-            output.write(f' -- Offset: {str(offset)}, length = {length}, FullContent: {str(line.hex())}\n')
-
             SaveCommand = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -496,8 +466,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
         case b'\x06' | b'\x08': 
             length = getLength(offset)
             line = radioData[offset : offset + length]
-            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-
             cuesElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -510,8 +478,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = 4
             line = radioData[offset : offset + length]
             content = line[0:header]
-            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-
             promptElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -571,8 +537,6 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             header = 5 # Maybe not ?
             line = radioData[offset : offset + header]
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
-            output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
-
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
@@ -584,14 +548,13 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             elementStack.append((conditionalElement, length))
 
             return header
-        
+
         case b'\x12': # Elseif
             header = getLengthManually(offset) # Maybe not ?
             line = radioData[offset : offset + header]
             length = header + struct.unpack('>H', line[header - 2 : header])[0] - 2 # We were preivously calculating length wrong, this is correct for the container
             containerLength = struct.unpack(">H", line[-2:len(line)])[0] - 3
             containerLength = header + struct.unpack('>H', line[header - 2 : header])[0] - 3
-            output.write(f' -- Offset = {offset}, header = {header}, length = {length} Content = {line.hex()}\n')
 
             conditionalElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
@@ -652,28 +615,11 @@ def handleCommand(offset: int) -> int: # We get through the file! But needs refi
             # FF 40 [outer_sz_hi] [outer_sz_lo] [content...] — standard length-prefixed format.
             length = getLength(offset)
             line = radioData[offset : offset + length]
-            output.write(f' -- Offset = {offset}, length = {length}, Content = {line.hex()}\n')
-
             randomElement = ET.SubElement(elementStack[-1][0], commandToEnglish(commandByte), {
                 "offset": str(offset),
                 "length": str(length),
                 "content": line.hex()
             })
-            return length
-        
-        # case b'\xFF': # This basically menas offset should be 1 less... we'll continue processing but output will error at this offset.
-            output.write(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
-            if debugOutput:
-                print(f'ERROR! Command was 0xFF at offset {offset}!!! \n')
-            length = 1
-            return length
-
-        # case _:
-            output.write(f'ERROR! Command is not yet cased! Command = {commandByte} -- ')
-            
-            length = getLengthManually(offset)
-            line = radioData[offset : offset + length]
-            output.write(f'Offset: {offset}, Content = {line.hex()}\n')
             return length
 
 def getGraphicsData(offset: int, returnNulls=False, end_limit: int = None) -> bytes:
@@ -806,12 +752,10 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
     global debugOutput
     global radioData
     global fileSize
-    global output
     global bar
 
     bar.maxval = fileSize
     bar.start()
-    setOutputFile(outputFilename)
     preloadCallOffsets()
 
     while offset < fileSize: # We might need to change this to Case When... as well.
@@ -845,7 +789,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
             if radioData[offset : offset + 2] != bytes.fromhex("ff10"):
                 checkElement(length)
         if radioData[offset] == b'\x00' and checkStack == len(elementStack): # If we handled a null and it did NOT remove an element:
-            output.write(f"Null! (Main loop) offset = {offset}\n")
             nullElement = ET.SubElement(elementStack[-1][0], "Null", {"Offset": f'{offset}', "length": "1"})
         
         # Add length to offset for next loop
@@ -853,7 +796,6 @@ def analyzeRadioFile(outputFilename: str) -> None: # Cant decide on a good name,
         bar.update(offset)
 
     bar.finish()
-    output.close()
 
     if offset >= fileSize - 1:
         print(f'File was parsed successfully! Written to {outputFilename}')
