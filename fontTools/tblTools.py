@@ -15,21 +15,23 @@ knows which byte code produces which character in the modified font.
 
 import translation.characters as characters
 
-GLYPH_COUNT = 440
 HIRAGANA_COUNT = 83
 KATAKANA_COUNT = 86
 KANJI_START = HIRAGANA_COUNT + KATAKANA_COUNT  # 169
 
+# Legacy constant — use FontBlock.kanaCount for actual glyph count
+GLYPH_COUNT = 440
+
 
 def slotToHexCode(slot: int) -> str:
-    """Map a font glyph slot index (0-439) to its 2-byte hex code string.
+    """Map a font glyph slot index to its 2-byte hex code string.
 
     Returns the 4-character hex string used in the game's text encoding,
     e.g. '8101' for hiragana slot 0, '8201' for katakana slot 0, '9001' for
-    the first kanji/punctuation slot.
+    the first kanji/punctuation slot. Works for any non-negative slot index.
     """
-    if slot < 0 or slot >= GLYPH_COUNT:
-        raise ValueError(f"Slot {slot} out of range (0-{GLYPH_COUNT-1})")
+    if slot < 0:
+        raise ValueError(f"Slot {slot} out of range (must be >= 0)")
 
     if slot < HIRAGANA_COUNT:
         # Hiragana: 0x81 prefix, second byte 01-53
