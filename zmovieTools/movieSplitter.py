@@ -3,7 +3,7 @@ Adapted from Green Goblins scripts. Very similar to demo
 only alignments are 0x920
 """
 
-import os, struct, re, sys, glob, json, argparse
+import os, struct, sys, glob, json, argparse
 sys.path.append(os.path.abspath('./myScripts'))
 sys.path.append(os.path.abspath('.'))
 import DemoTools.demoTextExtractor as DTE
@@ -12,15 +12,37 @@ parser = argparse.ArgumentParser(description='Split ZMOVIE.STR into individual .
 parser.add_argument('filename', type=str, help='Input ZMOVIE.STR file to split.')
 parser.add_argument('output', nargs='?', type=str, help='Output directory for .bin files and extracted text.')
 
+BLOCK_SIZE   = 0x920
+UNKNOWN_TAIL = 0x118
+GRAPHICS_END = BLOCK_SIZE - UNKNOWN_TAIL  # 0x808
+
 def getOffsets(toc: bytes) -> list:
     demoNum = 4 # If we figure out where this is we can implement it.
     offsets = []
     counter = 16
     for i in range(demoNum):
         offset = struct.unpack("<I", toc[counter : counter + 4])[0]
-        offsets.append(offset * 0x920)
+        offsets.append(offset * BLOCK_SIZE)
         counter += 8
     return offsets
+
+def getSubtitleSubset(movieData: bytes) -> bytes:
+    """
+    Subtitle block is always block 0. bytes[0x0E:0x10] = chunk_cnt.
+    If chunk_cnt == 2, graphics overflow into block 1 starting at 0x28.
+    Subtitle entries begin at 0x38; we pass everything up to GRAPHICS_END
+    per block so getTextHexes can split text from graphics naturally.
+    """
+    block0 = movieData[0:BLOCK_SIZE]
+    chunk_cnt = struct.unpack('<H', block0[0x0E:0x10])[0]
+
+    subset = block0[0x38:GRAPHICS_END]
+
+    if chunk_cnt == 2:
+        block1 = movieData[BLOCK_SIZE:2 * BLOCK_SIZE]
+        subset += block1[0x28:GRAPHICS_END]
+
+    return subset
 
 def main(args=None):
     if args is None:
@@ -37,7 +59,7 @@ def main(args=None):
 
     zMovieScript = {}
 
-    movieOffsets = getOffsets(zmData[0:0x920])
+    movieOffsets = getOffsets(zmData[0:BLOCK_SIZE])
     movieOffsets.append(len(zmData))
     print(movieOffsets)
 
@@ -46,7 +68,6 @@ def main(args=None):
         with open(f'{outputDir}/bins/zmovie-{i:02}.bin', 'wb') as f:
             start = movieOffsets[i]
             end = movieOffsets[i + 1]
-            # Output movie data
             f.write(zmData[start : end])
 
     bin_files = glob.glob(os.path.join(f"{outputDir}/bins", '*.bin'))
@@ -59,33 +80,14 @@ def main(args=None):
             DTE.filename = fname
             movieData = movieTest.read()
 
-            # Get text areas
-            matches = re.finditer(b'\x02\x00\x00\x00......\x10\x00', movieData, re.DOTALL)
-            offsets = [match.start() for match in matches]
+        subset = getSubtitleSubset(movieData)
+        textHexes, graphicsBytes, coords = DTE.getTextHexes(subset)
+        texts = DTE.getDialogue(textHexes, graphicsBytes)
+        timings = coords
 
-            # Trim false positives.
-            finalMatches = []
-            for offset in offsets:
-                if movieData[offset + 28: offset + 32] == bytes(4):
-                    finalMatches.append(offset)
-
-            offsets = finalMatches
-
-            texts = []
-            timings = [] # list of timings (start time, duration)
-            # For now we assume they are correct.
-            for offset in offsets:
-                length = struct.unpack("I", movieData[offset + 12 : offset + 16])[0] # Length for text only here.
-                subset = movieData[offset + 16: offset + 0x7e0]
-                textHexes, graphicsBytes, coords = DTE.getTextHexes(subset)
-                texts.extend(DTE.getDialogue(textHexes, graphicsBytes))
-                timings.extend(coords)
-
-            basename = fname.split('.')[0]
-            zMovieScript[basename] = [DTE.textToDict(texts), DTE.textToDict(timings)]
-            DTE.writeTextToFile(f'{outputDir}/texts/{basename}.txt', texts)
-
-        zMovieScript.update({basename: [DTE.textToDict(texts), DTE.textToDict(timings)]})
+        basename = fname.split('.')[0]
+        zMovieScript[basename] = [DTE.textToDict(texts), DTE.textToDict(timings)]
+        DTE.writeTextToFile(f'{outputDir}/texts/{basename}.txt', texts)
 
     with open(f'{outputDir}/zMovie-out.json', 'w') as f:
         json.dump(zMovieScript, f, ensure_ascii=False)
