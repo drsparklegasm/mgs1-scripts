@@ -32,7 +32,11 @@ debug = False
 multithreading = True
 subUseOriginalHex = False
 useDWSB = False
-modded = True
+modded = False
+
+def _pool_init_modded(modded_flag):
+    global modded
+    modded = modded_flag
 
 def loadNewSubs(callOffset: str) -> dict:
     """
@@ -88,7 +92,7 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "Call": # DONE
                 # Remember length - header is 11
                 newLength = origLength + lengthChange
-                if (newLength - 9) > 65535:
+                if (newLength - 9) > (4294967295 if modded else 65535):
                     print(f'CALL AT OFFSET {parent.get("offset")} HAS A LENGTH THAT IS TOO LONG! Please fix!')
                     newHexLength = "0000"
                     failedOffsets.append(parent.get("offset"))
@@ -131,14 +135,22 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 innerLength = int(parent[0].get('length')) + 2 # Get this from THEN_DO
 
                 newLength = origLength + lengthChange
-                if newLength < 65535:
-                    newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
-                    newHexLengthB = struct.pack('>H', innerLength).hex() # end of line. We're assuming the THEN_DO element is already correct and stealing that length value. 
+                sizeLimit = 4294967295 if modded else 65535
+                if newLength < sizeLimit:
+                    if modded:
+                        newHexLengthA = struct.pack('>L', newLength - 2).hex() # beginning of headerz
+                        newHexLengthB = struct.pack('>L', innerLength).hex()
+                    else:
+                        newHexLengthA = struct.pack('>H', newLength - 2).hex() # beginning of headerz
+                        newHexLengthB = struct.pack('>H', innerLength).hex()
                 else:
                     print(f'Offset {parent.get("offset")} has failed check!!!')
-                    newHexLengthA = "0000"
-                    newHexLengthB = "0000"
-                newContent = origContent[0:4] + newHexLengthA + origContent[ 8 : headerTextLength - 4 ] + newHexLengthB
+                    newHexLengthA = "00000000" if modded else "0000"
+                    newHexLengthB = "00000000" if modded else "0000"
+                # origContent layout: [opcode 4 chars] [lengthA 4 chars] [eval ...] [lengthB 4 chars]
+                # When modded, lengthA/B become 8 chars but the eval section stays the same
+                oldLenWidth = 4  # 2 bytes = 4 hex chars
+                newContent = origContent[0:4] + newHexLengthA + origContent[ 4 + oldLenWidth : headerTextLength - oldLenWidth ] + newHexLengthB
 
                 parent.set('length', str(newLength))
                 parent.set('content', newContent)
@@ -152,23 +164,33 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 # Else is simple because it has no conditions to eval
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
-                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
-                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
-                
-                newContent = origContent[0:6] + newHexLength
-                    
+                oldLenWidth = 4  # 2 bytes = 4 hex chars
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - oldLenWidth: headerTextLength]))[0]
+                newLenVal = max(0, origLengthHex + lengthChange)
+                if modded:
+                    newHexLength: bytes = struct.pack('>L', newLenVal).hex()
+                else:
+                    newHexLength: bytes = struct.pack('>H', newLenVal).hex()
+
+                newContent = origContent[0:headerTextLength - oldLenWidth] + newHexLength
+
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
 
             case "ELSE_IFS":
                 # FF1230 {1 byte length of eval} {eval} 80 {2 byte length}
                 newLength = origLength + lengthChange
-                headerTextLength: int = len(origContent) 
-                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
-                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
-                
-                newContent = origContent[0:headerTextLength - 4] + newHexLength
-                    
+                headerTextLength: int = len(origContent)
+                oldLenWidth = 4  # 2 bytes = 4 hex chars
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - oldLenWidth: headerTextLength]))[0]
+                newLenVal = max(0, origLengthHex + lengthChange)
+                if modded:
+                    newHexLength: bytes = struct.pack('>L', newLenVal).hex()
+                else:
+                    newHexLength: bytes = struct.pack('>H', newLenVal).hex()
+
+                newContent = origContent[0:headerTextLength - oldLenWidth] + newHexLength
+
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
                 
@@ -176,10 +198,15 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
                 # FF30 {length} { 2 byte Probability total}
                 newLength = origLength + lengthChange
                 headerTextLength: int = len(origContent) # 10 characters
-                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[ 4 : 8]))[0]
-                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
+                oldLenWidth = 4  # 2 bytes = 4 hex chars
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[ 4 : 4 + oldLenWidth]))[0]
+                newLenVal = max(0, origLengthHex + lengthChange)
+                if modded:
+                    newHexLength: bytes = struct.pack('>L', newLenVal).hex()
+                else:
+                    newHexLength: bytes = struct.pack('>H', newLenVal).hex()
 
-                newContent = origContent[0:4] + newHexLength + origContent[8:headerTextLength]
+                newContent = origContent[0:4] + newHexLength + origContent[4 + oldLenWidth:headerTextLength]
 
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
@@ -187,12 +214,17 @@ def updateParentLength(parents: list[ET.Element], lengthChange: int) -> None:
             case "RND_OPTN":
                 # {31} {2 byte probability} 80 {2b Length}
                 newLength = origLength + lengthChange
-                headerTextLength: int = len(origContent) 
-                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - 4: headerTextLength]))[0]
-                newHexLength: bytes = struct.pack('>H', origLengthHex + lengthChange).hex() # end of line
-              
-                newContent = origContent[0:headerTextLength - 4] + newHexLength
-                   
+                headerTextLength: int = len(origContent)
+                oldLenWidth = 4  # 2 bytes = 4 hex chars
+                origLengthHex: int = struct.unpack('>H', bytes.fromhex(origContent[headerTextLength - oldLenWidth: headerTextLength]))[0]
+                newLenVal = max(0, origLengthHex + lengthChange)
+                if modded:
+                    newHexLength: bytes = struct.pack('>L', newLenVal).hex()
+                else:
+                    newHexLength: bytes = struct.pack('>H', newLenVal).hex()
+
+                newContent = origContent[0:headerTextLength - oldLenWidth] + newHexLength
+
                 parent.set('length', str(newLength))
                 parent.set('content', str(newContent))
 
@@ -618,7 +650,7 @@ def init(xmlInputFile: str) -> ET.Element:
 
     if multithreading:
         # Pooling mya not work because each element would have to be replaced with the element we process :|
-        with Pool(processes=8) as pool:
+        with Pool(processes=8, initializer=_pool_init_modded, initargs=(modded,)) as pool:
             # Use map to process elements in parallel
             print(f'Recomputing Subtitle Lengths. Please wait...')
             listOfCalls = [(call, root) for call in root]

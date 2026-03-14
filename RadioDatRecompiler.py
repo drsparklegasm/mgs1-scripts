@@ -540,6 +540,10 @@ def main(args=None):
     if args == None:
         args = parser.parse_args()
 
+    if args.long:
+        USE_LONG = True
+        xmlFix.modded = True
+
     # Read new radio source
     if args.prepare:
         print(f'Preparing XML by repairing lengths...')
@@ -553,9 +557,6 @@ def main(args=None):
         outputFilename = args.output
     else:
         outputFilename = 'new-' + args.input.split("/")[-1].split(".")[0] + '.bin'
-
-    if args.long:
-        USE_LONG = True
 
     if args.pad:
         PAD = True
