@@ -66,6 +66,8 @@ if [ "$SKIP_VOX" = false ]; then
     echo "Processing VOX data..."
     python3 myScripts/voxTools/voxTextInjector.py
     python3 myScripts/voxTools/voxRejoiner.py workingFiles/jpn-d1/vox/bins workingFiles/jpn-d1/vox/new-VOX.DAT -n workingFiles/jpn-d1/vox/newBins -s build-src/jpn-d1/MGS/VOX.DAT
+    # ADJUST VOX OFFSETS!
+    python3 myScripts/StageDirTools/voxOffsetAdjuster.py -f -o workingFiles/jpn-d1/vox/offsets.json -n workingFiles/jpn-d1/vox/newVoxOffsets.json -s workingFiles/jpn-d1/stage/STAGE-j1.DIR
 fi
 sleep 2
 
@@ -88,7 +90,7 @@ if [ "$SKIP_RADIO" = false ]; then
     python3 build-proprietary/radio/dialogueSwap.py
     python3 myScripts/xmlModifierTools.py inject workingFiles/jpn-d1/radio/injected-Iseeva.json workingFiles/jpn-d1/radio/RADIO.xml 
     # python3 myScripts/RadioDatRecompiler.py -p radioWorkingDir/jpn-d1/RADIO-merged.xml radioWorkingDir/jpn-d1/new-RADIO.DAT -s build-src/jpn-d1/MGS/STAGE.DIR -S radioWorkingDir/jpn-d1/new-STAGE.DIR
-    python3 myScripts/RadioDatRecompiler.py --long -p workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR
+    python3 myScripts/RadioDatRecompiler.py --long workingFiles/jpn-d1/radio/RADIO-merged.xml workingFiles/jpn-d1/radio/new-RADIO.DAT -s workingFiles/jpn-d1/stage/STAGE-j1.DIR -S workingFiles/jpn-d1/stage/new-STAGE.DIR
 fi
 sleep 2
 
@@ -109,6 +111,7 @@ fi
 if [ "$SKIP_VOX" = false ]; then
     cp -v workingFiles/jpn-d1/vox/new-VOX.DAT build/jpn-d1/MGS/VOX.DAT
 fi
+
 # For now, using zmovie no matter what!
 cp -v workingFiles/jpn-d1/zmovie/ZMOVIE-new.STR build/jpn-d1/MGS/ZMOVIE.STR
 # 

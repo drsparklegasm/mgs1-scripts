@@ -37,7 +37,7 @@ os.makedirs(outputDir, exist_ok=True)
 outputJsonFile = f"workingFiles/{version}-d{disc}/vox/voxText-{version}.json"
 
 # Grab all files in the directory and sort into order.
-bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
+bin_files = glob.glob(os.path.join(inputDir, '*.vox'))
 bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # flags

@@ -38,7 +38,7 @@ injectJson = f'build-proprietary/vox/voxText-{version}-d{disc}.json'
 os.makedirs(outputDir, exist_ok=True)
 
 # Collect files to use
-bin_files = glob.glob(os.path.join(inputDir, '*.bin'))
+bin_files = glob.glob(os.path.join(inputDir, '*.vox'))
 bin_files.sort(key=lambda f: int(f.split('-')[-1].split('.')[0]))
 
 # Collect source json to inject
@@ -211,28 +211,35 @@ if __name__ == "__main__":
                 if checkBytes == bytes(len(checkBytes)):
                     newvoxData = newvoxData[:len(newvoxData) - len(checkBytes)]"""
         
-        # Adjust length to match original file.
+        # Adjust length to match original file, or align to 0x800 if it grew.
         if len(newvoxData) == len(origvoxData):
             print("Alignment correct!")
         elif len(newvoxData) < len(origvoxData): # new vox shorter
-            newvoxData += bytes(len(origvoxData) - len(newvoxData)) 
+            newvoxData += bytes(len(origvoxData) - len(newvoxData))
             if len(newvoxData) % 0x800 == 0:
                 print("Alignment correct!")
-        else:
-            checkBytes = newvoxData[len(newvoxData) - len(origvoxData):]
+        else: # New file is longer
+            checkBytes = newvoxData[len(origvoxData):]  # Only the excess bytes
             if checkBytes == bytes(len(checkBytes)):
-                newvoxData = newvoxData[:len(newvoxData) - len(checkBytes)]
+                # All extra bytes are null — safe to truncate back to original size
+                newvoxData = newvoxData[:len(origvoxData)]
+                print("Alignment correct! (trimmed trailing nulls)")
             else:
-                print(f'CRITICAL ERROR! New vox cannot be truncated to original length!')
-                exit(2)
-        
+                # Legitimately larger; align to 0x800 boundary
+                print(f'WARNING: New vox is larger than original ({len(newvoxData)} > {len(origvoxData)})')
+                if len(newvoxData) % 0x800 != 0:
+                    paddingNeeded = 0x800 - (len(newvoxData) % 0x800)
+                    newvoxData += bytes(paddingNeeded)
+                    print(f'  Added {paddingNeeded} bytes padding -> {len(newvoxData)} bytes ({len(newvoxData) // 0x800} blocks)')
+                print(f'  STAGE.DIR offsets will need updating!')
+
         newBlocks = len(newvoxData) // 0x800
         if newBlocks != origBlocks:
-            print(f"{len(newvoxData)} / {len(origvoxData)}") 
-            print(f'BLOCK MISMATCH!\nNew data is {newBlocks} blocks, old was {origBlocks} blocks.\nTHERE COULD BE PROBLEMS IN RECOMPILE!!')
+            print(f"  {basename}: {len(newvoxData)} / {len(origvoxData)}")
+            print(f'  BLOCK MISMATCH: New={newBlocks} blocks, Old={origBlocks} blocks.')
 
         # Finished work! Write the new file. 
-        newFile = open(f'{outputDir}/{basename}.bin', 'wb')
+        newFile = open(f'{outputDir}/{basename}.vox', 'wb')
         newFile.write(newvoxData)
         newFile.close()
         print(f'VOX Data successfully Output to new files!')

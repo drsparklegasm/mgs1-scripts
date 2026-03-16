@@ -4,6 +4,7 @@ Pretty much follows the same rules as demo.dat for chunking
 """
 
 import os
+import json
 import argparse
 
 parser = argparse.ArgumentParser(description='Split VOX.DAT into individual .vox files')
@@ -29,17 +30,25 @@ def findDemoOffsets():
             offset += 2048
 
 def splitDemoFiles():
+    offsetMap = {}
     for i in range(len(offsets)):
         start = offsets[i]
         if i < len(offsets) - 1:
             end = offsets[i + 1]
         else:
             end = len(demoData)  # Include the last byte
-        f = open(f'{outputDir}/vox-{i + 1:04}.vox', 'wb')
+        voxNum = f'{i + 1:04}'
+        offsetMap[voxNum] = f'{start:08x}'
+        f = open(f'{outputDir}/vox-{voxNum}.vox', 'wb')
         f.write(demoData[start:end])
         f.close()
         if debug:
             print(f'Wrote VOX file {i}')
+    # Save offset map for STAGE.DIR adjustment later
+    offsetJsonPath = os.path.join(outputDir, 'offsets.json')
+    with open(offsetJsonPath, 'w') as f:
+        json.dump(offsetMap, f, indent=4)
+    print(f'Saved {len(offsetMap)} VOX offsets to {offsetJsonPath}')
 
 def main(args=None):
     global filename, outputDir, debug, demoData, offsets
