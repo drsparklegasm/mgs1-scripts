@@ -11,7 +11,7 @@ Usage (module):
     compileToFile("OUT.STR", original_bytes, edited_json)
 """
 
-import os, sys, re, struct
+import os, sys, struct
 
 _here    = os.path.dirname(os.path.abspath(__file__))
 _scripts = os.path.dirname(_here)
@@ -30,8 +30,6 @@ _RAW_SECTOR_SIZE = 2352
 _XA_SUBHEADER_SIZE = 8     # subheader repeated twice at start of each 0x920 block
 _XA_PAYLOAD_SIZE = ZMOVIE_BLOCK - _XA_SUBHEADER_SIZE  # 2328 bytes
 
-# Pattern used by movieSplitter.py to locate subtitle blocks
-_SUBTITLE_RE = re.compile(b'\x02\x00\x00\x00......\x10\x00', re.DOTALL)
 
 
 # ── TOC ──────────────────────────────────────────────────────────────────────
@@ -65,6 +63,7 @@ def _parseTextBlock(data: bytes) -> tuple:
     """
     segments = []
     coords   = []
+    graphics = b''
     offset   = 0
 
     while offset < len(data):
@@ -80,6 +79,11 @@ def _parseTextBlock(data: bytes) -> tuple:
             appearDuration = struct.unpack("I", data[offset + 8: offset + 12])[0]
             coords.append(f'{appearTime},{appearDuration}')
             segments.append(data[offset + 16: offset + textSize])
+            # Graphics data follows the last subtitle entry
+            graphics = data[offset + textSize:]
+            # Strip trailing nulls
+            while graphics and graphics[-1:] == b'\x00':
+                graphics = graphics[:-1]
             break
         else:
             textSize = struct.unpack('<H', data[offset:offset + 2])[0]
@@ -91,9 +95,14 @@ def _parseTextBlock(data: bytes) -> tuple:
             coords.append(f'{appearTime},{appearDuration}')
             offset += textSize
 
+    # Build custom character dictionary from graphics data
+    callDict = {}
+    if graphics:
+        callDict = RD.makeCallDictionary('zmovie', graphics)
+
     texts = []
     for seg in segments:
-        text = RD.translateJapaneseHex(seg, {})
+        text = RD.translateJapaneseHex(seg, callDict)
         texts.append(text.replace('\x00', ''))
 
     return texts, coords
@@ -103,20 +112,28 @@ def _extractEntrySubtitles(entryData: bytes) -> dict:
     """
     Find all subtitle blocks in one zmovie entry and return a merged dict:
       {startFrame_str: {"duration": str, "text": str}}
+
+    Handles multi-chunk entries (e.g. zmovie-02) where graphics data
+    overflows into the next block. chunk_count is at offset 0x0E of
+    each entry's first block.
     """
-    matches = _SUBTITLE_RE.finditer(entryData)
-    valid_offsets = [
-        m.start() for m in matches
-        if entryData[m.start() + 28: m.start() + 32] == b'\x00\x00\x00\x00'
-    ]
+    # Detect multi-chunk entries from the header
+    chunk_count = struct.unpack('<H', entryData[0x0E:0x10])[0]
+
+    # Build the combined data region for subtitle + graphics parsing.
+    # Single chunk:  block0[0x38 : 0x808]
+    # Multi-chunk:   block0[0x38 : 0x808] + block1[0x28 : 0x808]
+    _DATA_END = 0x808  # effective data ends here; last 0x118 bytes are non-subtitle
+    combined = entryData[0x38:_DATA_END]
+    if chunk_count >= 2 and len(entryData) > ZMOVIE_BLOCK + _DATA_END:
+        combined += entryData[ZMOVIE_BLOCK + 0x28 : ZMOVIE_BLOCK + _DATA_END]
+
+    texts, coords = _parseTextBlock(combined)
 
     result = {}
-    for off in valid_offsets:
-        subset = entryData[off + 16: off + 0x7e0]
-        texts, coords = _parseTextBlock(subset)
-        for text, timing_str in zip(texts, coords):
-            startFrame, duration = timing_str.split(",")
-            result[startFrame] = {"duration": duration, "text": text}
+    for text, timing_str in zip(texts, coords):
+        startFrame, duration = timing_str.split(",")
+        result[startFrame] = {"duration": duration, "text": text}
 
     return result
 
