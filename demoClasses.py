@@ -634,7 +634,7 @@ def createXMLDemoData(root: ET.Element, demoData: bytes):
                 # This is a demo/animation block
                 root.append(fileHeader(demoData[offset:offset + length]).toElement())
             case _:
-                root.append("unknownChunk", {"type": str(chunkType), "length": str(length)})
+                root.append(ET.Element("unknownChunk", {"type": str(chunkType), "length": str(length)}))
                 print(f"Unknown Type at offset {offset}: {chunkType} Length: {length}")
         # Prepare for next loop
         offset += length
