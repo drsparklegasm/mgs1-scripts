@@ -67,7 +67,7 @@ if [ "$SKIP_VOX" = false ]; then
     python3 myScripts/voxTools/voxTextInjector.py
     python3 myScripts/voxTools/voxRejoiner.py workingFiles/jpn-d1/vox/bins workingFiles/jpn-d1/vox/new-VOX.DAT -n workingFiles/jpn-d1/vox/newBins -s build-src/jpn-d1/MGS/VOX.DAT
     # ADJUST VOX OFFSETS!
-    python3 myScripts/StageDirTools/voxOffsetAdjuster.py -f -o workingFiles/jpn-d1/vox/offsets.json -n workingFiles/jpn-d1/vox/newVoxOffsets.json -s workingFiles/jpn-d1/stage/STAGE-j1.DIR
+    python3 myScripts/StageDirTools/voxOffsetAdjuster.py -f -o workingFiles/jpn-d1/vox/offsets.json -n workingFiles/jpn-d1/vox/newVoxOffsets.json -s workingFiles/jpn-d1/stage/STAGE-j1.DIR --radio workingFiles/jpn-d1/radio/RADIO.xml
 fi
 sleep 2
 

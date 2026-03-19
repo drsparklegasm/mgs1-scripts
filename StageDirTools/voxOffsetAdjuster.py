@@ -1,15 +1,17 @@
 """
-Adjust VOX.DAT offsets in STAGE.DIR after VOX files have been reinjected.
+Adjust VOX.DAT offsets in STAGE.DIR and RADIO.DAT XML after VOX files have been reinjected.
 
-VOX references in STAGE.DIR use the GCL "Pv" tag (50 76), storing block indices
+STAGE.DIR: VOX references use the GCL "Pv" tag (50 76), storing block indices
 (byte_offset / 0x800) as 4-byte big-endian integers prefixed by 0x0a type markers.
-
-Two variants:
   Single:  50 76 06 0a [4B BE block index]
   Multi:   50 76 [payload_size] 0a [4B] 0a [4B] ...
 
+RADIO XML: VOX_CUES elements have a "voxCode" attribute containing the block index
+as an 8-char hex string (e.g. "00014bc7"). A voxCode of "00000000" means the voice
+line is on the other disc and must be left alone.
+
 Usage:
-  python3 voxOffsetAdjuster.py -o old_offsets.json -n new_offsets.json -s STAGE.DIR [-O output.DIR] [-v] [-f]
+  python3 voxOffsetAdjuster.py -o old.json -n new.json -s STAGE.DIR [--radio RADIO.xml] [-v] [-f]
 
 Offset json files map vox number (e.g. "0001") to raw byte offset hex string (e.g. "00003800").
 Block index = raw_offset / 0x800.
@@ -17,6 +19,7 @@ Block index = raw_offset / 0x800.
 
 import struct, json
 import os, sys, argparse
+import xml.etree.ElementTree as ET
 from progressbar import ProgressBar
 
 bar = ProgressBar()
@@ -103,12 +106,59 @@ def adjustVoxOffsets(stageData: bytearray, blockMap: dict) -> int:
         print(f'  Unchanged: {skipped}')
     return replacements
 
+def adjustRadioXml(xmlPath: str, blockMap: dict) -> int:
+    """
+    Patch voxCode attributes in VOX_CUES elements of a RADIO XML file.
+    voxCode "00000000" means the voice line is on the other disc — skip it.
+    Returns the number of replacements made.
+    """
+    global debug
+    tree = ET.parse(xmlPath)
+    root = tree.getroot()
+    replacements = 0
+    skipped = 0
+
+    for voxElem in root.iter('VOX_CUES'):
+        voxCode = voxElem.get('voxCode')
+        if voxCode is None:
+            continue
+
+        oldBlock = int(voxCode, 16)
+
+        # Null voxCode = other disc, leave it alone
+        if oldBlock == 0:
+            if debug:
+                print(f'  voxCode 00000000 (other disc), skipping')
+            skipped += 1
+            continue
+
+        if oldBlock in blockMap:
+            newBlock = blockMap[oldBlock]
+            if oldBlock != newBlock:
+                voxElem.set('voxCode', f'{newBlock:08x}')
+                replacements += 1
+                if debug:
+                    print(f'  voxCode {voxCode} -> {newBlock:08x}')
+            else:
+                skipped += 1
+        else:
+            if debug:
+                print(f'  voxCode {voxCode} (block {oldBlock}) not in offset map!')
+
+    if replacements > 0:
+        tree.write(xmlPath, encoding='unicode', xml_declaration=True)
+
+    if debug:
+        print(f'  Unchanged: {skipped}')
+    return replacements
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adjust VOX.DAT offsets in STAGE.DIR")
     parser.add_argument("-o", "--old-offsets", required=True, type=str, help="Original VOX offsets JSON file")
     parser.add_argument("-n", "--new-offsets", required=True, type=str, help="New VOX offsets JSON file")
     parser.add_argument("-s", "--stage", required=True, type=str, help="STAGE.DIR file to modify")
     parser.add_argument("-O", "--output", type=str, help="Output STAGE.DIR path (default: overwrites input)")
+    parser.add_argument("-r", "--radio", type=str, help="Radio XML file to patch voxCode attributes in")
     parser.add_argument("-v", "--debug", action="store_true", help="Verbose debug output")
     parser.add_argument("-f", "--force", action="store_true", help="Skip interactive confirmation")
     args = parser.parse_args()
@@ -146,4 +196,11 @@ if __name__ == "__main__":
     with open(outputFile, 'wb') as out:
         out.write(stageData)
         print(f'Written: {outputFile}')
+
+    # Patch radio XML if provided
+    if args.radio:
+        print(f"Adjusting Radio XML voxCode attributes...")
+        radioReplacements = adjustRadioXml(args.radio, blockMap)
+        print(f"Replaced {radioReplacements} voxCode references in {args.radio}")
+
     exit(0)
