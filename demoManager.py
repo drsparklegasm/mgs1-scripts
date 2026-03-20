@@ -51,10 +51,11 @@ def parseDemoFile(demoDatData: bytes) -> dict [str, demoCtrl.demo]:
     for i in range(len(demoOffsets) - 1):
         demoData = demoDatData[demoOffsets[i]:demoOffsets[i + 1]]
         demos[str(demoOffsets[i])] = demoCtrl.demo(demoOffsets[i], demoData)
-    demos[str(demoOffsets[-1])] = demoCtrl.demo(demoOffsets[-1], demoData)
+    # Add the final demo (slice from last offset to end-of-file)
+    lastData = demoDatData[demoOffsets[-1]:]
+    demos[str(demoOffsets[-1])] = demoCtrl.demo(demoOffsets[-1], lastData)
 
     return demos
-    # Add the final demo
 
 if __name__ == "__main__":
     # TESTING BRANCH
