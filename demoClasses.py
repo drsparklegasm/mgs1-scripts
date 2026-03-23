@@ -218,10 +218,13 @@ class dialogueLine():
         subBytes += struct.pack("<I", self.displayFrames)
         subBytes += self.buffer  # 4 bytes — preserved from parse (or zeros for new entries)
         subBytes += textBytes
-        # Pad to 4-byte boundary with null bytes
+        # Pad to next 4-byte boundary with null bytes;
+        # if already aligned, add a full 4 null bytes (required separator)
         rem = len(subBytes) % 4
         if rem != 0:
             subBytes += bytes(4 - rem)
+        else:
+            subBytes += bytes(4)
         return subBytes
 
     def toElement(self):
