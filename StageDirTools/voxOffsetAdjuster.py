@@ -22,8 +22,6 @@ import os, sys, argparse
 import xml.etree.ElementTree as ET
 from progressbar import ProgressBar
 
-bar = ProgressBar()
-
 debug = False
 
 def importOffsets(filename: str) -> dict:
@@ -55,7 +53,7 @@ def adjustVoxOffsets(stageData: bytearray, blockMap: dict) -> int:
     replacements = 0
     skipped = 0
 
-    bar.maxval = len(stageData)
+    bar = ProgressBar(maxval=len(stageData))
     bar.start()
 
     while offset < len(stageData) - 2:

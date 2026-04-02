@@ -3,7 +3,6 @@ import argparse
 import json
 
 import progressbar
-bar = progressbar.ProgressBar()
 
 # filename = "radioDatFiles/STAGE-usa-d1.DIR"
 
@@ -138,10 +137,9 @@ def writeCall(offset):
 # For now this will just get all offsets of radio calls in the stage.dir and write a CSV file with the relevent offsets.
 def getCallOffsets():
     global filesize
-    global bar
 
     offset = 0
-    bar.maxval = filesize
+    bar = progressbar.ProgressBar(maxval=filesize)
     bar.start()
 
     while offset < filesize:
