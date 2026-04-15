@@ -28,7 +28,7 @@ ROUND_TRIP = False
 
 # ==== Dependencies ==== #
 
-import os, struct
+import os, struct, math
 import argparse
 import xml.etree.ElementTree as ET
 import StageDirTools.callsInStageDirFinder as stageTools
@@ -468,9 +468,9 @@ def fixStageDirOffsets():
         print(f"\n========== STAGE.DIR MODE: {mode} ==========")
 
         print("\n========== RADIO CALL OFFSET MAP (old -> new) ==========")
-        for oldOff, newOff in sorted(newOffsets.items()):
+        for oldOff, (newOff, callSize) in sorted(newOffsets.items()):
             changed = " *CHANGED*" if oldOff != newOff else ""
-            print(f"  old: {oldOff:>8d} (0x{oldOff:06X})  ->  new: {newOff:>8d} (0x{newOff:06X}){changed}")
+            print(f"  old: {oldOff:>8d} (0x{oldOff:06X})  ->  new: {newOff:>8d} (0x{newOff:06X})  size: {callSize:>6d}{changed}")
         print(f"  Total calls: {len(newOffsets)}")
 
         print("\n========== STAGE.DIR OFFSETS FOUND ==========")
@@ -485,13 +485,14 @@ def fixStageDirOffsets():
 
     for key in stageTools.offsetDict.keys():
         stageOffset = int(stageTools.offsetDict.get(key)[0])
-        newOffset = newOffsets.get(stageOffset)
-        if newOffset == stageOffset:
+        offsetEntry = newOffsets.get(stageOffset)
+        if offsetEntry is None:
+            print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
+            continue
+        newOffset, callTotalSize = offsetEntry
+        if newOffset == stageOffset and INTEGRAL:
             if debug:
                 print(f"  SKIP (unchanged): stage pos 0x{key:06X}  offset {stageOffset} (0x{stageOffset:06X})")
-            continue
-        elif newOffset is None:
-            print(f'ERROR! Offset invalid! Key: {key} returned {stageTools.offsetDict.get(key)}')
             continue
 
         if INTEGRAL:
@@ -515,16 +516,34 @@ def fixStageDirOffsets():
                       f"(2 bytes written to stageBytes[0x{key+6:06X}:0x{key+8:06X}])")
         else:
             # USA/JPN: write 3-byte big-endian byte offset to bytes[5:8]
+            # and recompute byte4 (sector count - 1) so the game reads enough sectors
+            withinSector = newOffset % 2048
+            sectorsNeeded = math.ceil((withinSector + callTotalSize) / 2048)
+            newByte4 = sectorsNeeded - 1
+            if newByte4 > 0xFF:
+                print(f'ERROR! Sector count {sectorsNeeded} exceeds byte4 max (256)! '
+                      f'Call at offset 0x{newOffset:06X} size {callTotalSize}')
+                continue
+
+            oldByte4 = stageBytes[key + 4]
             newOffsetHex = struct.pack('>L', newOffset)
-            oldBytes = stageBytes[key + 5: key + 8]
+            oldBytes = stageBytes[key + 4: key + 8]
+            stageBytes[key + 4] = newByte4
             stageBytes[key + 5: key + 8] = newOffsetHex[1:4]
-            newBytes = stageBytes[key + 5: key + 8]
+            newBytes = stageBytes[key + 4: key + 8]
+
+            if newOffset == stageOffset and newByte4 == oldByte4:
+                if debug:
+                    print(f"  SKIP (unchanged): stage pos 0x{key:06X}  offset {stageOffset} (0x{stageOffset:06X})")
+                continue
+
             if debug:
                 freq = struct.unpack('>H', stageBytes[key + 1: key + 3])[0]
                 print(f"  REPLACE: stage pos 0x{key:06X}  freq {freq/100:.2f}  "
-                      f"old: {stageOffset:>8d} (0x{stageOffset:06X}) [{oldBytes.hex()}]  ->  "
-                      f"new: {newOffset:>8d} (0x{newOffset:06X}) [{newBytes.hex()}]  "
-                      f"(3 bytes written to stageBytes[0x{key+5:06X}:0x{key+8:06X}])")
+                      f"old: {stageOffset:>8d} (0x{stageOffset:06X}) byte4={oldByte4:02X} [{oldBytes.hex()}]  ->  "
+                      f"new: {newOffset:>8d} (0x{newOffset:06X}) byte4={newByte4:02X} [{newBytes.hex()}]  "
+                      f"sectors={sectorsNeeded}  "
+                      f"(4 bytes written to stageBytes[0x{key+4:06X}:0x{key+8:06X}])")
 
 def main(args=None):
     global subUseOriginalHex
@@ -597,8 +616,6 @@ def main(args=None):
         newCallOffset = len(outputContent)
         if PAD and newCallOffset % 0x800 != 0:
             print(f'BUG: call at offset {newCallOffset} is not 0x800-aligned after padding!')
-        newOffsets.update({int(call.attrib.get("offset")): newCallOffset})
-
         attrs = call.attrib
         currentCallDict = attrs.get('graphicsBytes', '')
 
@@ -626,9 +643,15 @@ def main(args=None):
         unk3 = bytes.fromhex(attrs.get("unknownVal3"))
         callHeader = freq + unk1 + unk2 + unk3 + b'\x80' + createLength(len(elemContent))
 
-        outputContent += callHeader + elemContent
+        callData = callHeader + elemContent
+        graphicsBytes = b''
         if attrs.get('graphicsBytes') is not None and subUseOriginalHex == True:
-            outputContent += bytes.fromhex(attrs.get('graphicsBytes'))
+            graphicsBytes = bytes.fromhex(attrs.get('graphicsBytes'))
+
+        callTotalSize = len(callData) + len(graphicsBytes)
+        newOffsets.update({int(call.attrib.get("offset")): (newCallOffset, callTotalSize)})
+
+        outputContent += callData + graphicsBytes
 
     # Final alignment pad at end of file if padded
     if PAD:
