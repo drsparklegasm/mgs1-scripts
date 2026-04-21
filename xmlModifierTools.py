@@ -456,13 +456,18 @@ def injectSubs(jsonData: dict):
     for call in root.findall(".//Call"):
         if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
             continue
-        newCallDialogue: dict = jsonData["calls"][call.get('offset')]
+        callVoxDict: dict = jsonData["calls"][call.get('offset')]
         call.set('modified', 'True') #  New feature to leave unmodified calls alone
+        # Flatten the vox layer into a single sub_offset → text lookup
+        flatSubs = {}
+        for voxKey, subsDict in callVoxDict.items():
+            flatSubs.update(subsDict)
         for subelem in call.findall(".//SUBTITLE"):
             offset = subelem.get('offset')
-            subelem.set('text', newCallDialogue.get(offset))
-            if debug:
-                print(f'Set {offset} to {newCallDialogue.get(offset)}')
+            if offset in flatSubs:
+                subelem.set('text', flatSubs[offset])
+                if debug:
+                    print(f'Set {offset} to {flatSubs[offset]}')
 
 def injectSaveBlocks(jsonData: dict):
     global root
