@@ -565,12 +565,14 @@ def main(args=None):
 
     # Read new radio source
     if args.prepare:
-        print(f'Preparing XML by repairing lengths...')
-        ROUND_TRIP = False  # re-encode from text attr in translation mode
-        root = xmlFix.init(args.input)
-    else:
-        radioSource = ET.parse(args.input)
-        root = radioSource.getroot()
+        print(f'WARNING: -p/--prepare is deprecated. Text encoding and length recomputation is now automatic. This flag is ignored.')
+        # -- deprecated prepare logic (kept for reference) --
+        # print(f'Preparing XML by repairing lengths...')
+        # ROUND_TRIP = False  # re-encode from text attr in translation mode
+        # root = xmlFix.init(args.input)
+
+    radioSource = ET.parse(args.input)
+    root = radioSource.getroot()
 
     if args.output:
         outputFilename = args.output
@@ -637,6 +639,9 @@ def main(args=None):
         elemContent += b'\x00'  # call payload terminator
 
         # Build call header from named attrs with recalculated size field.
+        if not USE_LONG and (2 + len(elemContent)) > 0xFFFF:
+            print(f'ERROR: Call at freq {attrs.get("freq")} (offset {attrs.get("offset")}) payload is {len(elemContent)} bytes — exceeds 65535 size field limit!')
+
         freq = getFreqbytes(attrs.get('freq'))
         unk1 = bytes.fromhex(attrs.get("unknownVal1"))
         unk2 = bytes.fromhex(attrs.get("unknownVal2"))
@@ -686,7 +691,7 @@ if __name__ == '__main__':
     parser.add_argument('input', type=str, help="Input XML to be recompiled.")
     parser.add_argument('output', nargs="?", type=str, help="Output Filename (.bin). If not present, will re-use basename of input with -mod.bin")
     parser.add_argument('-s', '--stage', nargs="?", type=str, help="Toggles STAGE.DIR modification, requires filename. Use -S for output filename.")
-    parser.add_argument('-p', '--prepare', action='store_true', help="Run the text encoder and recompute lengths")
+    parser.add_argument('-p', '--prepare', action='store_true', help="[DEPRECATED] Text encoding and length recomputation is now automatic. This flag is ignored.")
     parser.add_argument('-x', '--hex', action='store_true', help="Outputs hex with original subtitle hex, rather than converting dialogue to hex.")
     parser.add_argument('-v', '--debug', action='store_true', help="Prints debug information for troubleshooting compilation.")
     parser.add_argument('-D', '--double', action='store_true', help="Save blocks use double-width encoding [original vers.]")

@@ -865,12 +865,29 @@ def main(args=None):
 
         for call in root.findall(f'.//Call'):
             callOffset = call.attrib.get('offset')
-            callText = {}
+            callVox = {}
+            # Collect all subtitle offsets that belong to a VOX_CUES
+            voxSubOffsets = set()
+            for vox in call.findall(f'.//VOX_CUES'):
+                voxOffset = vox.attrib.get('offset')
+                voxText = {}
+                for subs in vox.findall(f'.//SUBTITLE'):
+                    offset = subs.attrib.get('offset')
+                    text = subs.attrib.get('text')
+                    voxText[int(offset)] = text
+                    voxSubOffsets.add(offset)
+                if voxText:
+                    callVox[int(voxOffset)] = voxText
+            # Catch orphan SUBTITLEs not inside any VOX_CUES (e.g. Integral)
+            orphanText = {}
             for subs in call.findall(f'.//SUBTITLE'):
                 offset = subs.attrib.get('offset')
-                text = subs.attrib.get('text')
-                callText[int(offset)] = text
-                callDialogue[int(callOffset)] = callText
+                if offset not in voxSubOffsets:
+                    orphanText[int(offset)] = subs.attrib.get('text')
+            if orphanText:
+                callVox["none"] = orphanText
+            if callVox:
+                callDialogue[int(callOffset)] = callVox
             saveOpts = {}
             for save in call.findall(f'.//MEM_SAVE'):
                 offset = save.attrib.get('offset')

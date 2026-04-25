@@ -116,13 +116,16 @@ modJson = json.load(jsonB)
 
 # Def put calls together
 for call in inputJson['calls'].keys():
-    newSubs: dict = inputJson['calls'][call]
+    srcCallVox: dict = inputJson['calls'][call]
     destCall = matchingCalls.get(call)
     if destCall is None:
         continue
-    newOffsets: dict = modJson['calls'][destCall]
-    newCall = dict(zip(newOffsets.keys(), newSubs.values()))
-    newjson['calls'][destCall] = newCall
+    destCallVox: dict = modJson['calls'][destCall]
+    # Zip subtitle text across matching VOX entries
+    newCallVox = {}
+    for (srcVoxKey, srcSubs), (destVoxKey, destSubs) in zip(srcCallVox.items(), destCallVox.items()):
+        newCallVox[destVoxKey] = dict(zip(destSubs.keys(), srcSubs.values()))
+    newjson['calls'][destCall] = newCallVox
 
 # Save file names (Dock, heliport, etc)
 # is coming out as unicode for some reason...

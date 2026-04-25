@@ -38,12 +38,13 @@ def _pool_init_modded(modded_flag):
     global modded
     modded = modded_flag
 
-def loadNewSubs(callOffset: str) -> dict:
-    """
-    Gets the call subtitles for a given offset. Offset needs to come in as a string to match against the dict.
-    """
-    global newSubsData
-    return newSubsData[callOffset]
+# -- deprecated: uses old flat iseeeva format (pre vox-layer) --
+# def loadNewSubs(callOffset: str) -> dict:
+#     """
+#     Gets the call subtitles for a given offset. Offset needs to come in as a string to match against the dict.
+#     """
+#     global newSubsData
+#     return newSubsData[callOffset]
 
 def updateLengths(subtitleElement: ET.Element): # This MUST be a SUBTITLE element!
     """
@@ -256,26 +257,27 @@ def getParentTree(target: ET.Element, root: ET.Element) -> list:
 
     return path
 
-def insertSubs(jsonInputFile: str, callOffset: int):
-    """
-    Replaces subs in the element with the new values. 
-    Uses xmlInputFile as root (Element Tree) and jsonInputFile (json dict)
-    """
-    global root
-    inputJson = json.load(open(jsonInputFile, 'r'))
-
-    for callOffset in newSubsData:
-        callElement = root.find(f".//Call[@offset='{callOffset}']")
-        newSubs = newSubsData[callOffset]
-        for key in newSubs:
-            subElement = callElement.find(f".//SUBTITLE[@offset='{key}']")
-            if debug:
-                print(f'Old Text = {subElement.attrib.get("text")}')
-                print(f'New Text = {newSubs[key]}')
-
-            subElement.set('text', newSubs.get(key))
-            if debug:
-                print(ET.tostring(subElement))
+# -- deprecated: uses old flat iseeeva format (pre vox-layer) --
+# def insertSubs(jsonInputFile: str, callOffset: int):
+#     """
+#     Replaces subs in the element with the new values.
+#     Uses xmlInputFile as root (Element Tree) and jsonInputFile (json dict)
+#     """
+#     global root
+#     inputJson = json.load(open(jsonInputFile, 'r'))
+#
+#     for callOffset in newSubsData:
+#         callElement = root.find(f".//Call[@offset='{callOffset}']")
+#         newSubs = newSubsData[callOffset]
+#         for key in newSubs:
+#             subElement = callElement.find(f".//SUBTITLE[@offset='{key}']")
+#             if debug:
+#                 print(f'Old Text = {subElement.attrib.get("text")}')
+#                 print(f'New Text = {newSubs[key]}')
+#
+#             subElement.set('text', newSubs.get(key))
+#             if debug:
+#                 print(ET.tostring(subElement))
 
 # Helpful shit for analysis and planning
 def printRadioXMLStats():
@@ -456,13 +458,18 @@ def injectSubs(jsonData: dict):
     for call in root.findall(".//Call"):
         if call.get('offset') not in jsonData["calls"].keys(): # Skip a call with no new subs to update
             continue
-        newCallDialogue: dict = jsonData["calls"][call.get('offset')]
+        callVoxDict: dict = jsonData["calls"][call.get('offset')]
         call.set('modified', 'True') #  New feature to leave unmodified calls alone
+        # Flatten the vox layer into a single sub_offset → text lookup
+        flatSubs = {}
+        for voxKey, subsDict in callVoxDict.items():
+            flatSubs.update(subsDict)
         for subelem in call.findall(".//SUBTITLE"):
             offset = subelem.get('offset')
-            subelem.set('text', newCallDialogue.get(offset))
-            if debug:
-                print(f'Set {offset} to {newCallDialogue.get(offset)}')
+            if offset in flatSubs:
+                subelem.set('text', flatSubs[offset])
+                if debug:
+                    print(f'Set {offset} to {flatSubs[offset]}')
 
 def injectSaveBlocks(jsonData: dict):
     global root
