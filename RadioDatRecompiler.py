@@ -622,6 +622,9 @@ def main(args=None):
         elemContent += b'\x00'  # call payload terminator
 
         # Build call header from named attrs with recalculated size field.
+        if not USE_LONG and (2 + len(elemContent)) > 0xFFFF:
+            print(f'ERROR: Call at freq {attrs.get("freq")} (offset {attrs.get("offset")}) payload is {len(elemContent)} bytes — exceeds 65535 size field limit!')
+
         freq = getFreqbytes(attrs.get('freq'))
         unk1 = bytes.fromhex(attrs.get("unknownVal1"))
         unk2 = bytes.fromhex(attrs.get("unknownVal2"))
